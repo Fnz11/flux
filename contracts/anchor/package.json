@@ -1,0 +1,13 @@
+{
+  "name": "fbyt-clone-vault",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "anchor build",
+    "deploy:devnet": "anchor deploy --provider.cluster devnet",
+    "test": "cargo test"
+  },
+  "devDependencies": {
+    "@anchor-lang/core": "^1.0.2"
+  }
+}

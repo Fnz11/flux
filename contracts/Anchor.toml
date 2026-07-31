@@ -1,0 +1,12 @@
+[programs.devnet]
+fbyt_clone_vault = "FBYT1111111111111111111111111111111111111"
+
+[provider]
+cluster = "Localnet"
+
+[scripts]
+test = "cargo test"
+
+# Pinned: anchor init defaults to yarn, but yarn is banned by solana skill
+[toolchain]
+package_manager = "npm"
