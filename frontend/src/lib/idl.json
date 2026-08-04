@@ -1,0 +1,39 @@
+{
+  "version": "0.1.0",
+  "name": "fbyt_vault",
+  "instructions": [
+    {
+      "name": "initializeVault",
+      "accounts": [
+        { "name": "manager", "isSigner": true, "isWritable": true },
+        { "name": "vault", "isSigner": false, "isWritable": true },
+        { "name": "systemProgram", "isSigner": false, "isWritable": false }
+      ],
+      "args": [
+        { "name": "minRaiseAmount", "type": "u64" },
+        { "name": "performanceFee", "type": "u16" },
+        { "name": "managementFee", "type": "u16" },
+        { "name": "lockupPeriod", "type": "i64" }
+      ]
+    },
+    {
+      "name": "executeTradePyth",
+      "accounts": [
+        { "name": "manager", "isSigner": true, "isWritable": true },
+        { "name": "vault", "isSigner": false, "isWritable": true },
+        { "name": "inputMint", "isSigner": false, "isWritable": false },
+        { "name": "outputMint", "isSigner": false, "isWritable": false },
+        { "name": "pythFeed", "isSigner": false, "isWritable": false },
+        { "name": "systemProgram", "isSigner": false, "isWritable": false }
+      ],
+      "args": [
+        { "name": "amountIn", "type": "u64" },
+        { "name": "minAmountOut", "type": "u64" },
+        { "name": "slippageBps", "type": "u16" }
+      ]
+    }
+  ],
+  "metadata": {
+    "address": "FBYT1111111111111111111111111111111111111111"
+  }
+}

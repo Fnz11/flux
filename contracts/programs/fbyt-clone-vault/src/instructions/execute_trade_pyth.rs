@@ -4,11 +4,10 @@ use anchor_spl::token_interface::{
     burn, Burn,
     mint_to, MintTo,
 };
-use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 use crate::constants::*;
 use crate::instructions::initialize_vault::{VaultState, VaultStatusCode, TradeExecuted};
-
-const VAULT_FEED_ID: &str = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
+use crate::pyth_price::{SOL_USD_FEED_ID, calculate_amount_out, read_pyth_price};
 
 #[derive(Accounts)]
 pub struct ExecuteTradePythAccountConstraints<'info> {
@@ -61,29 +60,8 @@ pub fn handler(ctx: Context<ExecuteTradePythAccountConstraints>, amount_in: u64,
     let vault = &mut ctx.accounts.vault;
     let clock = Clock::get()?;
 
-    let price_update = &ctx.accounts.price_update;
-    let feed_id_bytes = get_feed_id_from_hex(VAULT_FEED_ID)?;
-    let price = price_update.get_price_no_older_than(&clock, MAXIMUM_AGE, &feed_id_bytes)?;
-
-    let (multiplier, divisor) = if price.exponent >= 0 {
-        let mult = 10u128
-            .checked_pow(price.exponent as u32)
-            .ok_or(crate::errors::VaultError::MathOverflow)?;
-        (mult, 1u128)
-    } else {
-        let div = 10u128
-            .checked_pow(price.exponent.unsigned_abs())
-            .ok_or(crate::errors::VaultError::MathOverflow)?;
-        (1u128, div)
-    };
-
-    let amount_out = (amount_in as u128)
-        .checked_mul(price.price as u128)
-        .ok_or(crate::errors::VaultError::MathOverflow)?
-        .checked_mul(multiplier)
-        .ok_or(crate::errors::VaultError::MathOverflow)?
-        .checked_div(divisor)
-        .ok_or(crate::errors::VaultError::MathOverflow)? as u64;
+    let price = read_pyth_price(&ctx.accounts.price_update)?;
+    let amount_out = calculate_amount_out(amount_in, price.price, price.expo)?;
 
     require!(amount_out >= min_amount_out, crate::errors::VaultError::InvalidTradeParams);
 
@@ -128,8 +106,8 @@ pub fn handler(ctx: Context<ExecuteTradePythAccountConstraints>, amount_in: u64,
         amount_in,
         amount_out,
         price: price.price,
-        price_exponent: price.exponent,
-        feed_id: VAULT_FEED_ID.to_string(),
+        price_exponent: price.expo,
+        feed_id: SOL_USD_FEED_ID.to_string(),
     });
 
     Ok(())

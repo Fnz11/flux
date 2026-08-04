@@ -1,0 +1,14 @@
+@media (max-width: 768px) {
+  .sidebar { @apply fixed inset-y-0 left-0 z-50 -translate-x-full transition-transform duration-300; }
+  .sidebar.open { @apply translate-x-0; }
+  .sidebar-overlay { @apply fixed inset-0 z-40 bg-black/50; }
+  table { @apply block overflow-x-auto; }
+  .card-grid { @apply grid-cols-1; }
+}
+@media (max-width: 640px) {
+  html { font-size: 14px; }
+  .container-main { @apply px-3; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

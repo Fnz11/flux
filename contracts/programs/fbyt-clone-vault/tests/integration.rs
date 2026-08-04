@@ -1,11 +1,14 @@
 use litesvm::LiteSVM;
 use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
+use solana_pubkey::{pubkey, Pubkey};
 use solana_signer::Signer;
 use solana_message::Message;
 use solana_transaction::Transaction;
 use solana_instruction::{AccountMeta, Instruction};
+use anchor_lang::solana_program::rent;
 use anchor_lang::InstructionData;
+
+const TOKEN_PROGRAM_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
 fn setup_svm() -> (LiteSVM, Keypair, Pubkey) {
     let mut svm = LiteSVM::new();
@@ -57,8 +60,8 @@ fn test_initialize_vault_basic() {
         AccountMeta::new(share_token_mint.pubkey(), false),
         AccountMeta::new_readonly(vault_authority_pda, false),
         AccountMeta::new_readonly(solana_system_interface::program::ID, false),
-        AccountMeta::new_readonly(spl_token_interface::ID, false),
-        AccountMeta::new_readonly(solana_sysvar_interface::ID, false),
+        AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
+        AccountMeta::new_readonly(rent::ID, false),
     ];
 
     let tx = Transaction::new(

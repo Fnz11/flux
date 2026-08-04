@@ -1,5 +1,5 @@
 use {
-    anchor_lang::solana_program::sysvar::rent,
+    anchor_lang::solana_program::rent,
     anchor_lang::InstructionData,
     borsh::BorshDeserialize,
     litesvm::LiteSVM,
