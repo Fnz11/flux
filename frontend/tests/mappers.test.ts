@@ -51,6 +51,10 @@ describe('mappers', () => {
         tvl: 1500000.5,
         createdAt: '2026-01-01T00:00:00Z',
         updatedAt: '2026-01-02T00:00:00Z',
+        pnlPercent: 0,
+        minRaiseAmount: 1,
+        lockupPeriod: 7,
+        investorCount: 0,
       })
     })
   })

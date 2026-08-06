@@ -57,8 +57,10 @@ pub fn handler(
     );
 
     vault.manager = ctx.accounts.manager.key();
+    vault.creator = ctx.accounts.manager.key();
     vault.pending_manager = None;
     vault.deposit_mint = ctx.accounts.deposit_mint.key();
+    vault.share_token_mint = ctx.accounts.share_token_mint.key();
     vault.allowed_output_mints = allowed_output_mints;
     vault.min_raise_amount = min_raise_amount;
     vault.performance_fee_bps = performance_fee_bps;

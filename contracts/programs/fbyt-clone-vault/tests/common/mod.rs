@@ -1,8 +1,5 @@
 use {
-    anchor_lang::solana_program::rent,
-    anchor_lang::InstructionData,
-    anchor_lang::AccountDeserialize,
-    anchor_lang::AccountSerialize,
+    anchor_lang::{AccountDeserialize, AccountSerialize},
     litesvm::LiteSVM,
     solana_instruction::{AccountMeta, Instruction},
     solana_keypair::Keypair,
@@ -13,13 +10,53 @@ use {
     solana_system_interface::program::ID as SYSTEM_PROGRAM_ID,
     solana_transaction::Transaction,
     spl_associated_token_account::get_associated_token_address_with_program_id,
-    spl_token::instruction as token_ix,
 };
+use anchor_lang::InstructionData;
 use fbyt_clone_vault::state::{VaultState, VaultStatusCode};
 
-pub const TOKEN_PROGRAM_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+pub const TOKEN_PROGRAM_ID: Pubkey =
+    pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+pub const ASSOCIATED_TOKEN_PROGRAM_ID: Pubkey =
+    pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+pub const RENT_ID: Pubkey = pubkey!("SysvarRent111111111111111111111111111111111");
 pub const DECIMALS: u8 = 9;
 pub const MINT_SIZE: u64 = 82;
+
+// ---------------------------------------------------------------------
+// Version-adapter helpers.
+// `spl-token`/`spl-ata`/`anchor-lang` operate on the solana-program
+// v2 `Pubkey`/`Instruction` types, while the litesvm transaction layer
+// (solana-message/transaction/instruction v3/v4) needs the solana-pubkey
+// v3 `Pubkey` and `solana_instruction::Instruction`. These two helpers
+// bridge the two worlds.
+// ---------------------------------------------------------------------
+
+fn p2(p3: &Pubkey) -> spl_token::solana_program::pubkey::Pubkey {
+    spl_token::solana_program::pubkey::Pubkey::new_from_array(
+        p3.as_ref().try_into().expect("32-byte pubkey"),
+    )
+}
+
+fn to_3(ix: spl_token::solana_program::instruction::Instruction) -> Instruction {
+    Instruction {
+        program_id: Pubkey::new_from_array(ix.program_id.to_bytes()),
+        accounts: ix
+            .accounts
+            .into_iter()
+            .map(|a| AccountMeta {
+                pubkey: Pubkey::new_from_array(a.pubkey.to_bytes()),
+                is_signer: a.is_signer,
+                is_writable: a.is_writable,
+            })
+            .collect(),
+        data: ix.data,
+    }
+}
+
+/// Convert any 32-byte pubkey-like (from the v2 ecosystem) to the 3.x Pubkey.
+fn p3(bytes: [u8; 32]) -> Pubkey {
+    Pubkey::new_from_array(bytes)
+}
 
 pub fn setup_svm() -> (LiteSVM, Keypair, Pubkey) {
     let mut svm = LiteSVM::new();
@@ -38,6 +75,7 @@ pub fn send_tx(
     signers: &[&dyn Signer],
     instructions: &[Instruction],
 ) -> Result<(), String> {
+    svm.expire_blockhash();
     let payer = signers[0].pubkey();
     let tx = Transaction::new(
         signers,
@@ -60,31 +98,70 @@ pub fn create_mint(svm: &mut LiteSVM, payer: &Keypair, authority: &Pubkey) -> Pu
         MINT_SIZE,
         &TOKEN_PROGRAM_ID,
     );
-    let init_ix = token_ix::initialize_mint2(
-        &TOKEN_PROGRAM_ID,
-        &mint_pubkey,
-        authority,
-        None,
-        DECIMALS,
+    let init_ix = to_3(
+        spl_token::instruction::initialize_mint2(
+            &p2(&TOKEN_PROGRAM_ID),
+            &p2(&mint_pubkey),
+            &p2(authority),
+            None,
+            DECIMALS,
+        )
+        .unwrap(),
+    );
+    send_tx(
+        svm,
+        &[payer as &dyn Signer, &mint as &dyn Signer],
+        &[create_ix, init_ix],
     )
     .unwrap();
-    send_tx(svm, &[payer as &dyn Signer, &mint as &dyn Signer], &[create_ix, init_ix]).unwrap();
     mint_pubkey
 }
 
+/// Associated token address for `owner`/`mint` (returns the 3.x Pubkey type
+/// used throughout the harness).
+pub fn ata(owner: &Pubkey, mint: &Pubkey) -> Pubkey {
+    p3(
+        get_associated_token_address_with_program_id(&p2(owner), &p2(mint), &p2(&TOKEN_PROGRAM_ID))
+            .to_bytes(),
+    )
+}
+
 pub fn create_ata(svm: &mut LiteSVM, payer: &Keypair, mint: &Pubkey, owner: &Pubkey) -> Pubkey {
-    let ata = get_associated_token_address_with_program_id(owner, mint, &TOKEN_PROGRAM_ID);
-    let ix = spl_associated_token_account::instruction::create_associated_token_account(&payer.pubkey(), owner, mint, &TOKEN_PROGRAM_ID);
+    let ata = ata(owner, mint);
+    let ix = to_3(
+        spl_associated_token_account::instruction::create_associated_token_account(
+            &p2(&payer.pubkey()),
+            &p2(owner),
+            &p2(mint),
+            &p2(&TOKEN_PROGRAM_ID),
+        ),
+    );
     send_tx(svm, &[payer as &dyn Signer], &[ix]).unwrap();
     ata
 }
 
 pub fn mint_tokens(svm: &mut LiteSVM, payer: &Keypair, mint: &Pubkey, dest: &Pubkey, amount: u64) {
-    let ix = token_ix::mint_to(
-        &TOKEN_PROGRAM_ID, mint, dest, &payer.pubkey(), &[], amount,
-    )
-    .unwrap();
+    let ix = to_3(
+        spl_token::instruction::mint_to(
+            &p2(&TOKEN_PROGRAM_ID),
+            &p2(mint),
+            &p2(dest),
+            &p2(&payer.pubkey()),
+            &[],
+            amount,
+        )
+        .unwrap(),
+    );
     send_tx(svm, &[payer as &dyn Signer], &[ix]).unwrap();
+}
+
+/// Reads the balance of an SPL token account by parsing its fixed binary
+/// layout (amount is the u64 at byte offset 64). This avoids the
+/// `Pack`/`solana_program_pack` version conflicts between anchor/spl-token
+/// and the standalone solana crates used here.
+pub fn token_balance(svm: &LiteSVM, ata: &Pubkey) -> u64 {
+    let account = svm.get_account(ata).unwrap();
+    u64::from_le_bytes(account.data[64..72].try_into().unwrap())
 }
 
 pub fn initialize_vault(
@@ -127,7 +204,7 @@ pub fn initialize_vault_with_params(
             AccountMeta::new(payer.pubkey(), true),
             AccountMeta::new(vault_pda, false),
             AccountMeta::new_readonly(*deposit_mint, false),
-            AccountMeta::new(share_token_mint.pubkey(), false),
+            AccountMeta::new(share_token_mint.pubkey(), true),
             AccountMeta::new_readonly(vault_authority_pda, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
@@ -185,9 +262,9 @@ pub fn deposit(
             AccountMeta::new(share_token_mint, false),
             AccountMeta::new(investor_share_ata, false),
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
-            AccountMeta::new_readonly(spl_associated_token_account::ID, false),
+            AccountMeta::new_readonly(ASSOCIATED_TOKEN_PROGRAM_ID, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
-            AccountMeta::new_readonly(rent::ID, false),
+            AccountMeta::new_readonly(RENT_ID, false),
         ],
         data: data.data(),
     };
@@ -372,4 +449,3 @@ pub fn set_vault_total_assets(
     vault.try_serialize(&mut data_slice).unwrap();
     svm.set_account(*vault_pda, account).unwrap();
 }
-

@@ -113,5 +113,113 @@ mod tests {
         let result = calculate_management_fee(u64::MAX, 10000, 31_536_000);
         let _ = result;
     }
+
+    // --- calculate_performance_fee (additional) ---
+
+    #[test]
+    fn five_percent_fee() {
+        assert_eq!(calculate_performance_fee(1_000_000, 500).unwrap(), 50_000);
+    }
+
+    #[test]
+    fn one_bp_fee() {
+        assert_eq!(calculate_performance_fee(10_000, 1).unwrap(), 1);
+    }
+
+    #[test]
+    fn max_fee_bps_9999() {
+        assert_eq!(calculate_performance_fee(1_000_000, 9999).unwrap(), 999_900);
+    }
+
+    #[test]
+    fn small_profit_large_bps_caps() {
+        assert_eq!(calculate_performance_fee(99, 10000).unwrap(), 99);
+    }
+
+    #[test]
+    fn profit_1_wei_rounds_down() {
+        assert_eq!(calculate_performance_fee(1, 100).unwrap(), 0);
+    }
+
+    #[test]
+    fn profit_2M_is_2x_1M() {
+        assert_eq!(calculate_performance_fee(1_000_000, 1000).unwrap(), 100_000);
+        assert_eq!(calculate_performance_fee(2_000_000, 1000).unwrap(), 200_000);
+    }
+
+    #[test]
+    fn fee_returns_exact_round() {
+        assert_eq!(calculate_performance_fee(10_000, 100).unwrap(), 100);
+    }
+
+    #[test]
+    fn large_profit_no_panic() {
+        let r = calculate_performance_fee(u64::MAX, 1);
+        assert!(r.is_ok());
+    }
+
+    #[test]
+    fn fee_25pct() {
+        assert_eq!(calculate_performance_fee(1_000_000, 2500).unwrap(), 250_000);
+    }
+
+    // --- calculate_management_fee (additional) ---
+
+    const Y: i64 = 365 * 86400;
+
+    #[test]
+    fn quarter_year_fee() {
+        let fee = calculate_management_fee(10_000_000, 200, Y / 4).unwrap();
+        assert_eq!(fee, 50_000);
+    }
+
+    #[test]
+    fn one_day_fee() {
+        let fee = calculate_management_fee(10_000_000, 200, 86400).unwrap();
+        assert_eq!(fee, 547);
+    }
+
+    #[test]
+    fn one_second_fee_rounds_to_zero() {
+        assert_eq!(calculate_management_fee(10_000_000, 200, 1).unwrap(), 0);
+    }
+
+    #[test]
+    fn max_assets_no_overflow() {
+        let r = calculate_management_fee(u64::MAX / 1000, 200, 86400);
+        assert!(r.is_ok());
+    }
+
+    #[test]
+    fn two_years_double_annual() {
+        let fee = calculate_management_fee(10_000_000, 200, 2 * Y).unwrap();
+        assert_eq!(fee, 400_000);
+    }
+
+    #[test]
+    fn fee_scales_with_assets() {
+        assert_eq!(calculate_management_fee(10_000_000, 200, Y).unwrap(), 200_000);
+        assert_eq!(calculate_management_fee(20_000_000, 200, Y).unwrap(), 400_000);
+    }
+
+    #[test]
+    fn fee_scales_with_bps() {
+        assert_eq!(calculate_management_fee(10_000_000, 200, Y).unwrap(), 200_000);
+        assert_eq!(calculate_management_fee(10_000_000, 400, Y).unwrap(), 400_000);
+    }
+
+    #[test]
+    fn fee_100bps_is_1pct() {
+        let fee = calculate_management_fee(100_000_000, 100, Y).unwrap();
+        assert_eq!(fee, 1_000_000);
+    }
+
+    #[test]
+    fn very_large_elapsed() {
+        let r = calculate_management_fee(10_000_000, 200, 100 * Y);
+        assert!(r.is_ok());
+        // 10M at 2% annual for 100 years = 200_000 * 100 = 20_000_000
+        assert_eq!(r.unwrap(), 20_000_000);
+    }
 }
 

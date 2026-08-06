@@ -32,7 +32,7 @@ fn test_initialize_vault_basic() {
         &program_id,
     );
 
-    let deposit_mint = Keypair::new();
+    let deposit_mint = create_mint(&mut svm, &payer, &payer.pubkey());
     let share_token_mint = Keypair::new();
 
     let ix = fbyt_clone_vault::instruction::InitializeVault {
@@ -46,8 +46,8 @@ fn test_initialize_vault_basic() {
     let accounts = vec![
         AccountMeta::new(manager.pubkey(), true),
         AccountMeta::new(vault_pda, false),
-        AccountMeta::new_readonly(deposit_mint.pubkey(), false),
-        AccountMeta::new(share_token_mint.pubkey(), false),
+        AccountMeta::new_readonly(deposit_mint, false),
+        AccountMeta::new(share_token_mint.pubkey(), true),
         AccountMeta::new_readonly(vault_authority_pda, false),
         AccountMeta::new_readonly(solana_system_interface::program::ID, false),
         AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
@@ -55,7 +55,10 @@ fn test_initialize_vault_basic() {
 
     let tx = Transaction::new(
         &[&payer, &manager, &share_token_mint],
-        Message::new(&[Instruction { program_id, accounts, data: ix.data() }], Some(&payer.pubkey())),
+        Message::new(
+            &[Instruction { program_id, accounts, data: ix.data() }],
+            Some(&payer.pubkey()),
+        ),
         svm.latest_blockhash(),
     );
 
@@ -73,7 +76,7 @@ fn test_vault_pda_derivation() {
         &program_id,
     );
 
-    assert!(bump < 256);
+    assert!(bump <= u8::MAX);
     assert_eq!(vault_pda, Pubkey::find_program_address(
         &[b"vault", manager.as_ref()],
         &program_id,
@@ -90,7 +93,7 @@ fn test_vault_authority_pda_derivation() {
         &program_id,
     );
 
-    assert!(bump < 256);
+    assert!(bump <= u8::MAX);
     assert_eq!(authority_pda, Pubkey::find_program_address(
         &[b"vault_authority", vault_pda.as_ref()],
         &program_id,

@@ -15,12 +15,12 @@ pub struct Withdraw<'info> {
 
     #[account(
         mut,
-        seeds = [VAULT_SEED, vault.manager.as_ref()],
+        seeds = [VAULT_SEED, vault.creator.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.status != VaultStatusCode::Dormant @ crate::errors::VaultError::VaultLocked,
         constraint = !vault.is_paused @ crate::errors::VaultError::VaultLocked,
     )]
-    pub vault: Account<'info, VaultState>,
+    pub vault: Box<Account<'info, VaultState>>,
 
     #[account(
         seeds = [VAULT_AUTHORITY_SEED, vault.key().as_ref()],
@@ -30,32 +30,32 @@ pub struct Withdraw<'info> {
     pub vault_authority: UncheckedAccount<'info>,
 
     #[account(mut)]
-    pub investor_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub investor_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// The mint of the token being withdrawn
     #[account(
         constraint = withdraw_mint.key() == investor_token_account.mint,
     )]
-    pub withdraw_mint: InterfaceAccount<'info, Mint>,
+    pub withdraw_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         constraint = vault_token_account.owner == vault_authority.key(),
         constraint = vault_token_account.mint == withdraw_mint.key(),
     )]
-    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub vault_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         mint::authority = vault_authority,
     )]
-    pub share_token_mint: InterfaceAccount<'info, Mint>,
+    pub share_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         constraint = investor_share_account.owner == investor.key(),
     )]
-    pub investor_share_account: InterfaceAccount<'info, TokenAccount>,
+    pub investor_share_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,

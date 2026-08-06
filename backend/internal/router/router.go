@@ -21,6 +21,8 @@ type HandlerSet struct {
 	WS          *handlers.WSHandler
 	Metrics     *handlers.MetricsHandler
 	Transaction *handlers.TransactionHandler
+	Notification *handlers.NotificationHandler
+	Search       *handlers.SearchHandler
 	JWTSecret   string
 	Redis       *redis.Client
 }
@@ -121,6 +123,19 @@ func Setup(hs *HandlerSet) *gin.Engine {
 			if hs.Transaction != nil {
 				transactions.POST("/simulate", hs.Transaction.SimulateTransaction)
 			}
+		}
+
+		notifications := v1.Group("/notifications")
+		{
+			if hs.Notification != nil {
+				notifications.GET("", hs.Notification.List)
+				notifications.POST("", hs.Notification.Create)
+				notifications.POST("/read", hs.Notification.MarkAllRead)
+			}
+		}
+
+		if hs.Search != nil {
+			v1.GET("/search", hs.Search.Search)
 		}
 	}
 

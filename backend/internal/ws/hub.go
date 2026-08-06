@@ -152,6 +152,10 @@ func (h *Hub) BroadcastToChannels(channels []string, message []byte) {
 	}
 }
 
+func (h *Hub) BroadcastToUser(wallet string, message []byte) {
+	h.BroadcastToChannel("user:"+wallet, message)
+}
+
 func (h *Hub) unregisterClient(client *Client) {
 	h.unregister <- client
 }

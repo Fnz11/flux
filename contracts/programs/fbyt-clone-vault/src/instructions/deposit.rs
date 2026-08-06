@@ -16,12 +16,12 @@ pub struct Deposit<'info> {
 
     #[account(
         mut,
-        seeds = [VAULT_SEED, vault.manager.as_ref()],
+        seeds = [VAULT_SEED, vault.creator.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.status != VaultStatusCode::Dormant @ crate::errors::VaultError::VaultLocked,
         constraint = !vault.is_paused @ crate::errors::VaultError::VaultLocked,
     )]
-    pub vault: Account<'info, VaultState>,
+    pub vault: Box<Account<'info, VaultState>>,
 
     #[account(
         seeds = [VAULT_AUTHORITY_SEED, vault.key().as_ref()],
@@ -31,13 +31,13 @@ pub struct Deposit<'info> {
     pub vault_authority: UncheckedAccount<'info>,
 
     #[account(mut)]
-    pub investor_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub investor_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         constraint = vault_token_account.owner == vault_authority.key(),
     )]
-    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub vault_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// The mint of the token being deposited (USDC, wSOL, etc.)
     #[account(
@@ -45,13 +45,13 @@ pub struct Deposit<'info> {
         constraint = deposit_mint.key() == vault_token_account.mint,
         constraint = deposit_mint.key() == vault.deposit_mint @ crate::errors::VaultError::InvalidMint,
     )]
-    pub deposit_mint: InterfaceAccount<'info, Mint>,
+    pub deposit_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         mint::authority = vault_authority,
     )]
-    pub share_token_mint: InterfaceAccount<'info, Mint>,
+    pub share_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         init_if_needed,
@@ -59,7 +59,7 @@ pub struct Deposit<'info> {
         associated_token::mint = share_token_mint,
         associated_token::authority = investor,
     )]
-    pub investor_share_account: InterfaceAccount<'info, TokenAccount>,
+    pub investor_share_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,

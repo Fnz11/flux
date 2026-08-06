@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useForm, type Control } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { SectionCard } from '@/components/ui/SectionCard'
 import {
   Form,
   FormControl,
@@ -26,11 +27,13 @@ import {
   CheckCircle2,
   Percent,
   Clock,
-  ArrowLeft,
   Sparkles,
   Activity,
+  Layers,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { generateMetadata } from '@/lib/metadata'
 
 const createVaultSchema = z.object({
   vaultType: z.enum(['open', 'closed']),
@@ -57,44 +60,6 @@ type VaultType = 'open' | 'closed'
 type RaiseUnit = 'SOL' | 'USDC' | 'USDT'
 type LockupPeriodUnit = 'hours' | 'days'
 type FeeWithdrawalPeriod = 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-
-function SectionHeader({ step, title, subtitle }: { step: number; title: string; subtitle?: string }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2">
-        <span className="flex size-6 items-center justify-center rounded-full bg-primary-coral/10 text-xs font-bold text-primary-coral">{step}</span>
-        <h2 className="text-base font-semibold text-text-primary uppercase tracking-wide">{title}</h2>
-      </div>
-      {subtitle && <p className="mt-1 text-xs text-text-tertiary pl-8">{subtitle}</p>}
-    </div>
-  )
-}
-
-function SectionCard({
-  id,
-  step,
-  title,
-  subtitle,
-  className,
-  children,
-}: {
-  id?: string
-  step: number
-  title: string
-  subtitle?: string
-  className?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div
-      id={id}
-      className={cn('rounded-xl border border-border-subtle bg-bg-elevated/50 p-6 backdrop-blur-2xl space-y-4', className)}
-    >
-      <SectionHeader step={step} title={title} subtitle={subtitle} />
-      {children}
-    </div>
-  )
-}
 
 function VaultTypeCard({
   type,
@@ -157,12 +122,11 @@ function VaultTypeCard({
 function VaultTypeSection({ value, onSelect }: { value: VaultType; onSelect: (type: VaultType) => void }) {
   return (
     <SectionCard
-      step={1}
-      title="Vault Type"
-      subtitle="Choose how investors can enter and redeem capital from your vault."
-      className="space-y-4"
+      icon={<Globe className="size-4 text-primary-coral" />}
+      title="01. Vault Type"
+      description="Choose how investors can enter and redeem capital from your vault."
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <VaultTypeCard
           type="open"
           selected={value === 'open'}
@@ -207,10 +171,9 @@ function VaultIdentitySection({
 }) {
   return (
     <SectionCard
-      step={2}
-      title="Vault Identity"
-      subtitle="Define your vault's public title, strategy narrative, and branding banner."
-      className="space-y-5"
+      icon={<Layers className="size-4 text-primary-coral" />}
+      title="02. Vault Identity"
+      description="Define your vault's public title, strategy narrative, and branding banner."
     >
       <div className="space-y-4">
         <FormField
@@ -274,7 +237,7 @@ function VaultIdentitySection({
                 variant="ghost"
                 size="sm"
                 onClick={onRemoveImage}
-                className="text-xs text-status-error hover:bg-status-error/10 hover:text-status-error gap-1 font-semibold"
+                className="text-xs text-status-error hover:bg-status-error/10 hover:text-status-error gap-1 font-semibold cursor-pointer"
               >
                 <X className="size-3.5" />
                 REMOVE
@@ -315,95 +278,96 @@ function BasicConfigSection({
 }) {
   return (
     <SectionCard
-      step={3}
-      title="Basic Configuration"
-      subtitle="Set minimum fundraising targets, accepted deposit assets, and live price oracle rates."
-      className="space-y-5"
+      icon={<Activity className="size-4 text-primary-coral" />}
+      title="03. Basic Configuration"
+      description="Set minimum fundraising targets, accepted deposit assets, and live price oracle rates."
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <FormField
-          control={control}
-          name="minRaiseAmount"
-          render={({ field }) => (
-            <FormItem className="space-y-1.5">
-              <FormLabel className="text-xs text-text-secondary">Min. Raise Amount</FormLabel>
-              <div className="flex items-center gap-2">
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="any"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    className="bg-bg-inset border-border-subtle font-mono text-base"
-                  />
-                </FormControl>
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <FormField
+            control={control}
+            name="minRaiseAmount"
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <FormLabel className="text-xs text-text-secondary">Min. Raise Amount</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="any"
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      className="bg-bg-inset border-border-subtle font-mono text-base"
+                    />
+                  </FormControl>
 
-                <div className="flex rounded-lg bg-bg-inset p-1 border border-border-subtle">
-                  {(['SOL', 'USDC', 'USDT'] as const).map((unit) => (
-                    <button
-                      key={unit}
-                      type="button"
-                      onClick={() => onSetMinRaiseUnit(unit)}
-                      className={cn(
-                        'px-2.5 py-1 text-xs font-mono font-medium rounded-md transition-colors',
-                        minRaiseUnit === unit
-                          ? 'bg-primary-coral text-white'
-                          : 'text-text-tertiary hover:text-text-primary'
-                      )}
-                    >
-                      {unit}
-                    </button>
-                  ))}
+                  <div className="flex rounded-lg bg-bg-inset p-1 border border-border-subtle">
+                    {(['SOL', 'USDC', 'USDT'] as const).map((unit) => (
+                      <button
+                        key={unit}
+                        type="button"
+                        onClick={() => onSetMinRaiseUnit(unit)}
+                        className={cn(
+                          'px-2.5 py-1 text-xs font-mono font-medium rounded-md transition-colors cursor-pointer',
+                          minRaiseUnit === unit
+                            ? 'bg-primary-coral text-white'
+                            : 'text-text-tertiary hover:text-text-primary'
+                        )}
+                      >
+                        {unit}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <p className="text-[11px] font-mono text-text-tertiary">
-                ≈ ${minRaiseUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <p className="text-[11px] font-mono text-text-tertiary">
+                  ≈ ${minRaiseUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className="space-y-1.5">
-          <FormLabel className="text-xs text-text-secondary">Select Accepted Asset</FormLabel>
-          <div className="flex gap-2">
-            {(['SOL', 'USDC', 'USDT'] as const).map((asset) => {
-              const isSelected = acceptedAssets.includes(asset)
-              return (
-                <button
-                  key={asset}
-                  type="button"
-                  onClick={() => onToggleAsset(asset)}
-                  className={cn(
-                    'flex-1 py-2.5 px-3 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5',
-                    isSelected
-                      ? 'border-primary-coral bg-primary-coral/10 text-primary-coral'
-                      : 'border-border-subtle bg-bg-inset/50 text-text-tertiary hover:text-text-primary hover:border-border-subtle/80'
-                  )}
-                >
-                  {isSelected && <CheckCircle2 className="size-3.5" />}
-                  {asset}
-                </button>
-              )
-            })}
+          <div className="space-y-1.5">
+            <FormLabel className="text-xs text-text-secondary">Select Accepted Asset</FormLabel>
+            <div className="flex gap-2">
+              {(['SOL', 'USDC', 'USDT'] as const).map((asset) => {
+                const isSelected = acceptedAssets.includes(asset)
+                return (
+                  <button
+                    key={asset}
+                    type="button"
+                    onClick={() => onToggleAsset(asset)}
+                    className={cn(
+                      'flex-1 py-2.5 px-3 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer',
+                      isSelected
+                        ? 'border-primary-coral bg-primary-coral/10 text-primary-coral'
+                        : 'border-border-subtle bg-bg-inset/50 text-text-tertiary hover:text-text-primary hover:border-border-subtle/80'
+                    )}
+                  >
+                    {isSelected && <CheckCircle2 className="size-3.5" />}
+                    {asset}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-[11px] text-text-tertiary">Whitelisted token mints for vault deposits.</p>
           </div>
-          <p className="text-[11px] text-text-tertiary">Whitelisted token mints for vault deposits.</p>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border-subtle/80 bg-bg-inset/80 p-3.5 flex items-center justify-between font-mono text-xs">
-        <div className="flex items-center gap-2">
-          <div className="flex size-2 rounded-full bg-status-success animate-pulse" />
-          <span className="text-text-secondary font-sans text-xs">USD RATE (Pyth Oracle)</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-text-primary font-semibold">
-            1 SOL = ${solPrice.toFixed(2)} USD
-          </span>
-          <span className="text-[10px] bg-status-success/10 text-status-success px-2 py-0.5 rounded border border-status-success/20 font-sans font-medium flex items-center gap-1">
-            <CheckCircle2 className="size-3" /> Live
-          </span>
+        <div className="rounded-xl border border-border-subtle/80 bg-bg-inset/80 p-3.5 flex items-center justify-between font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <div className="flex size-2 rounded-full bg-status-success animate-pulse" />
+            <span className="text-text-secondary font-sans text-xs">USD RATE (Pyth Oracle)</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-text-primary font-semibold">
+              1 SOL = ${solPrice.toFixed(2)} USD
+            </span>
+            <span className="text-[10px] bg-status-success/10 text-status-success px-2 py-0.5 rounded border border-status-success/20 font-sans font-medium flex items-center gap-1">
+              <CheckCircle2 className="size-3" /> Live
+            </span>
+          </div>
         </div>
       </div>
     </SectionCard>
@@ -425,153 +389,154 @@ function AdvancedSettingsSection({
 }) {
   return (
     <SectionCard
-      step={4}
-      title="Advanced Settings"
-      subtitle="Customize lockup durations, performance benchmarks, and fee structures."
-      className="space-y-6"
+      icon={<Percent className="size-4 text-primary-coral" />}
+      title="04. Advanced Settings"
+      description="Customize lockup durations, performance benchmarks, and fee structures."
     >
-      <div className="space-y-3">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border-subtle/50 pb-1.5 flex items-center gap-1.5">
-          <Clock className="size-3.5 text-primary-coral" />
-          Investment Parameters
-        </h3>
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border-subtle/50 pb-1.5 flex items-center gap-1.5">
+            <Clock className="size-3.5 text-primary-coral" />
+            Investment Parameters
+          </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={control}
-            name="minInvestment"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs text-text-secondary">Min. Investment</FormLabel>
-                <div className="relative">
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="any"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      className="bg-bg-inset border-border-subtle font-mono pr-14"
-                    />
-                  </FormControl>
-                  <span className="absolute right-3 top-2.5 text-xs font-mono text-text-tertiary">SOL</span>
-                </div>
-                <p className="text-[10px] text-text-tertiary">Protocol min: $0.01 USD</p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={control}
+              name="minInvestment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs text-text-secondary">Min. Investment</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="any"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        className="bg-bg-inset border-border-subtle font-mono pr-14"
+                      />
+                    </FormControl>
+                    <span className="absolute right-3 top-2.5 text-xs font-mono text-text-tertiary">SOL</span>
+                  </div>
+                  <p className="text-[10px] text-text-tertiary">Protocol min: $0.01 USD</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={control}
-            name="lockupPeriodValue"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs text-text-secondary">Lockup Period</FormLabel>
-                <div className="flex gap-2">
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      className="bg-bg-inset border-border-subtle font-mono flex-1"
-                    />
-                  </FormControl>
+            <FormField
+              control={control}
+              name="lockupPeriodValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs text-text-secondary">Lockup Period</FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        className="bg-bg-inset border-border-subtle font-mono flex-1"
+                      />
+                    </FormControl>
 
-                  <select
-                    value={lockupPeriodUnit}
-                    onChange={(e) => onLockupPeriodUnitChange(e.target.value as LockupPeriodUnit)}
-                    className="rounded-lg border border-border-subtle bg-bg-inset px-3 py-1.5 text-xs font-mono text-text-primary focus:outline-none focus:border-primary-coral"
-                  >
-                    <option value="hours">Hours</option>
-                    <option value="days">Days</option>
-                  </select>
-                </div>
-                <p className="text-[10px] text-text-tertiary">Maximum 45 days lockup duration</p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-4 pt-2">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border-subtle/50 pb-1.5 flex items-center gap-1.5">
-          <Percent className="size-3.5 text-primary-coral" />
-          Fee Structure
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={control}
-            name="managementFeePercent"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex justify-between">
-                  <FormLabel className="text-xs text-text-secondary">Management Fee (% / Year)</FormLabel>
-                  <span className="text-[10px] text-text-tertiary font-mono">Max: 15%</span>
-                </div>
-                <div className="relative">
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      className="bg-bg-inset border-border-subtle font-mono pr-16"
-                    />
-                  </FormControl>
-                  <span className="absolute right-3 top-2.5 text-xs font-sans text-text-tertiary">/ Year</span>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name="performanceFeePercent"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex justify-between">
-                  <FormLabel className="text-xs text-text-secondary">Performance Fee (% on Profit)</FormLabel>
-                  <span className="text-[10px] text-text-tertiary font-mono">Max: 20%</span>
-                </div>
-                <div className="relative">
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.5"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      className="bg-bg-inset border-border-subtle font-mono pr-20"
-                    />
-                  </FormControl>
-                  <span className="absolute right-3 top-2.5 text-xs font-sans text-text-tertiary">On Profit</span>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                    <select
+                      value={lockupPeriodUnit}
+                      onChange={(e) => onLockupPeriodUnitChange(e.target.value as LockupPeriodUnit)}
+                      className="rounded-lg border border-border-subtle bg-bg-inset px-3 py-1.5 text-xs font-mono text-text-primary focus:outline-none focus:border-primary-coral cursor-pointer"
+                    >
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                    </select>
+                  </div>
+                  <p className="text-[10px] text-text-tertiary">Maximum 45 days lockup duration</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <FormLabel className="text-xs text-text-secondary">Fee Withdrawal Period</FormLabel>
-          <div className="flex rounded-xl bg-bg-inset p-1 border border-border-subtle">
-            {(['weekly', 'monthly', 'quarterly', 'yearly'] as const).map((period) => (
-              <button
-                key={period}
-                type="button"
-                onClick={() => onSetFeeWithdrawalPeriod(period)}
-                className={cn(
-                  'flex-1 py-2 text-xs font-medium capitalize rounded-lg transition-all',
-                  feeWithdrawalPeriod === period
-                    ? 'bg-primary-coral text-white font-semibold shadow-sm'
-                    : 'text-text-tertiary hover:text-text-primary'
-                )}
-              >
-                {period}
-              </button>
-            ))}
+        <div className="space-y-4 pt-2">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border-subtle/50 pb-1.5 flex items-center gap-1.5">
+            <Percent className="size-3.5 text-primary-coral" />
+            Fee Structure
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={control}
+              name="managementFeePercent"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex justify-between">
+                    <FormLabel className="text-xs text-text-secondary">Management Fee (% / Year)</FormLabel>
+                    <span className="text-[10px] text-text-tertiary font-mono">Max: 15%</span>
+                  </div>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        className="bg-bg-inset border-border-subtle font-mono pr-16"
+                      />
+                    </FormControl>
+                    <span className="absolute right-3 top-2.5 text-xs font-sans text-text-tertiary">/ Year</span>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name="performanceFeePercent"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex justify-between">
+                    <FormLabel className="text-xs text-text-secondary">Performance Fee (% on Profit)</FormLabel>
+                    <span className="text-[10px] text-text-tertiary font-mono">Max: 20%</span>
+                  </div>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        className="bg-bg-inset border-border-subtle font-mono pr-20"
+                      />
+                    </FormControl>
+                    <span className="absolute right-3 top-2.5 text-xs font-sans text-text-tertiary">On Profit</span>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <FormLabel className="text-xs text-text-secondary">Fee Withdrawal Period</FormLabel>
+            <div className="flex rounded-xl bg-bg-inset p-1 border border-border-subtle">
+              {(['weekly', 'monthly', 'quarterly', 'yearly'] as const).map((period) => (
+                <button
+                  key={period}
+                  type="button"
+                  onClick={() => onSetFeeWithdrawalPeriod(period)}
+                  className={cn(
+                    'flex-1 py-2 text-xs font-medium capitalize rounded-lg transition-all cursor-pointer',
+                    feeWithdrawalPeriod === period
+                      ? 'bg-primary-coral text-white font-semibold shadow-sm'
+                      : 'text-text-tertiary hover:text-text-primary'
+                  )}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -581,12 +546,16 @@ function AdvancedSettingsSection({
 
 function AgreementSection({ control }: { control: Control<CreateVaultFormValues> }) {
   return (
-    <SectionCard id="terms" step={5} title="Agreement" className="space-y-4">
+    <SectionCard
+      icon={<Shield className="size-4 text-primary-coral" />}
+      title="05. Agreement"
+      description="Review protocol rules and accept terms before creating on-chain vault."
+    >
       <FormField
         control={control}
         name="agreedToTerms"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 pl-8">
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
             <FormControl>
               <Checkbox
                 checked={field.value}
@@ -618,7 +587,7 @@ function CreateVaultSubmit({ isPending, agreedToTerms }: { isPending: boolean; a
         type="submit"
         variant="sweep"
         size="lg"
-        className="w-full text-base font-bold py-6 shadow-lg shadow-primary-coral/20"
+        className="w-full text-base font-bold py-6 shadow-lg shadow-primary-coral/20 cursor-pointer"
         disabled={isPending || !agreedToTerms}
       >
         {isPending ? (
@@ -637,8 +606,6 @@ function CreateVaultSubmit({ isPending, agreedToTerms }: { isPending: boolean; a
   )
 }
 
-import { generateMetadata } from '@/lib/metadata'
-
 export const Route = createFileRoute('/vaults/create')({
   head: () => ({
     meta: generateMetadata({
@@ -652,7 +619,6 @@ export const Route = createFileRoute('/vaults/create')({
 })
 
 export function CreateVaultPage() {
-  const navigate = useNavigate()
   const { handleSubmit: submitVault, isPending } = useCreateVault()
   const solPriceState = usePythPrice('SOL/USD')
   const solPrice = solPriceState.status === 'live' || solPriceState.status === 'stale' ? solPriceState.price : 150
@@ -742,66 +708,57 @@ export function CreateVaultPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate({ to: '/vaults' })}
-          className="gap-1.5 text-text-tertiary hover:text-text-primary"
-        >
-          <ArrowLeft className="size-4" />
-          Back
-        </Button>
-      </div>
-
+    <div className="space-y-6 pb-12 w-full">
       <PageHeader
         title="Create Vault"
         subtitle="Configure a new Solana investment vault matching OG FBYT parameters."
+        backTo="/vaults"
       />
 
-      <Form {...form}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* SECTION 1 — VAULT TYPE */}
-          <VaultTypeSection value={vaultType} onSelect={(type) => setValue('vaultType', type)} />
+      <div className="max-w-4xl mx-auto space-y-8">
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {/* SECTION 1 — VAULT TYPE */}
+            <VaultTypeSection value={vaultType} onSelect={(type) => setValue('vaultType', type)} />
 
-          {/* SECTION 2 — VAULT IDENTITY */}
-          <VaultIdentitySection
-            control={control}
-            description={description}
-            imagePreview={imagePreview}
-            imageName={imageName}
-            onImageUpload={handleImageUpload}
-            onRemoveImage={handleRemoveImage}
-          />
+            {/* SECTION 2 — VAULT IDENTITY */}
+            <VaultIdentitySection
+              control={control}
+              description={description}
+              imagePreview={imagePreview}
+              imageName={imageName}
+              onImageUpload={handleImageUpload}
+              onRemoveImage={handleRemoveImage}
+            />
 
-          {/* SECTION 3 — BASIC CONFIGURATION */}
-          <BasicConfigSection
-            control={control}
-            minRaiseUnit={minRaiseUnit}
-            acceptedAssets={acceptedAssets}
-            solPrice={solPrice}
-            minRaiseUsd={minRaiseUsd}
-            onSetMinRaiseUnit={(unit) => setValue('minRaiseUnit', unit)}
-            onToggleAsset={toggleAsset}
-          />
+            {/* SECTION 3 — BASIC CONFIGURATION */}
+            <BasicConfigSection
+              control={control}
+              minRaiseUnit={minRaiseUnit}
+              acceptedAssets={acceptedAssets}
+              solPrice={solPrice}
+              minRaiseUsd={minRaiseUsd}
+              onSetMinRaiseUnit={(unit) => setValue('minRaiseUnit', unit)}
+              onToggleAsset={toggleAsset}
+            />
 
-          {/* SECTION 4 — ADVANCED SETTINGS */}
-          <AdvancedSettingsSection
-            control={control}
-            lockupPeriodUnit={lockupPeriodUnit}
-            feeWithdrawalPeriod={feeWithdrawalPeriod}
-            onLockupPeriodUnitChange={(unit) => setValue('lockupPeriodUnit', unit)}
-            onSetFeeWithdrawalPeriod={(period) => setValue('feeWithdrawalPeriod', period)}
-          />
+            {/* SECTION 4 — ADVANCED SETTINGS */}
+            <AdvancedSettingsSection
+              control={control}
+              lockupPeriodUnit={lockupPeriodUnit}
+              feeWithdrawalPeriod={feeWithdrawalPeriod}
+              onLockupPeriodUnitChange={(unit) => setValue('lockupPeriodUnit', unit)}
+              onSetFeeWithdrawalPeriod={(period) => setValue('feeWithdrawalPeriod', period)}
+            />
 
-          {/* SECTION 5 — AGREEMENT */}
-          <AgreementSection control={control} />
+            {/* SECTION 5 — AGREEMENT */}
+            <AgreementSection control={control} />
 
-          {/* CREATE VAULT CTA */}
-          <CreateVaultSubmit isPending={isPending} agreedToTerms={agreedToTerms} />
-        </form>
-      </Form>
+            {/* CREATE VAULT CTA */}
+            <CreateVaultSubmit isPending={isPending} agreedToTerms={agreedToTerms} />
+          </form>
+        </Form>
+      </div>
     </div>
   )
 }

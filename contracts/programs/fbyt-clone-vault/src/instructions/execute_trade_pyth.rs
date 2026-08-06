@@ -17,12 +17,12 @@ pub struct ExecuteTradePyth<'info> {
 
     #[account(
         mut,
-        seeds = [VAULT_SEED, vault.manager.as_ref()],
+        seeds = [VAULT_SEED, vault.creator.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.status == VaultStatusCode::Active @ crate::errors::VaultError::VaultLocked,
         constraint = vault.manager == manager.key() @ crate::errors::VaultError::Unauthorized,
     )]
-    pub vault: Account<'info, VaultState>,
+    pub vault: Box<Account<'info, VaultState>>,
 
     #[account(
         seeds = [VAULT_AUTHORITY_SEED, vault.key().as_ref()],
@@ -36,28 +36,28 @@ pub struct ExecuteTradePyth<'info> {
         constraint = vault_input_token_account.owner == vault_authority.key(),
         constraint = vault_input_token_account.mint == vault_input_mint.key(),
     )]
-    pub vault_input_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub vault_input_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         constraint = (vault_input_mint.key() == vault.deposit_mint || vault.allowed_output_mints.contains(&vault_input_mint.key())) @ crate::errors::VaultError::InvalidMint,
     )]
-    pub vault_input_mint: InterfaceAccount<'info, Mint>,
+    pub vault_input_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         constraint = vault_output_token_account.owner == vault_authority.key(),
         constraint = vault_output_token_account.mint == vault_output_mint.key(),
     )]
-    pub vault_output_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub vault_output_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         constraint = (vault_output_mint.key() == vault.deposit_mint || vault.allowed_output_mints.contains(&vault_output_mint.key())) @ crate::errors::VaultError::InvalidMint,
     )]
-    pub vault_output_mint: InterfaceAccount<'info, Mint>,
+    pub vault_output_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    pub price_update: Account<'info, PriceUpdateV2>,
+    pub price_update: Box<Account<'info, PriceUpdateV2>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 }

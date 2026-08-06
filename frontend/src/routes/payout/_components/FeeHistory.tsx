@@ -1,56 +1,109 @@
 import type { ApiFee, Vault } from '@/types'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui/table'
-import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SectionCard } from '@/components/ui/SectionCard'
+import { Receipt, Coins } from 'lucide-react'
 
 interface FeeHistoryProps {
   isLoading: boolean
   filteredFees: ApiFee[]
   vaults: Vault[]
+  selectedVaultId: string
+  onSelectVault: (id: string) => void
 }
 
-export function FeeHistory({ isLoading, filteredFees, vaults }: FeeHistoryProps) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold text-text-primary">Fee History</h2>
+export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, onSelectVault }: FeeHistoryProps) {
+  const currentVault = vaults.find((v) => v.id === selectedVaultId)
+  const displayLabel = !selectedVaultId || selectedVaultId === 'ALL'
+    ? 'All Vaults'
+    : currentVault?.metadata.displayName || `Vault ${selectedVaultId.slice(0, 8)}`
 
-      <div className="rounded-xl border border-border-subtle bg-bg-elevated/60 backdrop-blur-2xl p-0 overflow-hidden">
-        {isLoading ? (
-          <div className="p-5"><LoadingSkeleton lines={4} /></div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vault</TableHead>
-                <TableHead>Performance Fee</TableHead>
-                <TableHead>Management Fee</TableHead>
-                <TableHead>Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredFees.length === 0 ? (
-                <TableEmpty
-                  colSpan={4}
-                  title="No accrued fees"
-                  description="Fees accrued on active vaults will appear here"
-                />
-              ) : (
-                filteredFees.map((fee) => {
-                  const vault = vaults.find((v) => v.id === fee.vault_id)
-                  const vaultName = vault?.metadata.displayName || `Vault ${fee.vault_id.slice(0, 8)}`
-                  return (
-                    <TableRow key={fee.vault_id}>
-                      <TableCell className="font-mono text-xs text-text-primary font-medium">{vaultName}</TableCell>
-                      <TableCell className="font-mono text-xs text-text-secondary">${fee.accrued_performance_fee.toFixed(2)}</TableCell>
-                      <TableCell className="font-mono text-xs text-text-secondary">${fee.accrued_management_fee.toFixed(2)}</TableCell>
-                      <TableCell className="font-mono text-xs font-semibold text-primary-coral">${fee.total_accrued.toFixed(2)}</TableCell>
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-    </div>
+  return (
+    <SectionCard
+      icon={<Receipt className="size-4 text-primary-coral" />}
+      title="Fee History"
+      description="Track accrued performance and management fees per vault position"
+      rightContent={
+        <Select 
+          value={selectedVaultId || 'ALL'} 
+          onValueChange={onSelectVault}
+        >
+          <SelectTrigger className="h-8 w-44 rounded-xl border border-border-subtle bg-bg-inset px-3 text-xs font-semibold text-text-primary hover:border-primary-coral/40 cursor-pointer">
+            <SelectValue placeholder="All Vaults">
+              {displayLabel}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent align="end" className="min-w-[10rem] rounded-xl border-border-medium bg-bg-elevated text-text-primary shadow-xl">
+            <SelectItem value="ALL" className="text-xs cursor-pointer">All Vaults</SelectItem>
+            {vaults.map((v) => (
+              <SelectItem key={v.id} value={v.id} className="text-xs cursor-pointer">
+                {v.metadata.displayName || `Vault ${v.id.slice(0, 8)}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      }
+    >
+      {isLoading ? (
+        <div className="p-5 space-y-3 min-h-[220px]">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="animate-pulse h-10 rounded-xl bg-bg-inset/60" />
+          ))}
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>VAULT</TableHead>
+              <TableHead className="text-right">PERFORMANCE FEE</TableHead>
+              <TableHead className="text-right">MANAGEMENT FEE</TableHead>
+              <TableHead className="text-right">TOTAL ACCRUED</TableHead>
+              <TableHead className="text-right">ACTION</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredFees.length === 0 ? (
+              <TableEmpty
+                colSpan={5}
+                title="No accrued fees recorded yet"
+                description="Fees accrued on active vaults will appear here"
+              />
+            ) : (
+              filteredFees.map((fee) => {
+                const vault = vaults.find((v) => v.id === fee.vault_id)
+                const vaultName = vault?.metadata.displayName || `Vault ${fee.vault_id.slice(0, 8)}`
+                return (
+                  <TableRow key={fee.vault_id} className="hover:bg-bg-inset/50 transition-colors">
+                    <TableCell className="font-semibold text-xs text-text-primary">
+                      <div className="flex items-center gap-2">
+                        <Coins className="size-4 text-primary-gold shrink-0" />
+                        <span>{vaultName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs text-text-secondary">
+                      ${fee.accrued_performance_fee.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs text-text-secondary">
+                      ${fee.accrued_management_fee.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs font-semibold text-primary-coral">
+                      ${fee.total_accrued.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <button
+                        type="button"
+                        className="rounded-lg bg-bg-inset border border-border-medium px-2.5 py-1 text-xs font-semibold text-text-primary hover:bg-primary-coral hover:text-black hover:border-primary-coral transition-colors cursor-pointer"
+                      >
+                        Claim
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
+          </TableBody>
+        </Table>
+      )}
+    </SectionCard>
   )
 }

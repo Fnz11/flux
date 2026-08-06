@@ -3,22 +3,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useAppStore } from '@/stores/app-store'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useFees } from '@/hooks/useFees'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PayoutSummary } from './payout/_components/PayoutSummary'
 import { FeeHistory } from './payout/_components/FeeHistory'
-
+import { Coins, Zap, Wallet, Info } from 'lucide-react'
 import { generateMetadata } from '@/lib/metadata'
 
 export const Route = createFileRoute('/payout')({
-  head: () => ({
-    meta: generateMetadata({
-      title: 'Fee Payouts',
-      description: 'Manage and claim management and performance fee distributions for your managed vaults.',
-      path: '/payout',
-      noIndex: true,
-    }),
-  }),
   beforeLoad: () => {
     // Note: beforeLoad is not a React component, must use .getState(), not hook selector
     const isManager = useAppStore.getState().isManager
@@ -29,9 +20,17 @@ export const Route = createFileRoute('/payout')({
     }
   },
   component: PayoutPage,
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Fee Payouts',
+      description: 'Manage and claim management and performance fee distributions for your managed vaults.',
+      path: '/payout',
+      noIndex: true,
+    }),
+  }),
 })
 
-function PayoutPage() {
+export function PayoutPage() {
   const isManager = useAppStore((s) => s.isManager)
   const navigate = useNavigate()
   const { data: vaults = [] } = useVaultsQuery()
@@ -58,57 +57,61 @@ function PayoutPage() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Payout"
-        subtitle="Manage investor payouts and distributions."
-        action={
-          <div className="w-full sm:w-48">
-            <Select 
-              value={selectedVaultId} 
-              onValueChange={setSelectedVaultId}
-              disabled={vaults.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={vaults.length === 0 ? "No vaults available" : "Filter by vault..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {vaults.length === 0 ? (
-                  <SelectItem disabled value="empty">No vaults available</SelectItem>
-                ) : (
-                  <>
-                    <SelectItem value="ALL">All Vaults</SelectItem>
-                    {vaults.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>
-                        {v.metadata.displayName || `Vault ${v.id.slice(0, 8)}`}
-                      </SelectItem>
-                    ))}
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-        }
+        title="Fee Payouts"
+        subtitle="Manage investor payouts, automated keeper distributions, and fee claims."
       />
 
+      {/* 3-Card Summary Top Metrics */}
       <PayoutSummary totalPerf={totalPerf} totalMgmt={totalMgmt} totalFees={totalFees} />
 
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold text-text-primary">How It Works</h2>
-        <div className="rounded-xl border border-border-subtle bg-bg-elevated/60 backdrop-blur-2xl p-5">
-          <div className="space-y-2 text-sm text-text-secondary">
-            <p>
-              Fees are accrued on-chain and tracked per vault. The <strong>Keeper</strong> system
-              automates fee collection and distribution to manager wallets.
+      {/* How It Works Step Cards Grid */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Info className="size-4 text-primary-coral" />
+          <h2 className="text-lg font-bold text-text-primary">How Payouts Work</h2>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3 items-stretch">
+          <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-4 shadow-lg space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-primary-coral">
+              <Coins className="size-4" />
+              <span>01. On-Chain Accrual</span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Performance and management fees accumulate continuously on-chain per vault based on trading profits & AUM.
             </p>
-            <ul className="list-inside list-disc space-y-1 text-xs text-text-tertiary">
-              <li>Performance Fee: Charged on profits, paid in vault LP tokens.</li>
-              <li>Management Fee: Charged on AUM, accrued continuously.</li>
-              <li>Keepers trigger payouts on a schedule or when thresholds are met.</li>
-            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-4 shadow-lg space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-primary-gold">
+              <Zap className="size-4" />
+              <span>02. Automated Keepers</span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Automated keeper bots monitor fee thresholds and execute distribution instructions automatically.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-4 shadow-lg space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+              <Wallet className="size-4" />
+              <span>03. Direct Payouts</span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Rewards are transferred directly to manager wallet addresses or claimed via one-click distributions.
+            </p>
           </div>
         </div>
       </div>
 
-      <FeeHistory isLoading={isLoading} filteredFees={filteredFees} vaults={vaults} />
+      {/* Fee History Section */}
+      <FeeHistory
+        isLoading={isLoading}
+        filteredFees={filteredFees}
+        vaults={vaults}
+        selectedVaultId={selectedVaultId}
+        onSelectVault={setSelectedVaultId}
+      />
     </div>
   )
 }

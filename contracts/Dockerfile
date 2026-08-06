@@ -1,4 +1,4 @@
-FROM coralxyz/anchor-cli:v0.30.1 AS builder
+FROM solanafoundation/anchor:v0.32.1 AS builder
 
 WORKDIR /workspace
 

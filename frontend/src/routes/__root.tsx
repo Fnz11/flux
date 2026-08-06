@@ -10,7 +10,8 @@ import { useConfigStore } from '../stores/config-store'
 import { useWebSocketStore } from '../stores/websocket-store'
 
 import { ErrorBoundary, DefaultErrorFallback } from '../components/ui/ErrorBoundary'
-import { ToastContainer } from '../components/ui/ToastContainer'
+import { NotFoundPage } from '../components/ui/NotFoundPage'
+import { Toaster } from 'react-hot-toast'
 import { HeroAmbient } from '../components/ui/HeroAmbient'
 
 import appCss from '../styles.css?url'
@@ -35,6 +36,7 @@ export const Route = createRootRoute({
   errorComponent: ({ error, reset }) => (
     <DefaultErrorFallback error={error as Error} onReset={reset} />
   ),
+  notFoundComponent: NotFoundPage,
   shellComponent: RootDocument,
 })
 
@@ -74,7 +76,28 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                       </div>
                     </main>
                   </div>
-                  <ToastContainer />
+                  <Toaster
+                    position="bottom-right"
+                    gutter={8}
+                    toastOptions={{
+                      duration: 4000,
+                      style: {
+                        background: 'rgba(18, 18, 22, 0.62)',
+                        backdropFilter: 'blur(24px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid rgba(255, 255, 255, 0.14)',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+                        fontWeight: 500,
+                        padding: '8px 12px',
+                        fontSize: '13px',
+                        lineHeight: '18px',
+                        maxWidth: '340px',
+                        minWidth: '0',
+                      },
+                    }}
+                  />
                 </RootBootstrap>
               </ErrorBoundary>
             </TooltipProvider>

@@ -1,0 +1,6594 @@
+[
+  {
+    "id": 0,
+    "description": "perf|profit=0|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 1,
+    "description": "perf|profit=0|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 2,
+    "description": "perf|profit=0|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 3,
+    "description": "perf|profit=0|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 4,
+    "description": "perf|profit=0|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 5,
+    "description": "perf|profit=0|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 6,
+    "description": "perf|profit=0|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 7,
+    "description": "perf|profit=0|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "0",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 8,
+    "description": "perf|profit=1|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 9,
+    "description": "perf|profit=1|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 10,
+    "description": "perf|profit=1|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 11,
+    "description": "perf|profit=1|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 12,
+    "description": "perf|profit=1|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 13,
+    "description": "perf|profit=1|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 14,
+    "description": "perf|profit=1|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 15,
+    "description": "perf|profit=1|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 16,
+    "description": "perf|profit=100|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 17,
+    "description": "perf|profit=100|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 18,
+    "description": "perf|profit=100|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 19,
+    "description": "perf|profit=100|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "5",
+    "expected_error": null
+  },
+  {
+    "id": 20,
+    "description": "perf|profit=100|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "10",
+    "expected_error": null
+  },
+  {
+    "id": 21,
+    "description": "perf|profit=100|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "50",
+    "expected_error": null
+  },
+  {
+    "id": 22,
+    "description": "perf|profit=100|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "99",
+    "expected_error": null
+  },
+  {
+    "id": 23,
+    "description": "perf|profit=100|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "100",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "100",
+    "expected_error": null
+  },
+  {
+    "id": 24,
+    "description": "perf|profit=1000|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 25,
+    "description": "perf|profit=1000|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 26,
+    "description": "perf|profit=1000|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "10",
+    "expected_error": null
+  },
+  {
+    "id": 27,
+    "description": "perf|profit=1000|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "50",
+    "expected_error": null
+  },
+  {
+    "id": 28,
+    "description": "perf|profit=1000|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "100",
+    "expected_error": null
+  },
+  {
+    "id": 29,
+    "description": "perf|profit=1000|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "500",
+    "expected_error": null
+  },
+  {
+    "id": 30,
+    "description": "perf|profit=1000|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "999",
+    "expected_error": null
+  },
+  {
+    "id": 31,
+    "description": "perf|profit=1000|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "1000",
+    "expected_error": null
+  },
+  {
+    "id": 32,
+    "description": "perf|profit=1000000|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 33,
+    "description": "perf|profit=1000000|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "100",
+    "expected_error": null
+  },
+  {
+    "id": 34,
+    "description": "perf|profit=1000000|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "10000",
+    "expected_error": null
+  },
+  {
+    "id": 35,
+    "description": "perf|profit=1000000|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "50000",
+    "expected_error": null
+  },
+  {
+    "id": 36,
+    "description": "perf|profit=1000000|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "100000",
+    "expected_error": null
+  },
+  {
+    "id": 37,
+    "description": "perf|profit=1000000|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "500000",
+    "expected_error": null
+  },
+  {
+    "id": 38,
+    "description": "perf|profit=1000000|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "999900",
+    "expected_error": null
+  },
+  {
+    "id": 39,
+    "description": "perf|profit=1000000|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "1000000",
+    "expected_error": null
+  },
+  {
+    "id": 40,
+    "description": "perf|profit=1000000000|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 41,
+    "description": "perf|profit=1000000000|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "100000",
+    "expected_error": null
+  },
+  {
+    "id": 42,
+    "description": "perf|profit=1000000000|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "10000000",
+    "expected_error": null
+  },
+  {
+    "id": 43,
+    "description": "perf|profit=1000000000|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "50000000",
+    "expected_error": null
+  },
+  {
+    "id": 44,
+    "description": "perf|profit=1000000000|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "100000000",
+    "expected_error": null
+  },
+  {
+    "id": 45,
+    "description": "perf|profit=1000000000|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "500000000",
+    "expected_error": null
+  },
+  {
+    "id": 46,
+    "description": "perf|profit=1000000000|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "999900000",
+    "expected_error": null
+  },
+  {
+    "id": 47,
+    "description": "perf|profit=1000000000|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "1000000000",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "1000000000",
+    "expected_error": null
+  },
+  {
+    "id": 48,
+    "description": "perf|profit=9223372036854775807|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 49,
+    "description": "perf|profit=9223372036854775807|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "922337203685477",
+    "expected_error": null
+  },
+  {
+    "id": 50,
+    "description": "perf|profit=9223372036854775807|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "92233720368547758",
+    "expected_error": null
+  },
+  {
+    "id": 51,
+    "description": "perf|profit=9223372036854775807|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "461168601842738790",
+    "expected_error": null
+  },
+  {
+    "id": 52,
+    "description": "perf|profit=9223372036854775807|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "922337203685477580",
+    "expected_error": null
+  },
+  {
+    "id": 53,
+    "description": "perf|profit=9223372036854775807|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "4611686018427387903",
+    "expected_error": null
+  },
+  {
+    "id": 54,
+    "description": "perf|profit=9223372036854775807|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "9222449699651090329",
+    "expected_error": null
+  },
+  {
+    "id": 55,
+    "description": "perf|profit=9223372036854775807|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "9223372036854775807",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "9223372036854775807",
+    "expected_error": null
+  },
+  {
+    "id": 56,
+    "description": "perf|profit=18446744073709551615|bps=0",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 57,
+    "description": "perf|profit=18446744073709551615|bps=1",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "1844674407370955",
+    "expected_error": null
+  },
+  {
+    "id": 58,
+    "description": "perf|profit=18446744073709551615|bps=100",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "100"
+    },
+    "expect_ok": true,
+    "expected_output": "184467440737095516",
+    "expected_error": null
+  },
+  {
+    "id": 59,
+    "description": "perf|profit=18446744073709551615|bps=500",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "500"
+    },
+    "expect_ok": true,
+    "expected_output": "922337203685477580",
+    "expected_error": null
+  },
+  {
+    "id": 60,
+    "description": "perf|profit=18446744073709551615|bps=1000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "1000"
+    },
+    "expect_ok": true,
+    "expected_output": "1844674407370955161",
+    "expected_error": null
+  },
+  {
+    "id": 61,
+    "description": "perf|profit=18446744073709551615|bps=5000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "5000"
+    },
+    "expect_ok": true,
+    "expected_output": "9223372036854775807",
+    "expected_error": null
+  },
+  {
+    "id": 62,
+    "description": "perf|profit=18446744073709551615|bps=9999",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "9999"
+    },
+    "expect_ok": true,
+    "expected_output": "18444899399302180659",
+    "expected_error": null
+  },
+  {
+    "id": 63,
+    "description": "perf|profit=18446744073709551615|bps=10000",
+    "function": "calculate_performance_fee",
+    "inputs": {
+      "profit": "18446744073709551615",
+      "performance_fee_bps": "10000"
+    },
+    "expect_ok": true,
+    "expected_output": "18446744073709551615",
+    "expected_error": null
+  },
+  {
+    "id": 64,
+    "description": "mgmt|a=0|bps=0|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 65,
+    "description": "mgmt|a=0|bps=0|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 66,
+    "description": "mgmt|a=0|bps=0|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 67,
+    "description": "mgmt|a=0|bps=0|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 68,
+    "description": "mgmt|a=0|bps=0|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 69,
+    "description": "mgmt|a=0|bps=0|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 70,
+    "description": "mgmt|a=0|bps=0|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 71,
+    "description": "mgmt|a=0|bps=0|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 72,
+    "description": "mgmt|a=0|bps=1|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 73,
+    "description": "mgmt|a=0|bps=1|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 74,
+    "description": "mgmt|a=0|bps=1|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 75,
+    "description": "mgmt|a=0|bps=1|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 76,
+    "description": "mgmt|a=0|bps=1|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 77,
+    "description": "mgmt|a=0|bps=1|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 78,
+    "description": "mgmt|a=0|bps=1|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 79,
+    "description": "mgmt|a=0|bps=1|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 80,
+    "description": "mgmt|a=0|bps=50|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 81,
+    "description": "mgmt|a=0|bps=50|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 82,
+    "description": "mgmt|a=0|bps=50|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 83,
+    "description": "mgmt|a=0|bps=50|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 84,
+    "description": "mgmt|a=0|bps=50|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 85,
+    "description": "mgmt|a=0|bps=50|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 86,
+    "description": "mgmt|a=0|bps=50|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 87,
+    "description": "mgmt|a=0|bps=50|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 88,
+    "description": "mgmt|a=0|bps=100|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 89,
+    "description": "mgmt|a=0|bps=100|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 90,
+    "description": "mgmt|a=0|bps=100|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 91,
+    "description": "mgmt|a=0|bps=100|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 92,
+    "description": "mgmt|a=0|bps=100|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 93,
+    "description": "mgmt|a=0|bps=100|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 94,
+    "description": "mgmt|a=0|bps=100|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 95,
+    "description": "mgmt|a=0|bps=100|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 96,
+    "description": "mgmt|a=0|bps=200|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 97,
+    "description": "mgmt|a=0|bps=200|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 98,
+    "description": "mgmt|a=0|bps=200|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 99,
+    "description": "mgmt|a=0|bps=200|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 100,
+    "description": "mgmt|a=0|bps=200|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 101,
+    "description": "mgmt|a=0|bps=200|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 102,
+    "description": "mgmt|a=0|bps=200|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 103,
+    "description": "mgmt|a=0|bps=200|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 104,
+    "description": "mgmt|a=0|bps=500|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 105,
+    "description": "mgmt|a=0|bps=500|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 106,
+    "description": "mgmt|a=0|bps=500|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 107,
+    "description": "mgmt|a=0|bps=500|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 108,
+    "description": "mgmt|a=0|bps=500|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 109,
+    "description": "mgmt|a=0|bps=500|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 110,
+    "description": "mgmt|a=0|bps=500|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 111,
+    "description": "mgmt|a=0|bps=500|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 112,
+    "description": "mgmt|a=0|bps=1000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 113,
+    "description": "mgmt|a=0|bps=1000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 114,
+    "description": "mgmt|a=0|bps=1000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 115,
+    "description": "mgmt|a=0|bps=1000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 116,
+    "description": "mgmt|a=0|bps=1000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 117,
+    "description": "mgmt|a=0|bps=1000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 118,
+    "description": "mgmt|a=0|bps=1000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 119,
+    "description": "mgmt|a=0|bps=1000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 120,
+    "description": "mgmt|a=0|bps=10000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 121,
+    "description": "mgmt|a=0|bps=10000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 122,
+    "description": "mgmt|a=0|bps=10000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 123,
+    "description": "mgmt|a=0|bps=10000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 124,
+    "description": "mgmt|a=0|bps=10000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 125,
+    "description": "mgmt|a=0|bps=10000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 126,
+    "description": "mgmt|a=0|bps=10000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 127,
+    "description": "mgmt|a=0|bps=10000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "0",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 128,
+    "description": "mgmt|a=1|bps=0|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 129,
+    "description": "mgmt|a=1|bps=0|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 130,
+    "description": "mgmt|a=1|bps=0|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 131,
+    "description": "mgmt|a=1|bps=0|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 132,
+    "description": "mgmt|a=1|bps=0|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 133,
+    "description": "mgmt|a=1|bps=0|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 134,
+    "description": "mgmt|a=1|bps=0|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 135,
+    "description": "mgmt|a=1|bps=0|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 136,
+    "description": "mgmt|a=1|bps=1|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 137,
+    "description": "mgmt|a=1|bps=1|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 138,
+    "description": "mgmt|a=1|bps=1|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 139,
+    "description": "mgmt|a=1|bps=1|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 140,
+    "description": "mgmt|a=1|bps=1|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 141,
+    "description": "mgmt|a=1|bps=1|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 142,
+    "description": "mgmt|a=1|bps=1|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 143,
+    "description": "mgmt|a=1|bps=1|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 144,
+    "description": "mgmt|a=1|bps=50|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 145,
+    "description": "mgmt|a=1|bps=50|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 146,
+    "description": "mgmt|a=1|bps=50|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 147,
+    "description": "mgmt|a=1|bps=50|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 148,
+    "description": "mgmt|a=1|bps=50|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 149,
+    "description": "mgmt|a=1|bps=50|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 150,
+    "description": "mgmt|a=1|bps=50|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 151,
+    "description": "mgmt|a=1|bps=50|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 152,
+    "description": "mgmt|a=1|bps=100|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 153,
+    "description": "mgmt|a=1|bps=100|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 154,
+    "description": "mgmt|a=1|bps=100|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 155,
+    "description": "mgmt|a=1|bps=100|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 156,
+    "description": "mgmt|a=1|bps=100|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 157,
+    "description": "mgmt|a=1|bps=100|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 158,
+    "description": "mgmt|a=1|bps=100|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 159,
+    "description": "mgmt|a=1|bps=100|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 160,
+    "description": "mgmt|a=1|bps=200|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 161,
+    "description": "mgmt|a=1|bps=200|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 162,
+    "description": "mgmt|a=1|bps=200|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 163,
+    "description": "mgmt|a=1|bps=200|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 164,
+    "description": "mgmt|a=1|bps=200|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 165,
+    "description": "mgmt|a=1|bps=200|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 166,
+    "description": "mgmt|a=1|bps=200|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 167,
+    "description": "mgmt|a=1|bps=200|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 168,
+    "description": "mgmt|a=1|bps=500|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 169,
+    "description": "mgmt|a=1|bps=500|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 170,
+    "description": "mgmt|a=1|bps=500|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 171,
+    "description": "mgmt|a=1|bps=500|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 172,
+    "description": "mgmt|a=1|bps=500|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 173,
+    "description": "mgmt|a=1|bps=500|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 174,
+    "description": "mgmt|a=1|bps=500|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 175,
+    "description": "mgmt|a=1|bps=500|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 176,
+    "description": "mgmt|a=1|bps=1000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 177,
+    "description": "mgmt|a=1|bps=1000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 178,
+    "description": "mgmt|a=1|bps=1000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 179,
+    "description": "mgmt|a=1|bps=1000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 180,
+    "description": "mgmt|a=1|bps=1000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 181,
+    "description": "mgmt|a=1|bps=1000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 182,
+    "description": "mgmt|a=1|bps=1000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 183,
+    "description": "mgmt|a=1|bps=1000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 184,
+    "description": "mgmt|a=1|bps=10000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 185,
+    "description": "mgmt|a=1|bps=10000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 186,
+    "description": "mgmt|a=1|bps=10000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 187,
+    "description": "mgmt|a=1|bps=10000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 188,
+    "description": "mgmt|a=1|bps=10000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 189,
+    "description": "mgmt|a=1|bps=10000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 190,
+    "description": "mgmt|a=1|bps=10000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 191,
+    "description": "mgmt|a=1|bps=10000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "2",
+    "expected_error": null
+  },
+  {
+    "id": 192,
+    "description": "mgmt|a=100|bps=0|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 193,
+    "description": "mgmt|a=100|bps=0|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 194,
+    "description": "mgmt|a=100|bps=0|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 195,
+    "description": "mgmt|a=100|bps=0|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 196,
+    "description": "mgmt|a=100|bps=0|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 197,
+    "description": "mgmt|a=100|bps=0|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 198,
+    "description": "mgmt|a=100|bps=0|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 199,
+    "description": "mgmt|a=100|bps=0|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 200,
+    "description": "mgmt|a=100|bps=1|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 201,
+    "description": "mgmt|a=100|bps=1|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 202,
+    "description": "mgmt|a=100|bps=1|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 203,
+    "description": "mgmt|a=100|bps=1|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 204,
+    "description": "mgmt|a=100|bps=1|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 205,
+    "description": "mgmt|a=100|bps=1|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 206,
+    "description": "mgmt|a=100|bps=1|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 207,
+    "description": "mgmt|a=100|bps=1|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 208,
+    "description": "mgmt|a=100|bps=50|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 209,
+    "description": "mgmt|a=100|bps=50|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 210,
+    "description": "mgmt|a=100|bps=50|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 211,
+    "description": "mgmt|a=100|bps=50|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 212,
+    "description": "mgmt|a=100|bps=50|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 213,
+    "description": "mgmt|a=100|bps=50|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 214,
+    "description": "mgmt|a=100|bps=50|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 215,
+    "description": "mgmt|a=100|bps=50|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 216,
+    "description": "mgmt|a=100|bps=100|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 217,
+    "description": "mgmt|a=100|bps=100|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 218,
+    "description": "mgmt|a=100|bps=100|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 219,
+    "description": "mgmt|a=100|bps=100|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 220,
+    "description": "mgmt|a=100|bps=100|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 221,
+    "description": "mgmt|a=100|bps=100|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 222,
+    "description": "mgmt|a=100|bps=100|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 223,
+    "description": "mgmt|a=100|bps=100|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "2",
+    "expected_error": null
+  },
+  {
+    "id": 224,
+    "description": "mgmt|a=100|bps=200|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 225,
+    "description": "mgmt|a=100|bps=200|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 226,
+    "description": "mgmt|a=100|bps=200|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 227,
+    "description": "mgmt|a=100|bps=200|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 228,
+    "description": "mgmt|a=100|bps=200|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 229,
+    "description": "mgmt|a=100|bps=200|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 230,
+    "description": "mgmt|a=100|bps=200|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "2",
+    "expected_error": null
+  },
+  {
+    "id": 231,
+    "description": "mgmt|a=100|bps=200|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "4",
+    "expected_error": null
+  },
+  {
+    "id": 232,
+    "description": "mgmt|a=100|bps=500|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 233,
+    "description": "mgmt|a=100|bps=500|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 234,
+    "description": "mgmt|a=100|bps=500|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 235,
+    "description": "mgmt|a=100|bps=500|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 236,
+    "description": "mgmt|a=100|bps=500|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 237,
+    "description": "mgmt|a=100|bps=500|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 238,
+    "description": "mgmt|a=100|bps=500|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "5",
+    "expected_error": null
+  },
+  {
+    "id": 239,
+    "description": "mgmt|a=100|bps=500|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "10",
+    "expected_error": null
+  },
+  {
+    "id": 240,
+    "description": "mgmt|a=100|bps=1000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 241,
+    "description": "mgmt|a=100|bps=1000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 242,
+    "description": "mgmt|a=100|bps=1000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 243,
+    "description": "mgmt|a=100|bps=1000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 244,
+    "description": "mgmt|a=100|bps=1000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 245,
+    "description": "mgmt|a=100|bps=1000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 246,
+    "description": "mgmt|a=100|bps=1000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "10",
+    "expected_error": null
+  },
+  {
+    "id": 247,
+    "description": "mgmt|a=100|bps=1000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "20",
+    "expected_error": null
+  },
+  {
+    "id": 248,
+    "description": "mgmt|a=100|bps=10000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 249,
+    "description": "mgmt|a=100|bps=10000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 250,
+    "description": "mgmt|a=100|bps=10000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 251,
+    "description": "mgmt|a=100|bps=10000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 252,
+    "description": "mgmt|a=100|bps=10000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 253,
+    "description": "mgmt|a=100|bps=10000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "8",
+    "expected_error": null
+  },
+  {
+    "id": 254,
+    "description": "mgmt|a=100|bps=10000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "100",
+    "expected_error": null
+  },
+  {
+    "id": 255,
+    "description": "mgmt|a=100|bps=10000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "100",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "200",
+    "expected_error": null
+  },
+  {
+    "id": 256,
+    "description": "mgmt|a=1000|bps=0|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 257,
+    "description": "mgmt|a=1000|bps=0|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 258,
+    "description": "mgmt|a=1000|bps=0|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 259,
+    "description": "mgmt|a=1000|bps=0|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 260,
+    "description": "mgmt|a=1000|bps=0|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 261,
+    "description": "mgmt|a=1000|bps=0|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 262,
+    "description": "mgmt|a=1000|bps=0|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 263,
+    "description": "mgmt|a=1000|bps=0|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 264,
+    "description": "mgmt|a=1000|bps=1|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 265,
+    "description": "mgmt|a=1000|bps=1|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 266,
+    "description": "mgmt|a=1000|bps=1|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 267,
+    "description": "mgmt|a=1000|bps=1|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 268,
+    "description": "mgmt|a=1000|bps=1|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 269,
+    "description": "mgmt|a=1000|bps=1|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 270,
+    "description": "mgmt|a=1000|bps=1|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 271,
+    "description": "mgmt|a=1000|bps=1|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 272,
+    "description": "mgmt|a=1000|bps=50|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 273,
+    "description": "mgmt|a=1000|bps=50|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 274,
+    "description": "mgmt|a=1000|bps=50|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 275,
+    "description": "mgmt|a=1000|bps=50|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 276,
+    "description": "mgmt|a=1000|bps=50|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 277,
+    "description": "mgmt|a=1000|bps=50|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 278,
+    "description": "mgmt|a=1000|bps=50|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "5",
+    "expected_error": null
+  },
+  {
+    "id": 279,
+    "description": "mgmt|a=1000|bps=50|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "10",
+    "expected_error": null
+  },
+  {
+    "id": 280,
+    "description": "mgmt|a=1000|bps=100|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 281,
+    "description": "mgmt|a=1000|bps=100|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 282,
+    "description": "mgmt|a=1000|bps=100|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 283,
+    "description": "mgmt|a=1000|bps=100|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 284,
+    "description": "mgmt|a=1000|bps=100|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 285,
+    "description": "mgmt|a=1000|bps=100|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 286,
+    "description": "mgmt|a=1000|bps=100|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "10",
+    "expected_error": null
+  },
+  {
+    "id": 287,
+    "description": "mgmt|a=1000|bps=100|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "20",
+    "expected_error": null
+  },
+  {
+    "id": 288,
+    "description": "mgmt|a=1000|bps=200|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 289,
+    "description": "mgmt|a=1000|bps=200|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 290,
+    "description": "mgmt|a=1000|bps=200|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 291,
+    "description": "mgmt|a=1000|bps=200|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 292,
+    "description": "mgmt|a=1000|bps=200|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 293,
+    "description": "mgmt|a=1000|bps=200|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 294,
+    "description": "mgmt|a=1000|bps=200|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "20",
+    "expected_error": null
+  },
+  {
+    "id": 295,
+    "description": "mgmt|a=1000|bps=200|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "40",
+    "expected_error": null
+  },
+  {
+    "id": 296,
+    "description": "mgmt|a=1000|bps=500|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 297,
+    "description": "mgmt|a=1000|bps=500|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 298,
+    "description": "mgmt|a=1000|bps=500|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 299,
+    "description": "mgmt|a=1000|bps=500|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 300,
+    "description": "mgmt|a=1000|bps=500|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 301,
+    "description": "mgmt|a=1000|bps=500|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "4",
+    "expected_error": null
+  },
+  {
+    "id": 302,
+    "description": "mgmt|a=1000|bps=500|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "50",
+    "expected_error": null
+  },
+  {
+    "id": 303,
+    "description": "mgmt|a=1000|bps=500|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "100",
+    "expected_error": null
+  },
+  {
+    "id": 304,
+    "description": "mgmt|a=1000|bps=1000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 305,
+    "description": "mgmt|a=1000|bps=1000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 306,
+    "description": "mgmt|a=1000|bps=1000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 307,
+    "description": "mgmt|a=1000|bps=1000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 308,
+    "description": "mgmt|a=1000|bps=1000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 309,
+    "description": "mgmt|a=1000|bps=1000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "8",
+    "expected_error": null
+  },
+  {
+    "id": 310,
+    "description": "mgmt|a=1000|bps=1000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "100",
+    "expected_error": null
+  },
+  {
+    "id": 311,
+    "description": "mgmt|a=1000|bps=1000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "200",
+    "expected_error": null
+  },
+  {
+    "id": 312,
+    "description": "mgmt|a=1000|bps=10000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 313,
+    "description": "mgmt|a=1000|bps=10000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 314,
+    "description": "mgmt|a=1000|bps=10000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 315,
+    "description": "mgmt|a=1000|bps=10000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 316,
+    "description": "mgmt|a=1000|bps=10000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "2",
+    "expected_error": null
+  },
+  {
+    "id": 317,
+    "description": "mgmt|a=1000|bps=10000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "83",
+    "expected_error": null
+  },
+  {
+    "id": 318,
+    "description": "mgmt|a=1000|bps=10000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "1000",
+    "expected_error": null
+  },
+  {
+    "id": 319,
+    "description": "mgmt|a=1000|bps=10000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "2000",
+    "expected_error": null
+  },
+  {
+    "id": 320,
+    "description": "mgmt|a=1000000|bps=0|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 321,
+    "description": "mgmt|a=1000000|bps=0|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 322,
+    "description": "mgmt|a=1000000|bps=0|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 323,
+    "description": "mgmt|a=1000000|bps=0|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 324,
+    "description": "mgmt|a=1000000|bps=0|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 325,
+    "description": "mgmt|a=1000000|bps=0|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 326,
+    "description": "mgmt|a=1000000|bps=0|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 327,
+    "description": "mgmt|a=1000000|bps=0|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 328,
+    "description": "mgmt|a=1000000|bps=1|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 329,
+    "description": "mgmt|a=1000000|bps=1|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 330,
+    "description": "mgmt|a=1000000|bps=1|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 331,
+    "description": "mgmt|a=1000000|bps=1|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 332,
+    "description": "mgmt|a=1000000|bps=1|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 333,
+    "description": "mgmt|a=1000000|bps=1|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "8",
+    "expected_error": null
+  },
+  {
+    "id": 334,
+    "description": "mgmt|a=1000000|bps=1|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "100",
+    "expected_error": null
+  },
+  {
+    "id": 335,
+    "description": "mgmt|a=1000000|bps=1|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "200",
+    "expected_error": null
+  },
+  {
+    "id": 336,
+    "description": "mgmt|a=1000000|bps=50|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 337,
+    "description": "mgmt|a=1000000|bps=50|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 338,
+    "description": "mgmt|a=1000000|bps=50|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 339,
+    "description": "mgmt|a=1000000|bps=50|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 340,
+    "description": "mgmt|a=1000000|bps=50|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "13",
+    "expected_error": null
+  },
+  {
+    "id": 341,
+    "description": "mgmt|a=1000000|bps=50|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "416",
+    "expected_error": null
+  },
+  {
+    "id": 342,
+    "description": "mgmt|a=1000000|bps=50|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "5000",
+    "expected_error": null
+  },
+  {
+    "id": 343,
+    "description": "mgmt|a=1000000|bps=50|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "10000",
+    "expected_error": null
+  },
+  {
+    "id": 344,
+    "description": "mgmt|a=1000000|bps=100|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 345,
+    "description": "mgmt|a=1000000|bps=100|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 346,
+    "description": "mgmt|a=1000000|bps=100|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 347,
+    "description": "mgmt|a=1000000|bps=100|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 348,
+    "description": "mgmt|a=1000000|bps=100|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "27",
+    "expected_error": null
+  },
+  {
+    "id": 349,
+    "description": "mgmt|a=1000000|bps=100|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "833",
+    "expected_error": null
+  },
+  {
+    "id": 350,
+    "description": "mgmt|a=1000000|bps=100|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "10000",
+    "expected_error": null
+  },
+  {
+    "id": 351,
+    "description": "mgmt|a=1000000|bps=100|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "20000",
+    "expected_error": null
+  },
+  {
+    "id": 352,
+    "description": "mgmt|a=1000000|bps=200|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 353,
+    "description": "mgmt|a=1000000|bps=200|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 354,
+    "description": "mgmt|a=1000000|bps=200|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 355,
+    "description": "mgmt|a=1000000|bps=200|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "2",
+    "expected_error": null
+  },
+  {
+    "id": 356,
+    "description": "mgmt|a=1000000|bps=200|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "54",
+    "expected_error": null
+  },
+  {
+    "id": 357,
+    "description": "mgmt|a=1000000|bps=200|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "1666",
+    "expected_error": null
+  },
+  {
+    "id": 358,
+    "description": "mgmt|a=1000000|bps=200|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "20000",
+    "expected_error": null
+  },
+  {
+    "id": 359,
+    "description": "mgmt|a=1000000|bps=200|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "40000",
+    "expected_error": null
+  },
+  {
+    "id": 360,
+    "description": "mgmt|a=1000000|bps=500|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 361,
+    "description": "mgmt|a=1000000|bps=500|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 362,
+    "description": "mgmt|a=1000000|bps=500|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 363,
+    "description": "mgmt|a=1000000|bps=500|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "5",
+    "expected_error": null
+  },
+  {
+    "id": 364,
+    "description": "mgmt|a=1000000|bps=500|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "136",
+    "expected_error": null
+  },
+  {
+    "id": 365,
+    "description": "mgmt|a=1000000|bps=500|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "4166",
+    "expected_error": null
+  },
+  {
+    "id": 366,
+    "description": "mgmt|a=1000000|bps=500|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "50000",
+    "expected_error": null
+  },
+  {
+    "id": 367,
+    "description": "mgmt|a=1000000|bps=500|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "100000",
+    "expected_error": null
+  },
+  {
+    "id": 368,
+    "description": "mgmt|a=1000000|bps=1000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 369,
+    "description": "mgmt|a=1000000|bps=1000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 370,
+    "description": "mgmt|a=1000000|bps=1000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 371,
+    "description": "mgmt|a=1000000|bps=1000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "11",
+    "expected_error": null
+  },
+  {
+    "id": 372,
+    "description": "mgmt|a=1000000|bps=1000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "273",
+    "expected_error": null
+  },
+  {
+    "id": 373,
+    "description": "mgmt|a=1000000|bps=1000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "8333",
+    "expected_error": null
+  },
+  {
+    "id": 374,
+    "description": "mgmt|a=1000000|bps=1000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "100000",
+    "expected_error": null
+  },
+  {
+    "id": 375,
+    "description": "mgmt|a=1000000|bps=1000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "200000",
+    "expected_error": null
+  },
+  {
+    "id": 376,
+    "description": "mgmt|a=1000000|bps=10000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 377,
+    "description": "mgmt|a=1000000|bps=10000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 378,
+    "description": "mgmt|a=1000000|bps=10000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 379,
+    "description": "mgmt|a=1000000|bps=10000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "114",
+    "expected_error": null
+  },
+  {
+    "id": 380,
+    "description": "mgmt|a=1000000|bps=10000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "2739",
+    "expected_error": null
+  },
+  {
+    "id": 381,
+    "description": "mgmt|a=1000000|bps=10000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "83333",
+    "expected_error": null
+  },
+  {
+    "id": 382,
+    "description": "mgmt|a=1000000|bps=10000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "1000000",
+    "expected_error": null
+  },
+  {
+    "id": 383,
+    "description": "mgmt|a=1000000|bps=10000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "2000000",
+    "expected_error": null
+  },
+  {
+    "id": 384,
+    "description": "mgmt|a=1000000000|bps=0|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 385,
+    "description": "mgmt|a=1000000000|bps=0|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 386,
+    "description": "mgmt|a=1000000000|bps=0|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 387,
+    "description": "mgmt|a=1000000000|bps=0|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 388,
+    "description": "mgmt|a=1000000000|bps=0|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 389,
+    "description": "mgmt|a=1000000000|bps=0|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 390,
+    "description": "mgmt|a=1000000000|bps=0|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 391,
+    "description": "mgmt|a=1000000000|bps=0|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 392,
+    "description": "mgmt|a=1000000000|bps=1|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 393,
+    "description": "mgmt|a=1000000000|bps=1|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 394,
+    "description": "mgmt|a=1000000000|bps=1|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 395,
+    "description": "mgmt|a=1000000000|bps=1|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "11",
+    "expected_error": null
+  },
+  {
+    "id": 396,
+    "description": "mgmt|a=1000000000|bps=1|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "273",
+    "expected_error": null
+  },
+  {
+    "id": 397,
+    "description": "mgmt|a=1000000000|bps=1|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "8333",
+    "expected_error": null
+  },
+  {
+    "id": 398,
+    "description": "mgmt|a=1000000000|bps=1|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "100000",
+    "expected_error": null
+  },
+  {
+    "id": 399,
+    "description": "mgmt|a=1000000000|bps=1|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "200000",
+    "expected_error": null
+  },
+  {
+    "id": 400,
+    "description": "mgmt|a=1000000000|bps=50|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 401,
+    "description": "mgmt|a=1000000000|bps=50|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 402,
+    "description": "mgmt|a=1000000000|bps=50|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 403,
+    "description": "mgmt|a=1000000000|bps=50|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "570",
+    "expected_error": null
+  },
+  {
+    "id": 404,
+    "description": "mgmt|a=1000000000|bps=50|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "13698",
+    "expected_error": null
+  },
+  {
+    "id": 405,
+    "description": "mgmt|a=1000000000|bps=50|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "416666",
+    "expected_error": null
+  },
+  {
+    "id": 406,
+    "description": "mgmt|a=1000000000|bps=50|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "5000000",
+    "expected_error": null
+  },
+  {
+    "id": 407,
+    "description": "mgmt|a=1000000000|bps=50|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "10000000",
+    "expected_error": null
+  },
+  {
+    "id": 408,
+    "description": "mgmt|a=1000000000|bps=100|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 409,
+    "description": "mgmt|a=1000000000|bps=100|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 410,
+    "description": "mgmt|a=1000000000|bps=100|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 411,
+    "description": "mgmt|a=1000000000|bps=100|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "1141",
+    "expected_error": null
+  },
+  {
+    "id": 412,
+    "description": "mgmt|a=1000000000|bps=100|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "27397",
+    "expected_error": null
+  },
+  {
+    "id": 413,
+    "description": "mgmt|a=1000000000|bps=100|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "833333",
+    "expected_error": null
+  },
+  {
+    "id": 414,
+    "description": "mgmt|a=1000000000|bps=100|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "10000000",
+    "expected_error": null
+  },
+  {
+    "id": 415,
+    "description": "mgmt|a=1000000000|bps=100|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "20000000",
+    "expected_error": null
+  },
+  {
+    "id": 416,
+    "description": "mgmt|a=1000000000|bps=200|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 417,
+    "description": "mgmt|a=1000000000|bps=200|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 418,
+    "description": "mgmt|a=1000000000|bps=200|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 419,
+    "description": "mgmt|a=1000000000|bps=200|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "2283",
+    "expected_error": null
+  },
+  {
+    "id": 420,
+    "description": "mgmt|a=1000000000|bps=200|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "54794",
+    "expected_error": null
+  },
+  {
+    "id": 421,
+    "description": "mgmt|a=1000000000|bps=200|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "1666666",
+    "expected_error": null
+  },
+  {
+    "id": 422,
+    "description": "mgmt|a=1000000000|bps=200|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "20000000",
+    "expected_error": null
+  },
+  {
+    "id": 423,
+    "description": "mgmt|a=1000000000|bps=200|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "40000000",
+    "expected_error": null
+  },
+  {
+    "id": 424,
+    "description": "mgmt|a=1000000000|bps=500|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 425,
+    "description": "mgmt|a=1000000000|bps=500|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 426,
+    "description": "mgmt|a=1000000000|bps=500|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "1",
+    "expected_error": null
+  },
+  {
+    "id": 427,
+    "description": "mgmt|a=1000000000|bps=500|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "5707",
+    "expected_error": null
+  },
+  {
+    "id": 428,
+    "description": "mgmt|a=1000000000|bps=500|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "136986",
+    "expected_error": null
+  },
+  {
+    "id": 429,
+    "description": "mgmt|a=1000000000|bps=500|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "4166666",
+    "expected_error": null
+  },
+  {
+    "id": 430,
+    "description": "mgmt|a=1000000000|bps=500|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "50000000",
+    "expected_error": null
+  },
+  {
+    "id": 431,
+    "description": "mgmt|a=1000000000|bps=500|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "100000000",
+    "expected_error": null
+  },
+  {
+    "id": 432,
+    "description": "mgmt|a=1000000000|bps=1000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 433,
+    "description": "mgmt|a=1000000000|bps=1000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 434,
+    "description": "mgmt|a=1000000000|bps=1000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "3",
+    "expected_error": null
+  },
+  {
+    "id": 435,
+    "description": "mgmt|a=1000000000|bps=1000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "11415",
+    "expected_error": null
+  },
+  {
+    "id": 436,
+    "description": "mgmt|a=1000000000|bps=1000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "273972",
+    "expected_error": null
+  },
+  {
+    "id": 437,
+    "description": "mgmt|a=1000000000|bps=1000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "8333333",
+    "expected_error": null
+  },
+  {
+    "id": 438,
+    "description": "mgmt|a=1000000000|bps=1000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "100000000",
+    "expected_error": null
+  },
+  {
+    "id": 439,
+    "description": "mgmt|a=1000000000|bps=1000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "200000000",
+    "expected_error": null
+  },
+  {
+    "id": 440,
+    "description": "mgmt|a=1000000000|bps=10000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 441,
+    "description": "mgmt|a=1000000000|bps=10000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 442,
+    "description": "mgmt|a=1000000000|bps=10000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "31",
+    "expected_error": null
+  },
+  {
+    "id": 443,
+    "description": "mgmt|a=1000000000|bps=10000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "114155",
+    "expected_error": null
+  },
+  {
+    "id": 444,
+    "description": "mgmt|a=1000000000|bps=10000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "2739726",
+    "expected_error": null
+  },
+  {
+    "id": 445,
+    "description": "mgmt|a=1000000000|bps=10000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "83333333",
+    "expected_error": null
+  },
+  {
+    "id": 446,
+    "description": "mgmt|a=1000000000|bps=10000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "1000000000",
+    "expected_error": null
+  },
+  {
+    "id": 447,
+    "description": "mgmt|a=1000000000|bps=10000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1000000000",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "2000000000",
+    "expected_error": null
+  },
+  {
+    "id": 448,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 449,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 450,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 451,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 452,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 453,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 454,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 455,
+    "description": "mgmt|a=1844674407370955161|bps=0|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "0",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 456,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 457,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 458,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "5849424",
+    "expected_error": null
+  },
+  {
+    "id": 459,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "21057927024",
+    "expected_error": null
+  },
+  {
+    "id": 460,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "505390248594",
+    "expected_error": null
+  },
+  {
+    "id": 461,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "15372286728091",
+    "expected_error": null
+  },
+  {
+    "id": 462,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "184467440737095",
+    "expected_error": null
+  },
+  {
+    "id": 463,
+    "description": "mgmt|a=1844674407370955161|bps=1|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "368934881474191",
+    "expected_error": null
+  },
+  {
+    "id": 464,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 465,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 466,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "292471208",
+    "expected_error": null
+  },
+  {
+    "id": 467,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "1052896351239",
+    "expected_error": null
+  },
+  {
+    "id": 468,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "25269512429739",
+    "expected_error": null
+  },
+  {
+    "id": 469,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "768614336404564",
+    "expected_error": null
+  },
+  {
+    "id": 470,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "9223372036854775",
+    "expected_error": null
+  },
+  {
+    "id": 471,
+    "description": "mgmt|a=1844674407370955161|bps=50|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "50",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "18446744073709551",
+    "expected_error": null
+  },
+  {
+    "id": 472,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 473,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 474,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "584942417",
+    "expected_error": null
+  },
+  {
+    "id": 475,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "2105792702478",
+    "expected_error": null
+  },
+  {
+    "id": 476,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "50539024859478",
+    "expected_error": null
+  },
+  {
+    "id": 477,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "1537228672809129",
+    "expected_error": null
+  },
+  {
+    "id": 478,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "18446744073709551",
+    "expected_error": null
+  },
+  {
+    "id": 479,
+    "description": "mgmt|a=1844674407370955161|bps=100|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "100",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "36893488147419103",
+    "expected_error": null
+  },
+  {
+    "id": 480,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 481,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 482,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "1169884834",
+    "expected_error": null
+  },
+  {
+    "id": 483,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "4211585404956",
+    "expected_error": null
+  },
+  {
+    "id": 484,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "101078049718956",
+    "expected_error": null
+  },
+  {
+    "id": 485,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "3074457345618258",
+    "expected_error": null
+  },
+  {
+    "id": 486,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "36893488147419103",
+    "expected_error": null
+  },
+  {
+    "id": 487,
+    "description": "mgmt|a=1844674407370955161|bps=200|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "200",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "73786976294838206",
+    "expected_error": null
+  },
+  {
+    "id": 488,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 489,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 490,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "2924712086",
+    "expected_error": null
+  },
+  {
+    "id": 491,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "10528963512391",
+    "expected_error": null
+  },
+  {
+    "id": 492,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "252695124297391",
+    "expected_error": null
+  },
+  {
+    "id": 493,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "7686143364045646",
+    "expected_error": null
+  },
+  {
+    "id": 494,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "92233720368547758",
+    "expected_error": null
+  },
+  {
+    "id": 495,
+    "description": "mgmt|a=1844674407370955161|bps=500|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "500",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "184467440737095516",
+    "expected_error": null
+  },
+  {
+    "id": 496,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 497,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 498,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "5849424173",
+    "expected_error": null
+  },
+  {
+    "id": 499,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "21057927024782",
+    "expected_error": null
+  },
+  {
+    "id": 500,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "505390248594782",
+    "expected_error": null
+  },
+  {
+    "id": 501,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "15372286728091293",
+    "expected_error": null
+  },
+  {
+    "id": 502,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "184467440737095516",
+    "expected_error": null
+  },
+  {
+    "id": 503,
+    "description": "mgmt|a=1844674407370955161|bps=1000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "1000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "368934881474191032",
+    "expected_error": null
+  },
+  {
+    "id": 504,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=-1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "-1"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 505,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=0",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "0"
+    },
+    "expect_ok": true,
+    "expected_output": "0",
+    "expected_error": null
+  },
+  {
+    "id": 506,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=1",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "1"
+    },
+    "expect_ok": true,
+    "expected_output": "58494241735",
+    "expected_error": null
+  },
+  {
+    "id": 507,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=3600",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "3600"
+    },
+    "expect_ok": true,
+    "expected_output": "210579270247825",
+    "expected_error": null
+  },
+  {
+    "id": 508,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=86400",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "86400"
+    },
+    "expect_ok": true,
+    "expected_output": "5053902485947822",
+    "expected_error": null
+  },
+  {
+    "id": 509,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=2628000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "2628000"
+    },
+    "expect_ok": true,
+    "expected_output": "153722867280912930",
+    "expected_error": null
+  },
+  {
+    "id": 510,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=31536000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "31536000"
+    },
+    "expect_ok": true,
+    "expected_output": "1844674407370955161",
+    "expected_error": null
+  },
+  {
+    "id": 511,
+    "description": "mgmt|a=1844674407370955161|bps=10000|e=63072000",
+    "function": "calculate_management_fee",
+    "inputs": {
+      "total_assets": "1844674407370955161",
+      "management_fee_bps": "10000",
+      "elapsed_seconds": "63072000"
+    },
+    "expect_ok": true,
+    "expected_output": "3689348814741910322",
+    "expected_error": null
+  }
+]

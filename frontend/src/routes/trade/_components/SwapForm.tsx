@@ -9,6 +9,7 @@ import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import { EmptyState } from '@/components/ui/EmptyState'
 import {
   Form,
   FormField,
@@ -17,7 +18,8 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form'
-import { ArrowDownUp, Loader2 } from 'lucide-react'
+import { ArrowDownUp } from 'lucide-react'
+import { SectionCard } from '@/components/ui/SectionCard'
 import { TokenSelector } from './TokenSelector'
 import { PriceDisplay } from './PriceDisplay'
 import { ConfirmationDialog } from './ConfirmationDialog'
@@ -187,33 +189,29 @@ function VaultSelectField({ vaults, isLoading, onVaultChange }: VaultSelectField
     <FormField
       name="vaultId"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-xs text-text-tertiary">Vault</FormLabel>
+        <FormItem className="m-0 space-y-0">
           <FormControl>
             <Select
-              value={field.value}
+              value={field.value || ''}
               onValueChange={onVaultChange}
               disabled={isLoading || vaults.length === 0}
             >
-              <SelectTrigger id="vault-select" className="w-full">
+              <SelectTrigger id="vault-select" className="h-8 w-44 rounded-xl border border-border-subtle bg-bg-inset px-3 text-xs font-semibold text-text-primary hover:border-primary-coral/40 cursor-pointer">
                 {isLoading ? (
-                  <div className="flex items-center gap-2 text-text-tertiary">
-                    <Loader2 className="size-3.5 animate-spin" />
-                    <span>Loading vaults...</span>
-                  </div>
+                  <div className="h-4 w-28 animate-pulse rounded-md bg-bg-inset" />
                 ) : (
-                  <SelectValue placeholder={vaults.length === 0 ? "No vaults available" : "Select vault..."} />
+                  <SelectValue placeholder={vaults.length === 0 ? "No vaults available" : "Select vault..."}>
+                    {vaults.find((v) => v.id === field.value)?.metadata?.displayName || (vaults.length === 0 ? "No vaults available" : "Select vault...")}
+                  </SelectValue>
                 )}
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="end" className="min-w-[11rem] rounded-xl border-border-medium bg-bg-elevated text-text-primary shadow-xl">
                 {vaults.length === 0 ? (
-                  <SelectItem disabled value="empty">
-                    No vaults available
-                  </SelectItem>
+                  <EmptyState size="xs" title="No vaults available" />
                 ) : (
                   vaults.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.metadata.displayName || v.id.slice(0, 8)}
+                    <SelectItem key={v.id} value={v.id} className="text-xs cursor-pointer">
+                      {v.metadata.displayName || `Vault ${v.id.slice(0, 8)}`}
                     </SelectItem>
                   ))
                 )}
@@ -312,10 +310,10 @@ function ReceiveSection({
   onOutputTokenChange,
 }: ReceiveSectionProps) {
   return (
-    <div className="rounded-xl bg-bg-inset p-4">
-      <FormLabel className="text-xs text-text-tertiary">You receive</FormLabel>
-      <div className="mt-1 flex items-center gap-3">
-        <p className="flex-1 font-mono text-xl text-text-primary">
+    <div className="rounded-xl border border-border-subtle/50 bg-bg-inset p-4 hover:border-border-medium transition-colors">
+      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">You receive</FormLabel>
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <p className="flex-1 font-mono text-2xl font-bold tracking-tight text-text-primary">
           {outputAmount > 0 ? outputAmount.toFixed(6) : '0.00'}
         </p>
         <TokenSelector
@@ -334,31 +332,37 @@ function SlippageField() {
     <FormField
       name="slippage"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-xs text-text-tertiary">Slippage (%)</FormLabel>
+        <FormItem className="pt-1">
+          <FormLabel className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Slippage Tolerance</FormLabel>
           <FormControl>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1.5">
               {[0.1, 0.5, 1.0, 2.0].map((s) => (
-                <Button
+                <button
                   key={s}
                   type="button"
-                  variant={field.value === s ? 'default' : 'outline'}
-                  size="sm"
                   onClick={() => setValue('slippage', s, { shouldValidate: true })}
+                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                    field.value === s
+                      ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-black font-bold shadow-xs'
+                      : 'border border-border-subtle bg-bg-inset text-text-tertiary hover:text-text-primary'
+                  }`}
                 >
                   {s}%
-                </Button>
+                </button>
               ))}
-              <Input
-                id="custom-slippage"
-                type="number"
-                value={field.value ?? ''}
-                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                step="0.1"
-                min="0"
-                max="100"
-                className="w-16 px-2 py-1.5 text-xs h-auto"
-              />
+              <div className="relative flex items-center ml-1">
+                <Input
+                  id="custom-slippage"
+                  type="number"
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  className="w-16 px-2 py-1 text-xs h-7 rounded-lg border-border-subtle bg-bg-inset text-center font-mono font-semibold"
+                />
+                <span className="ml-1 text-xs text-text-tertiary">%</span>
+              </div>
             </div>
           </FormControl>
           <FormMessage />
@@ -376,14 +380,17 @@ interface SwapActionButtonProps {
 
 function SwapActionButton({ disabled, isExecuting, walletConnected }: SwapActionButtonProps) {
   return (
-    <Button
+    <button
       type="submit"
-      variant="sweep"
-      className="mt-5 w-full"
       disabled={disabled}
+      className={`mt-4 w-full rounded-xl py-3 text-sm font-bold shadow-lg transition-all cursor-pointer ${
+        disabled
+          ? 'bg-bg-inset border border-border-subtle text-text-muted cursor-not-allowed'
+          : 'bg-gradient-to-r from-primary-coral via-primary-amber to-primary-gold text-black hover:brightness-110 shadow-primary-coral/20'
+      }`}
     >
       {isExecuting ? 'Swapping...' : !walletConnected ? 'Connect Wallet' : 'Execute Swap'}
-    </Button>
+    </button>
   )
 }
 
@@ -396,28 +403,30 @@ interface RouteDetailsProps {
 
 function RouteDetails({ inputToken, outputToken, slippage, minReceived }: RouteDetailsProps) {
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-elevated/40 p-4 space-y-3">
-      <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Oracle & Order Route Details</h3>
-      <div className="space-y-2 text-xs font-mono">
-        <div className="flex justify-between py-1 border-b border-border-subtle">
+    <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 space-y-3 shadow-lg">
+      <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider border-b border-border-subtle/50 pb-2">
+        Oracle & Order Route Details
+      </h3>
+      <div className="space-y-2.5 text-xs font-mono">
+        <div className="flex justify-between py-0.5">
           <span className="text-text-tertiary font-sans">Route Pair</span>
-          <span className="text-text-primary font-medium">{inputToken} / {outputToken}</span>
+          <span className="text-text-primary font-bold">{inputToken} / {outputToken}</span>
         </div>
-        <div className="flex justify-between py-1 border-b border-border-subtle">
+        <div className="flex justify-between py-0.5">
           <span className="text-text-tertiary font-sans">Price Oracle</span>
-          <span className="text-status-success font-medium">Pyth Hermes Network</span>
+          <span className="text-emerald-400 font-bold">Pyth Hermes Network</span>
         </div>
-        <div className="flex justify-between py-1 border-b border-border-subtle">
+        <div className="flex justify-between py-0.5">
           <span className="text-text-tertiary font-sans">Max Slippage</span>
-          <span className="text-text-primary font-medium">{slippage}%</span>
+          <span className="text-text-primary font-semibold">{slippage}%</span>
         </div>
-        <div className="flex justify-between py-1 border-b border-border-subtle">
+        <div className="flex justify-between py-0.5">
           <span className="text-text-tertiary font-sans">Min Received</span>
-          <span className="text-text-primary font-medium">{minReceived > 0 ? minReceived.toFixed(4) : '0.0000'} {outputToken}</span>
+          <span className="text-text-primary font-bold">{minReceived > 0 ? minReceived.toFixed(4) : '0.0000'} {outputToken}</span>
         </div>
-        <div className="flex justify-between py-1">
+        <div className="flex justify-between py-0.5 border-t border-border-subtle/40 pt-2">
           <span className="text-text-tertiary font-sans">Estimated Network Fee</span>
-          <span className="text-text-muted">~0.000005 SOL</span>
+          <span className="text-text-tertiary">~0.000005 SOL</span>
         </div>
       </div>
     </div>
@@ -454,19 +463,22 @@ export function SwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
   } = useSwapForm({ preselectedVaultId, onVaultChange })
 
   return (
-    <div className="grid gap-4 lg:grid-cols-5">
+    <div className="grid gap-5 lg:grid-cols-5 items-start">
       <div className="space-y-4 lg:col-span-3">
-        <div className="rounded-xl border border-border-subtle bg-bg-elevated/40 p-4">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-primary">Swap</h2>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2.5">
+        <Form {...form}>
+          <SectionCard
+            icon={<ArrowDownUp className="size-4 text-primary-coral" />}
+            title="SWAP CONSOLE"
+            description="Execute Pyth Oracle-powered AMM swaps"
+            rightContent={
               <VaultSelectField
                 vaults={vaults}
                 isLoading={isLoadingVaults}
                 onVaultChange={handleVaultChange}
               />
-
+            }
+          >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
               <PayInputField
                 maxBalance={maxBalance}
                 onSetMax={handleSetMax}
@@ -492,26 +504,26 @@ export function SwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
                 walletConnected={walletConnected}
               />
             </form>
-          </Form>
+          </SectionCard>
+        </Form>
 
-          <ConfirmationDialog
-            open={showConfirm}
-            onConfirm={handleConfirm}
-            onClose={() => setShowConfirm(false)}
-            inputToken={inputToken}
-            outputToken={outputToken}
-            inputAmount={inputNum}
-            outputAmount={outputAmount}
-            rate={rate}
-            slippage={slippage}
-            minReceived={minReceived}
-            networkFee={0.000005}
-            isLoading={isExecuting}
-          />
-        </div>
+        <ConfirmationDialog
+          open={showConfirm}
+          onConfirm={handleConfirm}
+          onClose={() => setShowConfirm(false)}
+          inputToken={inputToken}
+          outputToken={outputToken}
+          inputAmount={inputNum}
+          outputAmount={outputAmount}
+          rate={rate}
+          slippage={slippage}
+          minReceived={minReceived}
+          networkFee={0.000005}
+          isLoading={isExecuting}
+        />
       </div>
 
-      <div className="space-y-4 lg:col-span-2">
+      <div className="space-y-5 lg:col-span-2">
         <PriceDisplay data={priceData} />
 
         <RouteDetails

@@ -19,6 +19,20 @@ renumber.
 | 040 | `040_compression_policy.sql` | 5 | Compression on hypertables + OHLCV CAGG index fix (2.10) |
 | 050 | `050_cagg_trade_volume.sql` | 5 | `cagg_trade_volume_1h` continuous aggregate for trade volume |
 | 060 | `060_missing_indexes.sql` | 5 | Missing B-tree/partial/covering/BRIN indexes (1.4) |
+| 070 | `070_notifications.sql` | 6 (this) | `notifications` table for notification storage |
+
+### 070 note
+
+`070_notifications.sql` creates the `notifications` table (per-user storage for
+trade/vault events), plus the `idx_notifications_user_created` (newest-first)
+and `idx_notifications_user_unread` (partial, unread count) indexes. It is
+additive and idempotent — the table create and constraints are guarded by
+`to_regclass` checks and indexes use `IF NOT EXISTS` — so re-running after a
+failure is safe. It runs **after** AutoMigrate has created the base `users`
+table (the FK to `users` is only added if `users` exists, guarded via
+`to_regclass`), so it is ordered after 060. The base table can also be created
+by GORM AutoMigrate at startup (see `internal/database/migrate.go`); the script
+only fills any gaps and is safe to run either before or after boot.
 
 Why 010 first:
 

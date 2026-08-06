@@ -9,12 +9,11 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useTradeHistory } from '@/hooks/useTradeHistory'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { generateMetadata } from '@/lib/metadata'
 
 const tradeSearchSchema = z.object({
   vaultId: z.string().optional(),
 })
-
-import { generateMetadata } from '@/lib/metadata'
 
 export const Route = createFileRoute('/trade')({
   head: () => ({
@@ -66,23 +65,28 @@ function TradePage() {
   const { trades, isLoading: tradesLoading } = useTradeHistory(targetIds)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader 
-        title="Trade"
-        subtitle="Execute Pyth Oracle-powered AMM trades."
+        title="Trade Console"
+        subtitle="Execute Pyth Oracle-powered AMM trades & rebalance vault liquidity."
       />
 
+      {/* 1. Vault Assets & Balances Cockpit */}
       <VaultAssetsPanel
         vaultId={selectedVaultId}
         vaultName={selectedVault?.metadata?.displayName}
+        vaults={vaults}
+        onVaultChange={setSelectedVaultId}
       />
 
+      {/* 2. Swap Console & Oracle Live Feeds */}
       <SwapForm
         preselectedVaultId={selectedVaultId}
         onVaultChange={setSelectedVaultId}
       />
 
-      <div className="mt-4">
+      {/* 3. Trade History Console */}
+      <div className="pt-2">
         <TradeHistory trades={trades} isLoading={tradesLoading} />
       </div>
     </div>

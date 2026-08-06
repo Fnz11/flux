@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { LayoutDashboard, Wallet, LineChart, HandCoins, ArrowRightLeft, Gift, BookOpen, Medal, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAppStore } from '../stores/app-store'
+import { toastInfo } from '@/lib/toast'
 import { WalletConnectButton } from '@/components/ui/WalletConnectButton'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -24,6 +25,10 @@ const campaignLinks = [
   { to: '#', label: 'Airdrops', icon: Gift },
   { to: '#', label: 'Rewards', icon: Medal },
 ] as const
+
+const handleComingSoon = (label: string) => {
+  toastInfo(`${label} is on its way.`)
+}
 
 export function Sidebar() {
   const isManager = useAppStore((s) => s.isManager)
@@ -49,10 +54,10 @@ export function Sidebar() {
     <aside 
       className={cn(
         "z-50 flex flex-col border-r border-border-subtle bg-bg-surface/60 backdrop-blur-3xl overflow-y-auto transition-all duration-300 shrink-0",
-        isCollapsed ? "w-16" : "w-60"
+        isCollapsed ? "w-16" : "w-50"
       )}
     >
-      <div className={cn("flex h-16 items-center justify-between", isCollapsed ? "px-0 justify-center" : "px-5")}>
+      <div className={cn("flex h-16 items-center justify-between", isCollapsed ? "px-0 justify-center" : "px-2")}>
         <Link to="/" className="flex items-center gap-2.5">
           <div className={cn("flex items-center justify-center shrink-0", isCollapsed ? "size-6" : "size-8")}>
             <img src="/logo.png" alt="FBYT Logo" className="w-full h-full object-contain" />
@@ -75,12 +80,12 @@ export function Sidebar() {
       )}
 
       {!isCollapsed && (
-        <div className="px-6 py-2">
+        <div className="px-3 py-2 w-full">
           <WalletConnectButton />
         </div>
       )}
 
-      <nav className={cn("flex-1 space-y-6 py-4", isCollapsed ? "px-2" : "px-4")}>
+      <nav className={cn("flex-1 space-y-6 py-4", isCollapsed ? "px-2" : "px-2")}>
         <div>
           {!isCollapsed && (
             <h3 className="mb-2 px-3 text-[11px] font-medium uppercase tracking-wider text-text-muted">
@@ -96,7 +101,7 @@ export function Sidebar() {
                 inactiveProps={{ className: 'text-text-tertiary hover:text-text-primary border border-transparent' }}
                 className={cn(
                   "flex items-center rounded-lg transition-all",
-                  isCollapsed ? "justify-center size-9" : "gap-3 px-3 py-2 text-[13px] mx-2"
+                  isCollapsed ? "justify-center size-9" : "gap-3 px-2 py-1.5 text-[13px] mx-2"
                 )}
                 title={isCollapsed ? link.label : undefined}
               >
@@ -115,18 +120,18 @@ export function Sidebar() {
           )}
           <div className={cn("space-y-0.5", isCollapsed && "flex flex-col items-center")}>
             {campaignLinks.map((link) => (
-              <a
+              <button
                 key={link.label}
-                href={link.to}
+                type="button"
+                onClick={() => handleComingSoon(link.label)}
                 className={cn(
-                  "flex items-center text-text-tertiary hover:text-text-primary transition-colors cursor-not-allowed opacity-70 rounded-lg",
-                  isCollapsed ? "justify-center size-9" : "gap-3 px-3 py-2 text-[13px] mx-2"
+                  "flex items-center text-text-tertiary hover:text-text-primary transition-colors cursor-pointer rounded-lg",
+                  isCollapsed ? "justify-center size-9" : "gap-3 px-3 py-1.5 text-[13px] mx-2"
                 )}
-                title={`Coming Soon: ${link.label}`}
               >
                 <link.icon className="size-4 shrink-0" />
                 {!isCollapsed && link.label}
-              </a>
+              </button>
             ))}
           </div>
         </div>

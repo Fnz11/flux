@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
-import { TrendingUp, ChevronRight } from 'lucide-react'
+import { TrendingUp, ChevronRight, Trophy } from 'lucide-react'
 import { usePortfolioQuery, useVaultsQuery } from '@/services/hooks'
+import { SectionCard } from '@/components/ui/SectionCard'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { VaultSparkline } from '@/routes/vaults/_components/VaultSparkline'
 import { cn } from '@/lib/utils'
 
@@ -31,38 +33,38 @@ export function InvestorVaultsList({ walletAddress }: InvestorVaultsListProps) {
   }, [positions, vaults])
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-text-primary">Your Investments</h2>
-          <p className="text-xs text-text-tertiary">Vault positions in your active portfolio</p>
-        </div>
-        <Link to="/portfolio" className="text-[13px] text-primary-coral hover:underline font-medium">
+    <SectionCard
+      icon={<Trophy className="size-4 text-primary-coral" />}
+      title="Your Investments"
+      description="Vault positions in your active portfolio"
+      rightContent={
+        <Link to="/portfolio" className="text-xs text-primary-coral hover:underline font-semibold">
           View Portfolio →
         </Link>
-      </div>
-
+      }
+    >
       {isLoading ? (
         <div className="h-44 w-full animate-pulse rounded-xl border border-border-subtle bg-bg-elevated/40" />
       ) : sortedInvestments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-bg-elevated/30 p-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-3">
-            <TrendingUp className="h-6 w-6" />
+        <div className="rounded-xl border border-border-subtle/50 bg-bg-inset/40 p-4">
+          <EmptyState
+            icon={<TrendingUp className="size-5" />}
+            title="No Active Investments"
+            description="Deposit into top-performing Solana vaults to earn yields managed by pros."
+            size="md"
+          />
+          <div className="mt-2 flex justify-center">
+            <Link to="/vaults">
+              <span className="inline-flex items-center justify-center rounded-lg bg-primary-coral px-4 py-2 text-xs font-bold text-white hover:bg-primary-coral/90 transition-colors shadow-md">
+                Explore Vaults
+              </span>
+            </Link>
           </div>
-          <h3 className="text-base font-semibold text-text-primary">No Active Investments</h3>
-          <p className="mt-1 text-xs text-text-tertiary max-w-sm">
-            Deposit into top-performing Solana vaults to earn yields managed by pros.
-          </p>
-          <Link to="/vaults" className="mt-4">
-            <span className="inline-flex items-center justify-center rounded-lg bg-primary-coral px-4 py-2 text-sm font-semibold text-white hover:bg-primary-coral/90 transition-colors shadow-md">
-              Explore Vaults
-            </span>
-          </Link>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto rounded-xl border border-border-subtle bg-bg-elevated/60 shadow-lg backdrop-blur-md">
+        <div className="w-full overflow-x-auto rounded-xl border border-border-subtle/60 bg-bg-inset/40 shadow-lg">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-border-subtle bg-bg-inset/40 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+            <thead className="border-b border-border-subtle bg-bg-inset/60 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
               <tr>
                 <th className="py-3 px-5">VAULT NAME</th>
                 <th className="py-3 px-4">SHARES</th>
@@ -73,25 +75,25 @@ export function InvestorVaultsList({ walletAddress }: InvestorVaultsListProps) {
                 <th className="py-3 px-5 text-right">ACTION</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-subtle">
+            <tbody className="divide-y divide-border-subtle/50">
               {sortedInvestments.map((pos) => {
                 const isPositive = pos.pnlPercent >= 0
                 return (
-                  <tr key={pos.vaultId} className="hover:bg-bg-elevated/80 transition-colors">
-                    <td className="py-3.5 px-5 font-semibold text-text-primary whitespace-nowrap">
+                  <tr key={pos.vaultId} className="hover:bg-bg-elevated/60 transition-colors">
+                    <td className="py-3.5 px-5 font-semibold text-text-primary whitespace-nowrap text-xs">
                       {pos.vaultName}
                     </td>
                     <td className="py-3.5 px-4 font-mono text-xs text-text-secondary whitespace-nowrap">
                       {pos.sharesOwned.toFixed(4)}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-text-secondary whitespace-nowrap">
+                    <td className="py-3.5 px-4 font-mono text-xs text-text-secondary whitespace-nowrap">
                       ${pos.totalInvested.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-3.5 px-4 font-mono font-semibold text-text-primary whitespace-nowrap">
+                    <td className="py-3.5 px-4 font-mono text-xs font-semibold text-text-primary whitespace-nowrap">
                       ${pos.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
                     <td className={cn(
-                      'py-3.5 px-4 font-mono font-semibold whitespace-nowrap',
+                      'py-3.5 px-4 font-mono text-xs font-semibold whitespace-nowrap',
                       isPositive ? 'text-emerald-400' : 'text-rose-400'
                     )}>
                       {isPositive ? `+${pos.pnlPercent.toFixed(2)}%` : `${pos.pnlPercent.toFixed(2)}%`}
@@ -115,6 +117,6 @@ export function InvestorVaultsList({ walletAddress }: InvestorVaultsListProps) {
           </table>
         </div>
       )}
-    </div>
+    </SectionCard>
   )
 }

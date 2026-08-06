@@ -97,6 +97,13 @@ func main() {
 	metricsHandler := handlers.NewMetricsHandler(metricsRepo)
 	transactionHandler := handlers.NewTransactionHandler()
 
+	notificationRepo := repository.NewNotificationRepository(db)
+	searchRepo := repository.NewSearchRepository(db)
+	notificationSvc := services.NewNotificationService(notificationRepo, hub)
+	searchSvc := services.NewSearchService(searchRepo)
+	notificationHandler := handlers.NewNotificationHandler(notificationRepo, userRepo, notificationSvc)
+	searchHandler := handlers.NewSearchHandler(searchSvc)
+
 	mvWorker := jobs.NewMVRefreshWorker(db, logger, 0)
 	mvWorker.SetRedis(redisClient)
 	mvWorker.SetNotifier(func() {
@@ -129,6 +136,8 @@ func main() {
 		WS:          wsHandler,
 		Metrics:     metricsHandler,
 		Transaction: transactionHandler,
+		Notification: notificationHandler,
+		Search:       searchHandler,
 		JWTSecret:   cfg.JWTSecret,
 		Redis:       redisClient,
 	})

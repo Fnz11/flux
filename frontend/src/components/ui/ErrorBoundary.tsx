@@ -1,5 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react'
-import { AlertOctagon, RefreshCw } from 'lucide-react'
+import { AlertOctagon, RefreshCw, Home } from 'lucide-react'
 import { SweepButton } from './SweepButton'
 import { Button } from './button'
 
@@ -83,36 +83,51 @@ export function DefaultErrorFallback({
   onReset,
 }: DefaultErrorFallbackProps) {
   return (
-    <div className="mx-auto flex my-12 max-w-lg flex-col items-center justify-center rounded-xl border border-status-error/30 bg-bg-elevated/90 p-8 text-center shadow-2xl backdrop-blur-md">
-      <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-status-error/10 text-status-error border border-status-error/20">
-        <AlertOctagon className="size-7" />
-      </div>
+    <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
+      <div className="mx-auto flex max-w-lg w-full flex-col items-center justify-center rounded-2xl border border-status-error/30 bg-bg-elevated/90 p-8 text-center shadow-2xl backdrop-blur-2xl space-y-5 relative overflow-hidden">
+        {/* Subtle Ambient Red Background Radial Accent */}
+        <div className="absolute -top-24 -left-24 size-48 rounded-full bg-status-error/10 blur-3xl pointer-events-none" />
 
-      <h2 className="mb-2 font-mono text-xl font-bold tracking-tight text-text-primary">
-        {title}
-      </h2>
+        {/* Glowing Error Icon Badge */}
+        <div className="flex size-14 items-center justify-center rounded-full bg-status-error/10 text-status-error border border-status-error/25 shadow-lg shadow-status-error/10">
+          <AlertOctagon className="size-7 animate-pulse" />
+        </div>
 
-      <p className="mb-4 text-sm text-text-secondary leading-relaxed">
-        {description}
-      </p>
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-text-primary">
+            {title}
+          </h2>
+          <p className="mt-1 text-xs text-text-tertiary leading-relaxed max-w-sm mx-auto">
+            {description}
+          </p>
+        </div>
 
-      <div className="mb-6 w-full rounded-xl border border-border-subtle bg-bg-void/80 p-3.5 text-left font-mono text-xs text-status-error overflow-x-auto max-h-36">
-        <span className="font-semibold text-text-muted">Error Details: </span>
-        {error.message || String(error)}
-      </div>
+        {/* Terminal Log Error Console Box */}
+        <div className="w-full rounded-xl border border-status-error/20 bg-bg-inset/90 p-3.5 text-left font-mono text-xs text-status-error overflow-x-auto max-h-36 shadow-inner">
+          <span className="font-bold text-text-tertiary block mb-1">Error Details:</span>
+          <code className="text-[11px] leading-relaxed break-words">{error.message || String(error)}</code>
+        </div>
 
-      <div className="flex gap-3">
-        <SweepButton onClick={onReset} className="gap-2">
-          <RefreshCw className="size-4" />
-          Try Again
-        </SweepButton>
-        <Button
-          variant="outline"
-          onClick={() => window.location.reload()}
-          className="font-mono text-sm text-text-secondary hover:text-text-primary"
-        >
-          Reload Page
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2 w-full">
+          <SweepButton onClick={onReset} icon={<RefreshCw className="size-4" />} className="h-10 text-xs font-bold">
+            Try Again
+          </SweepButton>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (window.location.pathname !== '/') {
+                window.location.href = '/'
+              } else {
+                window.location.reload()
+              }
+            }}
+            className="h-10 px-5 text-xs font-semibold text-text-secondary hover:text-text-primary border-border-medium bg-bg-inset gap-2 cursor-pointer"
+          >
+            <Home className="size-4" />
+            Back to Home
+          </Button>
+        </div>
       </div>
     </div>
   )

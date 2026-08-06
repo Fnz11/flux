@@ -25,6 +25,8 @@ pyth-solana-receiver-sdk = "2.0.0"
 solana-security-txt = "1.1.1"
 
 [dev-dependencies]
+serde = "1"
+serde_json = "1"
 litesvm = "=0.15.2"
 borsh = "1.6.1"
 spl-token = "7"
@@ -46,3 +48,10 @@ opt-level = 3
 overflow-checks = true
 lto = "fat"
 codegen-units = 1
+
+[lints.rust]
+# anchor_lang's `#[derive(Accounts)]` / `#[program]` macros emit `cfg(feature = "cpi")`
+# checks that new rustc `unexpected_cfgs` lint rejects. Anchor's own lint is
+# `unexpected_cfgs` (check-cfg). Suppress it for this crate so a modern rustc
+# (1.80+) can compile the program without the anchor macros being flagged.
+unexpected_cfgs = "allow"

@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
-import { Loader2 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Wallet } from 'lucide-react'
 
 const withdrawSchema = z.object({
   shareAmount: z
@@ -94,14 +95,24 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
   return (
     <Modal open={open} onOpenChange={(o) => { if (!o) handleClose() }} title="Withdraw">
       {isLoadingData ? (
-        <div className="py-8 flex flex-col items-center justify-center text-text-tertiary gap-2">
-          <Loader2 className="size-6 animate-spin text-primary-coral" />
-          <p className="text-xs">Loading position details...</p>
+        <div className="py-2 space-y-4">
+          <div className="h-4 w-40 animate-pulse rounded-xl bg-bg-inset" />
+          <div className="space-y-2">
+            <div className="h-3 w-24 animate-pulse rounded-xl bg-bg-inset" />
+            <div className="h-11 w-full animate-pulse rounded-xl bg-bg-inset" />
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 flex-1 animate-pulse rounded-xl bg-bg-inset" />
+            <div className="h-10 flex-1 animate-pulse rounded-xl bg-bg-inset" />
+          </div>
         </div>
       ) : !position ? (
-        <div className="py-6 text-center text-sm text-text-tertiary">
-          No position found for this vault.
-        </div>
+        <EmptyState
+          size="sm"
+          icon={<Wallet className="size-full" />}
+          title="No position found for this vault."
+          description="Deposit into this vault to start withdrawing."
+        />
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleWithdraw)}>

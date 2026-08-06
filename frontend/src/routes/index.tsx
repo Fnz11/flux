@@ -62,13 +62,6 @@ function DashboardPage() {
       <PageHeader
         title={!walletAddress ? 'Welcome to FBYT' : isManager ? 'Manager Dashboard' : 'Dashboard'}
         subtitle={!walletAddress ? 'Connect your wallet to get started.' : isManager ? 'Hey Manager, Welcome back!' : 'Hey Investor, Welcome back!'}
-        action={
-          isManager && walletAddress ? (
-            <Link to="/vaults/create">
-              <SweepButton>Create Vault</SweepButton>
-            </Link>
-          ) : undefined
-        }
       />
 
       {!walletAddress ? (
@@ -84,7 +77,7 @@ function DashboardPage() {
       ) : (
         <>
           {/* Platform Aggregates */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
         <ProgressMetricCard
           title="Total Value Locked"
           total={

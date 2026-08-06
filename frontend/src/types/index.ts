@@ -226,3 +226,57 @@ export interface WsErrorData {
   code: string
   message: string
 }
+
+// ═══════════════════════════════════════
+//  NOTIFICATIONS
+// ═══════════════════════════════════════
+
+export interface Notification {
+  id: string
+  type: string
+  title: string
+  message: string
+  read: boolean
+  createdAt: string
+}
+
+export interface ApiNotification {
+  id: string
+  type: string
+  title: string
+  message: string
+  read: boolean
+  created_at: string
+}
+
+export interface NotificationsResponse {
+  items: ApiNotification[]
+  total: number
+  page: number
+  limit: number
+  unread: number
+}
+
+// ═══════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════
+
+export type SearchRole = 'manager' | 'investor'
+
+export interface SearchPair {
+  symbol: string
+}
+
+export interface SearchVault {
+  id: string
+  address: string
+  displayName: string
+  tvl: number
+}
+
+export type SearchResultKind = 'pairs' | 'vaults'
+
+export interface SearchResults {
+  kind: SearchResultKind
+  items: SearchPair[] | SearchVault[]
+}

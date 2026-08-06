@@ -122,5 +122,161 @@ mod tests {
         // All shares burned -> should return total_assets exactly
         assert_eq!(calculate_amount_out(1_000_000, 1_000_000, 1_000_000).unwrap(), 1_000_000);
     }
+
+    // --- calculate_shares_to_mint (extended coverage) ---
+
+    #[test]
+    fn nav_3x_one_third_shares() {
+        // NAV=3, deposit 1M -> get 1/3 of shares = 333_333
+        assert_eq!(calculate_shares_to_mint(1_000_000, 3_000_000, 1_000_000).unwrap(), 333_333);
+    }
+
+    #[test]
+    fn nav_10x_one_tenth_shares() {
+        // NAV=10, deposit 1M -> get 1/10 of shares = 100_000
+        assert_eq!(calculate_shares_to_mint(1_000_000, 10_000_000, 1_000_000).unwrap(), 100_000);
+    }
+
+    #[test]
+    fn min_deposit_1_wei_bootstrap() {
+        assert_eq!(calculate_shares_to_mint(1, 0, 0).unwrap(), 1);
+    }
+
+    #[test]
+    fn max_deposit_bootstrap() {
+        assert_eq!(calculate_shares_to_mint(u64::MAX, 0, 0).unwrap(), u64::MAX);
+    }
+
+    #[test]
+    fn deposit_equal_to_total_assets() {
+        // deposit X, assets X, shares X -> get X shares
+        assert_eq!(calculate_shares_to_mint(1_000_000, 2_000_000, 2_000_000).unwrap(), 1_000_000);
+    }
+
+    #[test]
+    fn deposit_double_total_assets() {
+        // deposit 2M vs 1M assets -> get 2x shares = 2M
+        assert_eq!(calculate_shares_to_mint(2_000_000, 1_000_000, 1_000_000).unwrap(), 2_000_000);
+    }
+
+    #[test]
+    fn deposit_half_total_assets() {
+        // 2M shares over 1M assets (NAV 0.5) -> deposit 500K -> get 500K*2M/1M = 1M shares
+        assert_eq!(calculate_shares_to_mint(500_000, 1_000_000, 2_000_000).unwrap(), 1_000_000);
+    }
+
+    #[test]
+    fn large_nav_small_deposit_truncates() {
+        // 1 deposit vs huge NAV -> truncates to 0 shares
+        assert_eq!(calculate_shares_to_mint(1, u64::MAX / 2, 1).unwrap(), 0);
+    }
+
+    #[test]
+    fn total_shares_gt_assets_dilution() {
+        // 1M * 2M / 500K = 4M shares minted
+        assert_eq!(calculate_shares_to_mint(1_000_000, 500_000, 2_000_000).unwrap(), 4_000_000);
+    }
+
+    #[test]
+    fn share_mint_near_u64_max() {
+        // (u64::MAX/2)*1/1 fits in u64 -> no error
+        assert_eq!(calculate_shares_to_mint(u64::MAX / 2, 1, 1).unwrap(), u64::MAX / 2);
+    }
+
+    #[test]
+    fn shares_exact_0_when_too_small() {
+        // 1 * 2000 / 1000 = 2
+        assert_eq!(calculate_shares_to_mint(1, 1000, 2000).unwrap(), 2);
+    }
+
+    #[test]
+    fn nav_0_5_double_shares() {
+        // 1M * 1M / 500K = 2M shares minted
+        assert_eq!(calculate_shares_to_mint(1_000_000, 500_000, 1_000_000).unwrap(), 2_000_000);
+    }
+
+    #[test]
+    fn rounding_down_invariant() {
+        // exact=0.666... -> rounds DOWN to 0
+        assert_eq!(calculate_shares_to_mint(1, 3, 2).unwrap(), 0);
+    }
+
+    // --- calculate_amount_out (extended coverage) ---
+
+    #[test]
+    fn nav_3x_triple_assets_returned() {
+        // NAV=3, burn all shares -> get 3x assets
+        assert_eq!(calculate_amount_out(1_000_000, 3_000_000, 1_000_000).unwrap(), 3_000_000);
+    }
+
+    #[test]
+    fn burn_one_of_many_shares() {
+        assert_eq!(calculate_amount_out(1, 1_000_000, 1_000_000).unwrap(), 1);
+    }
+
+    #[test]
+    fn burn_all_at_high_nav() {
+        // NAV=5, burn all X shares -> get 5*X assets
+        assert_eq!(calculate_amount_out(1_000_000, 5_000_000, 1_000_000).unwrap(), 5_000_000);
+    }
+
+    #[test]
+    fn tiny_shares_large_assets() {
+        // u64::MAX / 2 rounds down to u64::MAX/2
+        assert_eq!(calculate_amount_out(1, u64::MAX, 2).unwrap(), u64::MAX / 2);
+    }
+
+    #[test]
+    fn multiple_burns_drain_correctly() {
+        // Single pro-rata burn of 400K against 1M shares/1M assets
+        assert_eq!(calculate_amount_out(400_000, 1_000_000, 1_000_000).unwrap(), 400_000);
+    }
+
+    #[test]
+    fn single_wei_burn() {
+        assert_eq!(calculate_amount_out(1, 1_000_000_000, 1_000_000_000).unwrap(), 1);
+    }
+
+    #[test]
+    fn burn_at_nav_0_5() {
+        // NAV=0.5, burn all shares -> get half the assets
+        assert_eq!(calculate_amount_out(1_000_000, 500_000, 1_000_000).unwrap(), 500_000);
+    }
+
+    #[test]
+    fn truncation_1_5_rounds_down() {
+        // exact=1.5 -> truncates DOWN to 1
+        assert_eq!(calculate_amount_out(1, 3, 2).unwrap(), 1);
+    }
+
+    #[test]
+    fn u64_max_all_fields() {
+        // (u64::MAX*u64::MAX)/(u64::MAX) = u64::MAX, fits
+        assert_eq!(calculate_amount_out(u64::MAX, u64::MAX, u64::MAX).unwrap(), u64::MAX);
+    }
+
+    #[test]
+    fn burn_quarter_shares() {
+        // Burn 250K of 1M shares -> get 250K assets
+        assert_eq!(calculate_amount_out(250_000, 1_000_000, 1_000_000).unwrap(), 250_000);
+    }
+
+    #[test]
+    fn burn_three_quarter_shares() {
+        // Burn 750K of 1M shares -> get 750K assets
+        assert_eq!(calculate_amount_out(750_000, 1_000_000, 1_000_000).unwrap(), 750_000);
+    }
+
+    #[test]
+    fn nav_100x_burn_1() {
+        // 100M / 1M = 100 assets per share
+        assert_eq!(calculate_amount_out(1, 100_000_000, 1_000_000).unwrap(), 100);
+    }
+
+    #[test]
+    fn output_never_negative_reason_rounds_to_zero() {
+        // 1*1/2 = 0.5 -> truncates DOWN to 0
+        assert_eq!(calculate_amount_out(1, 1, 2).unwrap(), 0);
+    }
 }
 

@@ -1,14 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
-import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
-import { StatCard } from '@/components/ui/stat-card'
+import { InvestSummary } from './_components/InvestSummary'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableEmpty } from '@/components/ui/table'
 import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
+import { SectionCard } from '@/components/ui/SectionCard'
 import { VaultInvestCard, VaultInvestCardSkeleton } from './_components/VaultInvestCard'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 import { PageHeader } from '@/components/ui/PageHeader'
-
+import { Trophy, Activity } from 'lucide-react'
 import { generateMetadata } from '@/lib/metadata'
 
 export const Route = createFileRoute('/invest/')({
@@ -27,45 +27,33 @@ function InvestPage() {
   useRouteWsChannel(['vaults'])
   const wallet = useWallet()
   const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useVaultsQuery()
-  const { totalInvested, totalValue, totalPnl } = usePortfolioPnl(wallet.publicKey?.toBase58())
 
   const topVaults = vaults.slice(0, 6)
-  const pnlAccent = totalPnl >= 0 ? 'green' : 'red'
-  const pnlPrefix = totalPnl >= 0 ? '+' : ''
 
   return (
     <div className="space-y-8">
       <PageHeader 
         title="Invest"
         subtitle="Browse vaults and deposit funds."
-        action={
-          wallet.publicKey ? (
-            <div className="rounded-lg bg-bg-inset px-4 py-2 text-sm font-mono text-text-secondary border border-border-subtle/50">
-              {wallet.publicKey.toBase58().slice(0, 4)}...{wallet.publicKey.toBase58().slice(-4)}
-            </div>
-          ) : undefined
-        }
       />
 
-      {wallet.publicKey && (
-        <div className="grid grid-cols-3 gap-4">
-          <StatCard title="Invested" value={`$${totalInvested.toLocaleString()}`} accent="coral" />
-          <StatCard title="Value" value={`$${totalValue.toLocaleString()}`} accent="gold" />
-          <StatCard title="PnL" value={`${pnlPrefix}$${totalPnl.toLocaleString()}`} accent={pnlAccent} />
-        </div>
-      )}
+      {/* Revamped 3-Card Summary Metric Header */}
+      {wallet.publicKey && <InvestSummary />}
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-text-primary">Top Vaults</h2>
+      {/* Top Vaults Section */}
+      <SectionCard
+        icon={<Trophy className="size-4 text-primary-coral" />}
+        title="Top Vaults"
+        description="Explore top-performing non-custodial Solana vaults and start earning yield."
+        rightContent={
           <Link
             to="/invest/vaults"
-            className="text-sm font-medium text-primary-coral hover:underline"
+            className="text-xs font-semibold text-primary-coral hover:underline"
           >
             View all →
           </Link>
-        </div>
-
+        }
+      >
         {vaultsLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <VaultInvestCardSkeleton key={i} />)}
@@ -81,12 +69,15 @@ function InvestPage() {
             {topVaults.map((vault) => <VaultInvestCard key={vault.id} vault={vault} />)}
           </div>
         )}
-      </div>
+      </SectionCard>
 
       {wallet.publicKey && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-text-primary">Recent Activity</h2>
-          <div className="rounded-xl border border-border-subtle bg-bg-elevated/60 backdrop-blur-2xl p-0 overflow-hidden">
+        <SectionCard
+          icon={<Activity className="size-4 text-primary-coral" />}
+          title="Recent Activity"
+          description="Log of deposits, withdrawals, and vault transactions on Solana"
+        >
+          <div className="rounded-xl border border-border-subtle/60 bg-bg-inset/40 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -106,7 +97,7 @@ function InvestPage() {
               </TableBody>
             </Table>
           </div>
-        </div>
+        </SectionCard>
       )}
     </div>
   )

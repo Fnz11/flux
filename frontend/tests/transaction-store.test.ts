@@ -1,12 +1,10 @@
 import { describe, it, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { useTransactionStore } from '../src/stores/transaction-store'
-import { useToastStore } from '../src/stores/toast-store'
 
 describe('useTransactionStore', () => {
   beforeEach(() => {
     useTransactionStore.setState({ pending: [], history: [] })
-    useToastStore.setState({ toasts: [] })
   })
 
   it('adds transaction to pending array', () => {
@@ -26,7 +24,7 @@ describe('useTransactionStore', () => {
     assert.equal(pending[0].amountIn, 5)
   })
 
-  it('updates status and triggers error toast on transaction failure', () => {
+  it('marks failed status and records the error message', () => {
     const txId = useTransactionStore.getState().addTransaction({
       type: 'trade',
       signature: 'mock_sig_123',
@@ -39,13 +37,6 @@ describe('useTransactionStore', () => {
     const { pending } = useTransactionStore.getState()
     assert.equal(pending[0].status, 'failed')
     assert.equal(pending[0].errorMessage, 'Slippage exceeded')
-
-    const { toasts } = useToastStore.getState()
-    assert.equal(toasts.length, 1)
-    assert.equal(toasts[0].type, 'error')
-    assert.equal(toasts[0].title, 'Transaction Failed')
-    assert.equal(toasts[0].message, 'Slippage exceeded')
-    assert.equal(toasts[0].txSignature, 'mock_sig_123')
   })
 
   it('confirms transaction and moves to history', () => {

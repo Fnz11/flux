@@ -23,6 +23,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.TradeHistory{},
 		&models.PriceHistory{},
 		&models.VaultMetric{},
+		&models.Notification{},
 	); err != nil {
 		return err
 	}

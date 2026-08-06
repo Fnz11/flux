@@ -5,9 +5,6 @@ use fbyt_clone_vault::state::VaultStatusCode;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
-use anchor_lang::solana_program::program_pack::Pack;
-use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_token::state::Account as SplAccount;
 use solana_instruction::{AccountMeta, Instruction};
 use anchor_lang::InstructionData;
 use solana_system_interface::program::ID as SYSTEM_PROGRAM_ID;
@@ -53,11 +50,7 @@ fn test_deposit_and_withdraw() {
         10_000_000_000,
     );
 
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &depositor.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&depositor.pubkey(), &share_token_mint);
 
     let dep_res = deposit(
         &mut svm,
@@ -77,9 +70,8 @@ fn test_deposit_and_withdraw() {
     assert_eq!(vault.total_assets_deposited, deposit_amount);
     assert_eq!(vault.total_shares_minted, deposit_amount);
 
-    let share_account = svm.get_account(&investor_share_ata).unwrap();
-    let parsed = SplAccount::unpack(&share_account.data).unwrap();
-    assert_eq!(parsed.amount, deposit_amount);
+    let share_balance = common::token_balance(&svm, &investor_share_ata);
+    assert_eq!(share_balance, deposit_amount);
 
     let withdraw_amount = deposit_amount / 2;
     let with_res = withdraw(
@@ -106,9 +98,8 @@ fn test_deposit_and_withdraw() {
         deposit_amount - withdraw_amount
     );
 
-    let share_account = svm.get_account(&investor_share_ata).unwrap();
-    let parsed = SplAccount::unpack(&share_account.data).unwrap();
-    assert_eq!(parsed.amount, deposit_amount - withdraw_amount);
+    let share_balance = common::token_balance(&svm, &investor_share_ata);
+    assert_eq!(share_balance, deposit_amount - withdraw_amount);
 }
 
 #[test]
@@ -134,11 +125,7 @@ fn test_activate_vault() {
     let depositor_deposit_ata = create_ata(&mut svm, &depositor, &deposit_mint, &depositor.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &depositor_deposit_ata, 10_000_000_000);
 
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &depositor.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&depositor.pubkey(), &share_token_mint);
 
     // Deposit partial amount (500_000_000 < min_raise_amount)
     let dep_res1 = deposit(
@@ -208,11 +195,7 @@ fn test_lockup_enforcement_on_withdrawal() {
     let depositor_deposit_ata = create_ata(&mut svm, &depositor, &deposit_mint, &depositor.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &depositor_deposit_ata, 10_000_000_000);
 
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &depositor.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&depositor.pubkey(), &share_token_mint);
 
     let deposit_amount = 1_000_000_000;
     deposit(
@@ -293,7 +276,7 @@ fn test_fee_cap_enforcement_on_initialization() {
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(vault_pda, false),
             AccountMeta::new_readonly(deposit_mint, false),
-            AccountMeta::new(share_token_mint.pubkey(), false),
+            AccountMeta::new(share_token_mint.pubkey(), true),
             AccountMeta::new_readonly(vault_authority_pda, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
@@ -322,7 +305,7 @@ fn test_fee_cap_enforcement_on_initialization() {
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(vault_pda, false),
             AccountMeta::new_readonly(deposit_mint, false),
-            AccountMeta::new(share_token_mint_valid.pubkey(), false),
+            AccountMeta::new(share_token_mint_valid.pubkey(), true),
             AccountMeta::new_readonly(vault_authority_pda, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
@@ -349,11 +332,7 @@ fn test_zero_amount_edge_cases() {
         create_ata(&mut svm, &payer, &deposit_mint, &vault_authority_pda);
     mint_tokens(&mut svm, &payer, &deposit_mint, &payer_deposit_ata, 10_000_000_000);
 
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &payer.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&payer.pubkey(), &share_token_mint);
 
     // 1. Zero amount deposit should fail
     let zero_dep_res = deposit(
@@ -430,7 +409,7 @@ fn test_rejects_double_init() {
             AccountMeta::new(payer.pubkey(), true),
             AccountMeta::new(vault_pda, false),
             AccountMeta::new_readonly(deposit_mint, false),
-            AccountMeta::new(share_token_mint.pubkey(), false),
+            AccountMeta::new(share_token_mint.pubkey(), true),
             AccountMeta::new_readonly(vault_authority_pda, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
@@ -527,11 +506,7 @@ fn test_second_deposit_share_ratio_correct() {
     let dep1_ata = create_ata(&mut svm, &depositor1, &deposit_mint, &depositor1.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &dep1_ata, 10_000_000_000);
 
-    let dep1_share_ata = get_associated_token_address_with_program_id(
-        &depositor1.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let dep1_share_ata = common::ata(&depositor1.pubkey(), &share_token_mint);
     let first_deposit_amount = 1_000_000_000;
     deposit(
         &mut svm,
@@ -560,11 +535,7 @@ fn test_second_deposit_share_ratio_correct() {
     let dep2_ata = create_ata(&mut svm, &depositor2, &deposit_mint, &depositor2.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &dep2_ata, 10_000_000_000);
 
-    let dep2_share_ata = get_associated_token_address_with_program_id(
-        &depositor2.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let dep2_share_ata = common::ata(&depositor2.pubkey(), &share_token_mint);
     let second_deposit_amount = 1_000_000_000;
     deposit(
         &mut svm,
@@ -581,9 +552,8 @@ fn test_second_deposit_share_ratio_correct() {
 
     // Expected shares for Depositor 2 = (1_000_000_000 * 1_000_000_000) / 2_000_000_000 = 500_000_000
     let expected_dep2_shares = 500_000_000;
-    let share_account2 = svm.get_account(&dep2_share_ata).unwrap();
-    let parsed2 = SplAccount::unpack(&share_account2.data).unwrap();
-    assert_eq!(parsed2.amount, expected_dep2_shares);
+    let dep2_share_balance = common::token_balance(&svm, &dep2_share_ata);
+    assert_eq!(dep2_share_balance, expected_dep2_shares);
 
     let vault = get_vault_state(&svm, &vault_pda);
     assert_eq!(vault.total_shares_minted, first_deposit_amount + expected_dep2_shares);
@@ -603,11 +573,7 @@ fn test_pause_and_unpause_vault() {
     svm.airdrop(&depositor.pubkey(), 10_000_000_000).unwrap();
     let depositor_deposit_ata = create_ata(&mut svm, &depositor, &deposit_mint, &depositor.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &depositor_deposit_ata, 10_000_000_000);
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &depositor.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&depositor.pubkey(), &share_token_mint);
 
     // Pause vault
     let pause_res = pause_vault(&mut svm, &manager, &vault_pda, true);
@@ -688,7 +654,7 @@ fn test_manager_rotation_two_step() {
 
     let vault = get_vault_state(&svm, &vault_pda);
     assert_eq!(vault.manager, manager_b.pubkey());
-    assert_eq!(vault.pending_manager, Some(Pubkey::default()));
+    assert_eq!(vault.pending_manager, None);
 
     // Manager A can no longer manage vault
     let old_mgr_pause = pause_vault(&mut svm, &manager_a, &vault_pda, true);
@@ -751,9 +717,8 @@ fn test_collect_fees_accrual() {
     );
     assert!(collect_res.is_ok(), "Expected fee collection to succeed: {:?}", collect_res.err());
 
-    let manager_account = svm.get_account(&manager_deposit_ata).unwrap();
-    let parsed_mgr = SplAccount::unpack(&manager_account.data).unwrap();
-    assert_eq!(parsed_mgr.amount, total_fees);
+    let manager_balance = common::token_balance(&svm, &manager_deposit_ata);
+    assert_eq!(manager_balance, total_fees);
 
     let vault = get_vault_state(&svm, &vault_pda);
     assert_eq!(vault.accrued_performance_fee, 0);
@@ -828,11 +793,7 @@ fn test_withdraw_at_exact_lockup_expiry() {
     let depositor_deposit_ata = create_ata(&mut svm, &depositor, &deposit_mint, &depositor.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &depositor_deposit_ata, 10_000_000_000);
 
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &depositor.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&depositor.pubkey(), &share_token_mint);
 
     let deposit_amount = 1_000_000_000;
     deposit(
@@ -895,11 +856,7 @@ fn test_withdraw_one_second_before_lockup_fails() {
     let depositor_deposit_ata = create_ata(&mut svm, &depositor, &deposit_mint, &depositor.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &depositor_deposit_ata, 10_000_000_000);
 
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &depositor.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&depositor.pubkey(), &share_token_mint);
 
     let deposit_amount = 1_000_000_000;
     deposit(
@@ -989,11 +946,7 @@ fn test_activate_already_active_vault_fails() {
     let depositor_deposit_ata = create_ata(&mut svm, &depositor, &deposit_mint, &depositor.pubkey());
     mint_tokens(&mut svm, &manager, &deposit_mint, &depositor_deposit_ata, 10_000_000_000);
 
-    let investor_share_ata = get_associated_token_address_with_program_id(
-        &depositor.pubkey(),
-        &share_token_mint,
-        &TOKEN_PROGRAM_ID,
-    );
+    let investor_share_ata = common::ata(&depositor.pubkey(), &share_token_mint);
 
     deposit(
         &mut svm,

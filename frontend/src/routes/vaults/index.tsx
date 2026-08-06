@@ -5,16 +5,17 @@ import { VaultsTable, type SortColumn } from './_components/VaultsTable'
 import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { SweepButton } from '@/components/ui/SweepButton'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { SectionCard } from '@/components/ui/SectionCard'
+import { Layers } from 'lucide-react'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 import { cn } from '@/lib/utils'
+import { generateMetadata } from '@/lib/metadata'
 
 const vaultsSearchSchema = z.object({
   status: z.enum(['All', 'Fundraising', 'Active', 'Dormant']).optional(),
   sortBy: z.enum(['displayName', 'pnl', 'created_at', 'min_raise_amount', 'investors', 'tvl']).optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 })
-
-import { generateMetadata } from '@/lib/metadata'
 
 export const Route = createFileRoute('/vaults/')({
   head: () => ({
@@ -78,54 +79,61 @@ function VaultsListPage() {
       <PageHeader
         title="Vaults"
         subtitle="Create and manage Solana investment vaults."
-        action={
-          <Link to="/vaults/create">
-            <SweepButton>Create Vault</SweepButton>
-          </Link>
-        }
       />
 
-      {/* Status Filter Tabs */}
-      <div className="flex items-center space-x-2 border-b border-border-subtle pb-3">
-        {STATUS_TABS.map((tab) => {
-          const isActive = currentStatus === tab
-          return (
-            <button
-              key={tab}
-              onClick={() => handleStatusChange(tab)}
-              className={cn(
-                'px-4 py-2 text-sm font-medium rounded-lg transition-all',
-                isActive
-                  ? 'bg-primary-coral/10 text-primary-coral border border-primary-coral/30 shadow-sm'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-              )}
-            >
-              {tab}
-            </button>
-          )
-        })}
-      </div>
+      <SectionCard
+        icon={<Layers className="size-4 text-primary-coral" />}
+        title="Solana Vaults"
+        description="Browse, filter, and manage non-custodial Solana investment vaults"
+        rightContent={
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center space-x-1.5 rounded-xl bg-bg-inset p-1">
+              {STATUS_TABS.map((tab) => {
+                const isActive = currentStatus === tab
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => handleStatusChange(tab)}
+                    className={cn(
+                      'px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer',
+                      isActive
+                        ? 'bg-primary-coral/10 text-primary-coral border border-primary-coral/30 shadow-xs'
+                        : 'text-text-tertiary hover:text-text-primary hover:bg-bg-elevated'
+                    )}
+                  >
+                    {tab}
+                  </button>
+                )
+              })}
+            </div>
 
-      {isLoading ? (
-        <div className="w-full h-64 animate-pulse rounded-xl border border-border-subtle bg-bg-elevated p-5" />
-      ) : vaults.length === 0 ? (
-        <EmptyVaultsTable
-          title="No vaults found"
-          description={
-            currentStatus === 'All'
-              ? 'Create your first Solana investment vault to get started'
-              : `No vaults found with status "${currentStatus}"`
-          }
-          headers={['VAULT', 'PNL', 'CREATED', 'MIN', 'INVESTORS', 'ASSET', 'PERFORMANCE', 'ACTION']}
-        />
-      ) : (
-        <VaultsTable
-          vaults={vaults}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-        />
-      )}
+            <Link to="/vaults/create">
+              <SweepButton className="h-8 text-xs">Create Vault</SweepButton>
+            </Link>
+          </div>
+        }
+      >
+        {isLoading ? (
+          <div className="w-full h-64 animate-pulse rounded-xl bg-bg-inset p-5" />
+        ) : vaults.length === 0 ? (
+          <EmptyVaultsTable
+            title="No vaults found"
+            description={
+              currentStatus === 'All'
+                ? 'Create your first Solana investment vault to get started'
+                : `No vaults found with status "${currentStatus}"`
+            }
+            headers={['VAULT', 'PNL', 'CREATED', 'MIN', 'INVESTORS', 'ASSET', 'PERFORMANCE', 'ACTION']}
+          />
+        ) : (
+          <VaultsTable
+            vaults={vaults}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSort={handleSort}
+          />
+        )}
+      </SectionCard>
     </div>
   )
 }

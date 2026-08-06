@@ -96,6 +96,7 @@ mod tests {
     fn mock_vault(total_assets: u64, total_shares: u64) -> VaultState {
         VaultState {
             manager: Pubkey::default(),
+            creator: Pubkey::default(),
             pending_manager: None,
             deposit_mint: Pubkey::default(),
             share_token_mint: Pubkey::default(),
@@ -206,5 +207,250 @@ mod tests {
         let (mgmt_fee, perf_fee) = VaultManager::accrue_fees(&vault, one_year, profit).unwrap();
         assert_eq!(mgmt_fee, 200_000); // 2% of 10M
         assert_eq!(perf_fee, 100_000); // 10% of 1M
+    }
+
+    #[test]
+    fn nav_exact_10x() {
+        let vault = mock_vault(10_000_000_000, 1_000_000_000);
+        assert_eq!(VaultManager::calculate_nav(&vault).unwrap(), 10_000_000_000);
+    }
+
+    #[test]
+    fn nav_with_fractional_assets_rounds_down() {
+        let vault = mock_vault(1_000_000, 3_000_000);
+        assert_eq!(VaultManager::calculate_nav(&vault).unwrap(), 333_333_333);
+    }
+
+    #[test]
+    fn nav_overflow_guard() {
+        let vault = mock_vault(u64::MAX, 1);
+        assert!(VaultManager::calculate_nav(&vault).is_err());
+    }
+
+    #[test]
+    fn nav_100_shares_200_assets() {
+        let vault = mock_vault(200, 100);
+        assert_eq!(VaultManager::calculate_nav(&vault).unwrap(), 2_000_000_000);
+    }
+
+    #[test]
+    fn nav_monotonically_increases_after_profit() {
+        let vault1 = mock_vault(2_000_000_000, 1_000_000_000);
+        let vault2 = mock_vault(3_000_000_000, 1_000_000_000);
+        let nav1 = VaultManager::calculate_nav(&vault1).unwrap();
+        let nav2 = VaultManager::calculate_nav(&vault2).unwrap();
+        assert_eq!(nav1, 2_000_000_000);
+        assert_eq!(nav2, 3_000_000_000);
+        assert!(nav2 > nav1);
+    }
+
+    #[test]
+    fn nav_equals_1_after_bootstrap() {
+        let vault = mock_vault(0, 0);
+        assert_eq!(VaultManager::calculate_nav(&vault).unwrap(), 1_000_000_000);
+    }
+
+    #[test]
+    fn nav_at_0_5() {
+        let vault = mock_vault(500_000, 1_000_000);
+        assert_eq!(VaultManager::calculate_nav(&vault).unwrap(), 500_000_000);
+    }
+
+    #[test]
+    fn nav_at_3_triple() {
+        let vault = mock_vault(3_000_000, 1_000_000);
+        assert_eq!(VaultManager::calculate_nav(&vault).unwrap(), 3_000_000_000);
+    }
+
+    #[test]
+    fn deposit_at_nav_5() {
+        let mut vault = mock_vault(5_000_000, 1_000_000);
+        let shares = VaultManager::process_deposit(&mut vault, 1_000_000).unwrap();
+        assert_eq!(shares, 200_000);
+        assert_eq!(vault.total_assets_deposited, 6_000_000);
+        assert_eq!(vault.total_shares_minted, 1_200_000);
+    }
+
+    #[test]
+    fn deposit_at_nav_0_1() {
+        let mut vault = mock_vault(1_000_000, 10_000_000);
+        let shares = VaultManager::process_deposit(&mut vault, 1_000_000).unwrap();
+        assert_eq!(shares, 10_000_000);
+    }
+
+    #[test]
+    fn sequential_5_deposits_cumulate() {
+        let mut vault = mock_vault(1_000_000, 1_000_000);
+        for _ in 0..5 {
+            let shares = VaultManager::process_deposit(&mut vault, 100_000).unwrap();
+            assert_eq!(shares, 100_000);
+        }
+        assert_eq!(vault.total_assets_deposited, 1_500_000);
+        assert_eq!(vault.total_shares_minted, 1_500_000);
+    }
+
+    #[test]
+    fn deposit_rounds_to_zero_at_high_nav() {
+        let mut vault = mock_vault(2_000_000_000, 1_000_000);
+        let shares = VaultManager::process_deposit(&mut vault, 1).unwrap();
+        assert_eq!(shares, 0);
+        assert_eq!(vault.total_assets_deposited, 2_000_000_001);
+        assert_eq!(vault.total_shares_minted, 1_000_000);
+    }
+
+    #[test]
+    fn deposit_mutates_vault_total_assets_and_shares() {
+        let mut vault = mock_vault(2_000_000, 1_000_000);
+        let shares = VaultManager::process_deposit(&mut vault, 1_000_000).unwrap();
+        assert_eq!(shares, 500_000);
+        assert_eq!(vault.total_assets_deposited, 3_000_000);
+        assert_eq!(vault.total_shares_minted, 1_500_000);
+    }
+
+    #[test]
+    fn deposit_overflow_rejected() {
+        let mut vault = mock_vault(u64::MAX - 1000, 1_000_000);
+        let result = VaultManager::process_deposit(&mut vault, 2_000);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn deposit_at_nav_2_half_shares() {
+        let mut vault = mock_vault(2_000_000, 1_000_000);
+        let shares = VaultManager::process_deposit(&mut vault, 1_000_000).unwrap();
+        assert_eq!(shares, 500_000);
+    }
+
+    #[test]
+    fn deposit_at_nav_0_5_double_shares() {
+        let mut vault = mock_vault(500_000, 1_000_000);
+        let shares = VaultManager::process_deposit(&mut vault, 1_000_000).unwrap();
+        assert_eq!(shares, 2_000_000);
+        assert_eq!(vault.total_assets_deposited, 1_500_000);
+        assert_eq!(vault.total_shares_minted, 3_000_000);
+    }
+
+    #[test]
+    fn withdraw_at_nav_5_returns_5x() {
+        let mut vault = mock_vault(5_000_000, 1_000_000);
+        let amount = VaultManager::process_withdraw(&mut vault, 1_000_000).unwrap();
+        assert_eq!(amount, 5_000_000);
+        assert_eq!(vault.total_assets_deposited, 0);
+        assert_eq!(vault.total_shares_minted, 0);
+    }
+
+    #[test]
+    fn withdraw_partial_leaves_correct_remainder() {
+        let mut vault = mock_vault(1_000_000, 1_000_000);
+        let amount = VaultManager::process_withdraw(&mut vault, 300_000).unwrap();
+        assert_eq!(amount, 300_000);
+        assert_eq!(vault.total_assets_deposited, 700_000);
+        assert_eq!(vault.total_shares_minted, 700_000);
+    }
+
+    #[test]
+    fn withdraw_1_of_1000_shares() {
+        let mut vault = mock_vault(1_000_000_000, 1_000_000_000);
+        let amount = VaultManager::process_withdraw(&mut vault, 1_000_000).unwrap();
+        assert_eq!(amount, 1_000_000);
+    }
+
+    #[test]
+    fn withdraw_all_drains_vault() {
+        let mut vault = mock_vault(123_456_789, 123_456_789);
+        let amount = VaultManager::process_withdraw(&mut vault, 123_456_789).unwrap();
+        assert_eq!(amount, 123_456_789);
+        assert_eq!(vault.total_assets_deposited, 0);
+        assert_eq!(vault.total_shares_minted, 0);
+    }
+
+    #[test]
+    fn withdraw_sequential_multiple_users_pro_rata() {
+        let mut vault = mock_vault(1_000_000, 1_000_000);
+        let first = VaultManager::process_withdraw(&mut vault, 400_000).unwrap();
+        assert_eq!(first, 400_000);
+        assert_eq!(vault.total_assets_deposited, 600_000);
+        assert_eq!(vault.total_shares_minted, 600_000);
+        let second = VaultManager::process_withdraw(&mut vault, 200_000).unwrap();
+        assert_eq!(second, 200_000);
+        assert_eq!(vault.total_assets_deposited, 400_000);
+    }
+
+    #[test]
+    fn withdraw_overflow_check() {
+        let mut vault = mock_vault(u64::MAX, 1_000_000);
+        let result = VaultManager::process_withdraw(&mut vault, u64::MAX);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn withdraw_underflow_prevented() {
+        let mut vault = mock_vault(500_000, 500_000);
+        let result = VaultManager::process_withdraw(&mut vault, 1_000_000);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn accrue_zero_elapsed() {
+        let vault = mock_vault(10_000_000, 10_000_000);
+        let (mgmt_fee, perf_fee) = VaultManager::accrue_fees(&vault, 0, 0).unwrap();
+        assert_eq!((mgmt_fee, perf_fee), (0, 0));
+    }
+
+    #[test]
+    fn accrue_zero_profit() {
+        let vault = mock_vault(10_000_000, 10_000_000);
+        let one_year = 365 * 86400i64;
+        let (mgmt_fee, perf_fee) = VaultManager::accrue_fees(&vault, one_year, 0).unwrap();
+        assert_eq!((mgmt_fee, perf_fee), (200_000, 0));
+    }
+
+    #[test]
+    fn accrue_zero_bps() {
+        let mut vault = mock_vault(10_000_000, 10_000_000);
+        vault.management_fee_bps = 0;
+        vault.performance_fee_bps = 0;
+        let one_year = 365 * 86400i64;
+        let (mgmt_fee, perf_fee) = VaultManager::accrue_fees(&vault, one_year, 1_000_000).unwrap();
+        assert_eq!((mgmt_fee, perf_fee), (0, 0));
+    }
+
+    #[test]
+    fn accrue_management_and_performance_together() {
+        let vault = mock_vault(10_000_000, 10_000_000);
+        let one_year = 365 * 86400i64;
+        let (mgmt_fee, perf_fee) = VaultManager::accrue_fees(&vault, one_year, 1_000_000).unwrap();
+        assert_eq!((mgmt_fee, perf_fee), (200_000, 100_000));
+    }
+
+    #[test]
+    fn accrue_negative_elapsed_ignored() {
+        let vault = mock_vault(10_000_000, 10_000_000);
+        let (mgmt_fee, perf_fee) = VaultManager::accrue_fees(&vault, -100, 0).unwrap();
+        assert_eq!((mgmt_fee, perf_fee), (0, 0));
+    }
+
+    #[test]
+    fn accrue_1_year_all_fees_exact() {
+        let vault = mock_vault(10_000_000, 10_000_000);
+        let one_year = 365 * 86400i64;
+        let (mgmt_fee, perf_fee) = VaultManager::accrue_fees(&vault, one_year, 1_000_000).unwrap();
+        assert_eq!((mgmt_fee, perf_fee), (200_000, 100_000));
+    }
+
+    #[test]
+    fn accrue_large_profit_no_panic() {
+        let vault = mock_vault(10_000_000, 10_000_000);
+        let one_year = 365 * 86400i64;
+        let (_, perf_fee) = VaultManager::accrue_fees(&vault, one_year, u64::MAX).unwrap();
+        assert!(perf_fee > 0);
+    }
+
+    #[test]
+    fn accrue_fees_readonly_vault_not_mutated() {
+        let vault = mock_vault(10_000_000, 10_000_000);
+        let one_year = 365 * 86400i64;
+        let _ = VaultManager::accrue_fees(&vault, one_year, 1_000_000).unwrap();
+        assert_eq!(vault.total_assets_deposited, 10_000_000);
     }
 }

@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { EmptyState, type EmptyStateSize } from './EmptyState'
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto rounded-xl border border-border-subtle bg-bg-elevated/40">
+    <div className="relative w-full overflow-auto rounded-xl border border-border-subtle/60 bg-bg-inset/40">
       <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   ),
@@ -14,7 +15,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('border-b border-border-subtle bg-bg-inset/40', className)} {...props} />
+  <thead ref={ref} className={cn('border-b border-border-subtle/60 bg-bg-inset/60', className)} {...props} />
 ))
 TableHeader.displayName = 'TableHeader'
 
@@ -30,7 +31,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn('border-b border-border-subtle transition-colors hover:bg-bg-inset/50 data-[state=selected]:bg-bg-inset', className)}
+      className={cn('border-b border-border-subtle/40 transition-colors hover:bg-bg-inset/50 data-[state=selected]:bg-bg-inset', className)}
       {...props}
     />
   ),
@@ -61,16 +62,17 @@ interface TableEmptyProps {
   colSpan: number
   title?: string
   description?: string
+  icon?: React.ReactNode
+  size?: EmptyStateSize
   minHeight?: string
 }
 
-function TableEmpty({ colSpan, title = 'No records found', description, minHeight = 'h-[200px]' }: TableEmptyProps) {
+function TableEmpty({ colSpan, title = 'No records found', description, icon, size = 'md', minHeight = 'h-[200px]' }: TableEmptyProps) {
   return (
     <TableRow className="hover:bg-transparent border-0">
-      <TableCell colSpan={colSpan} className={cn('text-center py-12', minHeight)}>
-        <div className="flex flex-col items-center justify-center space-y-1">
-          <p className="text-sm font-medium text-text-secondary">{title}</p>
-          {description && <p className="text-xs text-text-muted">{description}</p>}
+      <TableCell colSpan={colSpan} className={cn('text-center', minHeight)}>
+        <div className="flex h-full w-full items-center justify-center">
+          <EmptyState icon={icon} title={title} description={description} size={size} />
         </div>
       </TableCell>
     </TableRow>

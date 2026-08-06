@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { Wallet, LogOut, Copy, ChevronDown } from 'lucide-react'
+import { Wallet, LogOut, Copy, ChevronsUpDown } from 'lucide-react'
 import { Modal } from './modal'
 import { Button } from './button'
 import { useAppStore } from '@/stores/app-store'
@@ -66,29 +66,43 @@ export function WalletConnectButton() {
 
   if (connected && address) {
     return (
-      <div className="relative">
+      <div className="relative w-full">
         <button
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="group inline-flex items-center gap-2 rounded-xl border border-border-medium bg-bg-elevated px-3 py-1.5 text-xs font-mono text-text-primary transition-[border-color,background-color] hover:border-primary-gold/40 hover:bg-bg-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral"
+          className="group flex w-full items-center justify-between gap-2 rounded-xl border border-border-medium bg-bg-elevated/90 px-2.5 py-1.5 transition-all hover:border-primary-coral/40 hover:bg-bg-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral cursor-pointer shadow-md min-w-0"
         >
-          <span className="size-2 rounded-full bg-status-success animate-pulse" />
-          <span>{truncatedAddress}</span>
-          <ChevronDown className="size-3 text-text-tertiary transition-transform group-hover:text-text-primary" />
+          {/* Left Square Wallet Icon Badge */}
+          <div className="flex size-6 items-center justify-center rounded-md bg-bg-inset border border-border-subtle text-primary-coral group-hover:border-primary-coral/40 transition-colors shrink-0">
+            <Wallet className="size-3" />
+          </div>
+
+          {/* Account Label & Truncated Address */}
+          <div className="flex flex-col text-left min-w-0 flex-1">
+            <span className="text-[8px] font-medium uppercase tracking-wider text-text-tertiary leading-none mb-0.5 truncate">
+              Your account
+            </span>
+            <span className="text-[11px] font-semibold font-mono text-text-primary leading-none truncate">
+              {truncatedAddress}
+            </span>
+          </div>
+
+          {/* Chevrons Up Down Icon */}
+          <ChevronsUpDown className="size-3 text-text-tertiary group-hover:text-text-primary transition-colors shrink-0" />
         </button>
 
         {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-48 rounded-xl border border-border-medium bg-bg-elevated p-2 shadow-xl backdrop-blur-xl z-50">
+          <div className="absolute right-0 mt-2 w-52 rounded-xl border border-border-medium bg-bg-elevated p-2 shadow-2xl backdrop-blur-2xl z-50">
             <button
               onClick={handleCopy}
-              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-text-secondary hover:bg-bg-inset hover:text-text-primary transition-colors"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-bg-inset hover:text-text-primary transition-colors cursor-pointer"
             >
               <Copy className="size-3.5" />
               {copied ? 'Copied!' : 'Copy Address'}
             </button>
             <button
               onClick={handleDisconnect}
-              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-status-error hover:bg-status-error/10 transition-colors"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-status-error hover:bg-status-error/10 transition-colors cursor-pointer"
             >
               <LogOut className="size-3.5" />
               Disconnect
@@ -111,7 +125,7 @@ export function WalletConnectButton() {
         variant="sweep"
         size="sm"
         onClick={() => setIsOpen(true)}
-        className="h-7 px-3 text-xs gap-1.5"
+        className="h-8 px-3.5 text-xs gap-1.5"
       >
         <Wallet className="size-3.5" />
         <span>Connect Wallet</span>
@@ -129,7 +143,7 @@ export function WalletConnectButton() {
                 type="button"
                 variant="outline"
                 onClick={() => handleSelectWallet(w.adapter.name)}
-                className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-[border-color,background-color] hover:border-primary-coral/50 hover:bg-bg-elevated font-normal"
+                className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-[border-color,background-color] hover:border-primary-coral/50 hover:bg-bg-elevated font-normal cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   {w.adapter.icon && (
@@ -147,7 +161,7 @@ export function WalletConnectButton() {
               type="button"
               variant="outline"
               onClick={handleConnectDemo}
-              className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-[border-color,background-color] hover:border-primary-gold/50 hover:bg-bg-elevated font-normal border-dashed border-primary-gold/40"
+              className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-[border-color,background-color] hover:border-primary-gold/50 hover:bg-bg-elevated font-normal border-dashed border-primary-gold/40 cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="size-6 rounded bg-primary-gold/20 flex items-center justify-center text-primary-gold font-bold text-xs">

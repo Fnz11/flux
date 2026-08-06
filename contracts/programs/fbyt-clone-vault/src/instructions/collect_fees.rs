@@ -14,7 +14,7 @@ pub struct CollectFees<'info> {
 
     #[account(
         mut,
-        seeds = [VAULT_SEED, vault.manager.as_ref()],
+        seeds = [VAULT_SEED, vault.creator.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.manager == manager.key() @ crate::errors::VaultError::Unauthorized,
     )]

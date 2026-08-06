@@ -1380,6 +1380,8 @@ dependencies = [
  "borsh 1.8.0",
  "litesvm",
  "pyth-solana-receiver-sdk",
+ "serde",
+ "serde_json",
  "solana-instruction 3.4.0",
  "solana-keypair",
  "solana-message 4.4.0",

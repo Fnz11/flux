@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SectionCard } from '@/components/ui/SectionCard'
+import { History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface TradeHistoryProps {
@@ -44,51 +46,52 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-text-primary">Trade History</h3>
-        <div className="w-[120px]">
-          <Select
-            value={activeFilter}
-            onValueChange={(val) => {
-              setActiveFilter(val as FilterTab)
-              setPage(0)
-            }}
-          >
-            <SelectTrigger className="h-8 bg-transparent border-none focus:ring-0 shadow-none text-text-secondary text-sm">
-              <SelectValue placeholder="Select filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="Trades">Trades</SelectItem>
-              <SelectItem value="Deposits">Deposits</SelectItem>
-              <SelectItem value="Withdrawals">Withdrawals</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div className="rounded-xl border border-border-subtle bg-bg-elevated/60 backdrop-blur-2xl p-0 overflow-hidden">
-
+    <SectionCard
+      icon={<History className="size-4 text-primary-coral" />}
+      title="Trade History"
+      description="Real-time execution log of past vault swaps & transactions"
+      className="flex-1 flex flex-col justify-between"
+      rightContent={
+        <Select
+          value={activeFilter}
+          onValueChange={(val) => {
+            setActiveFilter(val as FilterTab)
+            setPage(0)
+          }}
+        >
+          <SelectTrigger className="h-8 w-28 rounded-xl border border-border-subtle bg-bg-inset px-2.5 text-xs font-semibold text-text-primary hover:border-primary-coral/40 cursor-pointer">
+            <SelectValue placeholder="All">
+              {activeFilter}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent align="end" className="min-w-[8rem] rounded-xl border-border-medium bg-bg-elevated text-text-primary shadow-xl">
+            <SelectItem value="All" className="text-xs cursor-pointer">All</SelectItem>
+            <SelectItem value="Trades" className="text-xs cursor-pointer">Trades</SelectItem>
+            <SelectItem value="Deposits" className="text-xs cursor-pointer">Deposits</SelectItem>
+            <SelectItem value="Withdrawals" className="text-xs cursor-pointer">Withdrawals</SelectItem>
+          </SelectContent>
+        </Select>
+      }
+    >
       {isLoading ? (
-        <div className="mt-4 space-y-3 min-h-[220px]">
+        <div className="p-4 space-y-3 min-h-[220px]">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="animate-pulse h-10 rounded-xl bg-bg-inset/60" />
           ))}
         </div>
       ) : (
         <>
-          <div className="mt-4 min-h-[220px] flex flex-col justify-between">
+          <div className="min-h-[220px] flex flex-col justify-between flex-1">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Pair</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Tx</TableHead>
+                  <TableHead>DATE</TableHead>
+                  <TableHead>TYPE</TableHead>
+                  <TableHead>PAIR</TableHead>
+                  <TableHead className="text-right">AMOUNT</TableHead>
+                  <TableHead className="text-right">PRICE</TableHead>
+                  <TableHead>STATUS</TableHead>
+                  <TableHead className="text-right">TX</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -130,7 +133,7 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
           </div>
 
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-center gap-2">
+            <div className="p-3 border-t border-border-subtle/50 flex items-center justify-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -152,7 +155,6 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
           )}
         </>
       )}
-      </div>
-    </div>
+    </SectionCard>
   )
 }

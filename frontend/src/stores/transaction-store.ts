@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import type { Transaction, TransactionStatus } from '../types'
-
-import { useToastStore } from './toast-store'
+import { toastError } from '@/lib/toast'
 
 interface TransactionState {
   pending: Transaction[]
@@ -42,10 +41,7 @@ export const useTransactionStore = create<TransactionStore>()((set) => ({
         tx.id === id ? { ...tx, status, errorMessage: errorMessage ?? null } : tx,
       )
       if (status === 'failed') {
-        const failedTx = s.pending.find((tx) => tx.id === id)
-        useToastStore
-          .getState()
-          .txFailed(errorMessage || 'Transaction failed', failedTx?.signature)
+        toastError(errorMessage || 'Transaction failed')
       }
       return { pending: updated }
     }),
