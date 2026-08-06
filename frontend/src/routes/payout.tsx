@@ -6,12 +6,12 @@ import { useFees } from '@/hooks/useFees'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PayoutSummary } from './payout/_components/PayoutSummary'
 import { FeeHistory } from './payout/_components/FeeHistory'
+import { Card } from '@/components/ui/card'
 import { Coins, Zap, Wallet, Info } from 'lucide-react'
 import { generateMetadata } from '@/lib/metadata'
 
 export const Route = createFileRoute('/payout')({
   beforeLoad: () => {
-    // Note: beforeLoad is not a React component, must use .getState(), not hook selector
     const isManager = useAppStore.getState().isManager
     if (!isManager) {
       throw redirect({
@@ -72,7 +72,7 @@ export function PayoutPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3 items-stretch">
-          <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-4 shadow-lg space-y-2">
+          <Card className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-primary-coral">
               <Coins className="size-4" />
               <span>01. On-Chain Accrual</span>
@@ -80,9 +80,9 @@ export function PayoutPage() {
             <p className="text-xs text-text-secondary leading-relaxed">
               Performance and management fees accumulate continuously on-chain per vault based on trading profits & AUM.
             </p>
-          </div>
+          </Card>
 
-          <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-4 shadow-lg space-y-2">
+          <Card className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-primary-gold">
               <Zap className="size-4" />
               <span>02. Automated Keepers</span>
@@ -90,9 +90,9 @@ export function PayoutPage() {
             <p className="text-xs text-text-secondary leading-relaxed">
               Automated keeper bots monitor fee thresholds and execute distribution instructions automatically.
             </p>
-          </div>
+          </Card>
 
-          <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-4 shadow-lg space-y-2">
+          <Card className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
               <Wallet className="size-4" />
               <span>03. Direct Payouts</span>
@@ -100,7 +100,7 @@ export function PayoutPage() {
             <p className="text-xs text-text-secondary leading-relaxed">
               Rewards are transferred directly to manager wallet addresses or claimed via one-click distributions.
             </p>
-          </div>
+          </Card>
         </div>
       </div>
 

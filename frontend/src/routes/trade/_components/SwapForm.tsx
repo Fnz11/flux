@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/form'
 import { ArrowDownUp } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
+import { Card } from '@/components/ui/card'
 import { TokenSelector } from './TokenSelector'
 import { PriceDisplay } from './PriceDisplay'
 import { ConfirmationDialog } from './ConfirmationDialog'
@@ -403,7 +404,7 @@ interface RouteDetailsProps {
 
 function RouteDetails({ inputToken, outputToken, slippage, minReceived }: RouteDetailsProps) {
   return (
-    <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 space-y-3 shadow-lg">
+    <Card className="p-5 space-y-3">
       <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider border-b border-border-subtle/50 pb-2">
         Oracle & Order Route Details
       </h3>
@@ -429,7 +430,7 @@ function RouteDetails({ inputToken, outputToken, slippage, minReceived }: RouteD
           <span className="text-text-tertiary">~0.000005 SOL</span>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
 

@@ -4,6 +4,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '../lib/query-client'
 import { Sidebar } from '../components/Sidebar'
+import { MobileNav } from '../components/MobileNav'
 import { TooltipProvider } from '../components/ui/tooltip'
 import { WalletProvider } from '../components/providers/WalletProvider'
 import { useConfigStore } from '../stores/config-store'
@@ -69,7 +70,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <RootBootstrap>
                   <div className="flex h-screen w-full overflow-hidden">
                     <Sidebar />
-                    <main className="relative flex-1 overflow-y-auto overflow-x-hidden">
+                    <MobileNav />
+                    <main className="relative flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
                       <HeroAmbient />
                       <div className="container-main py-6 space-y-6">
                         {children}

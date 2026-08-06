@@ -15,7 +15,7 @@ export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummary
   return (
     <div className="grid gap-4 sm:grid-cols-3 items-stretch">
       {/* 1. Total Performance Fee Card */}
-      <Card className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5">
         <div>
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
             <div className="flex items-center gap-2">
@@ -42,7 +42,7 @@ export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummary
       </Card>
 
       {/* 2. Total Management Fee Card */}
-      <Card className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5">
         <div>
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
             <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummary
       </Card>
 
       {/* 3. Total Accrued Rewards Card */}
-      <Card className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-primary-coral/30 bg-gradient-to-br from-bg-elevated via-bg-elevated to-primary-coral/10 backdrop-blur-2xl p-5 shadow-lg">
+      <Card className="relative flex flex-col justify-between overflow-hidden border-primary-coral/30 bg-gradient-to-br from-bg-elevated via-bg-elevated to-primary-coral/10 p-5">
         <div>
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
             <div className="flex items-center gap-2">

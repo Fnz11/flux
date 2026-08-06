@@ -715,9 +715,9 @@ export function CreateVaultPage() {
         backTo="/vaults"
       />
 
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-4">
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* SECTION 1 — VAULT TYPE */}
             <VaultTypeSection value={vaultType} onSelect={(type) => setValue('vaultType', type)} />
 

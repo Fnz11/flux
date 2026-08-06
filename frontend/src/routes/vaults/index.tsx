@@ -86,8 +86,8 @@ function VaultsListPage() {
         title="Solana Vaults"
         description="Browse, filter, and manage non-custodial Solana investment vaults"
         rightContent={
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center space-x-1.5 rounded-xl bg-bg-inset p-1">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
+            <div className="flex items-center space-x-1 rounded-xl bg-bg-inset p-1 overflow-x-auto max-w-full no-scrollbar shrink-0">
               {STATUS_TABS.map((tab) => {
                 const isActive = currentStatus === tab
                 return (
@@ -95,7 +95,7 @@ function VaultsListPage() {
                     key={tab}
                     onClick={() => handleStatusChange(tab)}
                     className={cn(
-                      'px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer',
+                      'px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap',
                       isActive
                         ? 'bg-primary-coral/10 text-primary-coral border border-primary-coral/30 shadow-xs'
                         : 'text-text-tertiary hover:text-text-primary hover:bg-bg-elevated'
@@ -107,8 +107,8 @@ function VaultsListPage() {
               })}
             </div>
 
-            <Link to="/vaults/create">
-              <SweepButton className="h-8 text-xs">Create Vault</SweepButton>
+            <Link to="/vaults/create" className="shrink-0">
+              <SweepButton className="h-8 text-xs whitespace-nowrap">Create Vault</SweepButton>
             </Link>
           </div>
         }

@@ -29,7 +29,7 @@ export function SectionCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl shadow-lg flex flex-col overflow-hidden',
+        'rounded-2xl border border-white/12 bg-bg-elevated/3 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] flex flex-col overflow-hidden',
         noPadding ? 'p-0' : 'p-5',
         className,
       )}
@@ -37,8 +37,8 @@ export function SectionCard({
       {hasHeader && (
         <div
           className={cn(
-            'flex items-center justify-between gap-3 border-b border-border-subtle/50 pb-4 shrink-0',
-            noPadding && 'p-5 pb-4',
+            'flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle/50 pb-4 shrink-0',
+            noPadding && 'p-4 sm:p-5 pb-4',
             headerClassName,
           )}
         >
@@ -59,7 +59,7 @@ export function SectionCard({
           </div>
 
           {rightContent && (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto overflow-x-auto no-scrollbar">
               {rightContent}
             </div>
           )}

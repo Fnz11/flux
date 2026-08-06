@@ -19,7 +19,7 @@ export const Route = createFileRoute('/settings')({
 
 export function SettingsPage() {
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-4 max-w-4xl">
       <div>
         <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Settings</h1>
         <p className="mt-2 text-text-secondary">Configure network RPC, trading slippage, and platform preferences.</p>

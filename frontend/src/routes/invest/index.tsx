@@ -31,7 +31,7 @@ function InvestPage() {
   const topVaults = vaults.slice(0, 6)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageHeader 
         title="Invest"
         subtitle="Browse vaults and deposit funds."
@@ -77,7 +77,7 @@ function InvestPage() {
           title="Recent Activity"
           description="Log of deposits, withdrawals, and vault transactions on Solana"
         >
-          <div className="rounded-xl border border-border-subtle/60 bg-bg-inset/40 overflow-hidden">
+          <div className="rounded-xl border border-border-subtle/60 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>

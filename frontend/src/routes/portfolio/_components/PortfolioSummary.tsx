@@ -3,6 +3,7 @@ import { Wallet, TrendingUp, Sparkles, ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useAppStore } from '@/stores/app-store'
+import { Card } from '@/components/ui/card'
 
 export function PortfolioSummary() {
   const { totalInvested, totalValue, totalPnl, totalPnlPercent } = usePortfolioPnl()
@@ -21,7 +22,7 @@ export function PortfolioSummary() {
   return (
     <div className="grid gap-4 lg:grid-cols-12 items-stretch">
       {/* 1. Account Balance Card (Col-span 5) */}
-      <div className="lg:col-span-5 relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg">
+      <Card className="lg:col-span-5 relative flex flex-col justify-between overflow-hidden p-5">
         {/* Card Header & Action Pills */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
@@ -66,10 +67,10 @@ export function PortfolioSummary() {
             <span className="text-xs text-text-tertiary">Compare to last month</span>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* 2. Profit & Losses Card (Col-span 4) */}
-      <div className="lg:col-span-4 relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg">
+      <Card className="lg:col-span-4 relative flex flex-col justify-between overflow-hidden p-5">
         <div>
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
             <div className="flex items-center gap-2">
@@ -121,10 +122,10 @@ export function PortfolioSummary() {
             />
           </svg>
         </div>
-      </div>
+      </Card>
 
       {/* 3. Become a Manager Card (Col-span 3) */}
-      <div className="lg:col-span-3 relative flex flex-col justify-between overflow-hidden rounded-2xl border border-primary-coral/30 bg-gradient-to-br from-bg-elevated via-bg-elevated to-primary-coral/10 backdrop-blur-2xl p-5 shadow-lg">
+      <Card className="lg:col-span-3 relative flex flex-col justify-between overflow-hidden border-primary-coral/30 bg-gradient-to-br from-bg-elevated via-bg-elevated to-primary-coral/10 p-5">
         <div>
           <div className="flex items-center gap-1.5 text-xs font-bold text-primary-coral">
             <Sparkles className="size-4" />
@@ -147,7 +148,7 @@ export function PortfolioSummary() {
             Become a manager
           </button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

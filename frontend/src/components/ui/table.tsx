@@ -4,7 +4,7 @@ import { EmptyState, type EmptyStateSize } from './EmptyState'
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto rounded-xl border border-border-subtle/60 bg-bg-inset/40">
+    <div className="relative w-full overflow-auto rounded-xl border border-border-subtle/60 bg-bg-inset/20">
       <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   ),

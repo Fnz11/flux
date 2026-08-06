@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Activity, ShieldCheck } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
 interface PriceState {
   price: number
@@ -24,7 +25,7 @@ export function PriceDisplay({ data, label = 'Pyth Oracle Price' }: PriceDisplay
   const cfg = data.status === 'loading' ? undefined : statusConfig[data.status]
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg space-y-3">
+    <Card className="p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Activity className="size-4 text-emerald-400" />
@@ -85,7 +86,7 @@ export function PriceDisplay({ data, label = 'Pyth Oracle Price' }: PriceDisplay
           </div>
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 

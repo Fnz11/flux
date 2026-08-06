@@ -112,7 +112,7 @@ export function PortfolioPage() {
                   )
                 }
               >
-                <div className="rounded-xl border border-border-subtle/60 bg-bg-inset/40 overflow-hidden">
+                <div className="rounded-xl border border-border-subtle/60 overflow-hidden">
                   {isLoading ? (
                     <div className="p-5 space-y-3 min-h-[200px]">
                       {Array.from({ length: 3 }).map((_, i) => (

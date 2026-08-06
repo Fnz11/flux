@@ -1,21 +1,19 @@
 import * as React from 'react'
-import { Dialog, DialogContent, DialogTitle } from './dialog'
+import { ResponsiveDrawer } from './ResponsiveDrawer'
 
 interface ModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
+  description?: string
   children: React.ReactNode
 }
 
-function Modal({ open, onOpenChange, title, children }: ModalProps) {
+function Modal({ open, onOpenChange, title, description, children }: ModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogTitle>{title}</DialogTitle>
-        {children}
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDrawer open={open} onOpenChange={onOpenChange} title={title} description={description}>
+      {children}
+    </ResponsiveDrawer>
   )
 }
 

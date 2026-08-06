@@ -29,13 +29,18 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-[100] w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border-subtle bg-bg-elevated p-6 shadow-2xl',
+        'fixed z-[100] w-full border border-white/15 bg-bg-surface/95 backdrop-blur-3xl shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] transition-all duration-200',
+        // Desktop Centered Dialog
+        'md:left-1/2 md:top-1/2 md:max-w-md md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl',
+        // Mobile Bottom Slide-Up Drawer
+        'left-0 right-0 bottom-0 top-auto translate-x-0 translate-y-0 max-sm:left-0 max-sm:right-0 max-sm:bottom-0 max-sm:top-auto max-sm:translate-x-0 max-sm:translate-y-0 rounded-t-3xl max-sm:rounded-b-none min-h-[60vh] max-h-[88vh] overflow-y-auto border-t border-white/20 p-5 animate-in slide-in-from-bottom duration-300',
         className,
       )}
       {...props}
     >
+      <div className="w-12 h-1.5 rounded-full bg-border-medium mx-auto mb-3 md:hidden shrink-0" />
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm text-text-muted hover:text-text-primary">
+      <DialogPrimitive.Close className="hidden md:block absolute right-4 top-4 rounded-sm text-text-muted hover:text-text-primary">
         <X className="h-4 w-4" />
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>

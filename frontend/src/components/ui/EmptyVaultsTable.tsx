@@ -18,8 +18,8 @@ export function EmptyVaultsTable({
   size,
 }: EmptyVaultsTableProps) {
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-elevated/60 backdrop-blur-2xl p-0 overflow-hidden">
-      <Table>
+    <div className="w-full overflow-x-auto rounded-xl border border-border-subtle bg-bg-elevated/60 backdrop-blur-2xl p-0">
+      <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow>
             {headers.map((h, i) => (

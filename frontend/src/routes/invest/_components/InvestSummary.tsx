@@ -2,6 +2,7 @@ import { Wallet, Coins, TrendingUp, ArrowUpRight } from 'lucide-react'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { cn } from '@/lib/utils'
+import { Card } from '@/components/ui/card'
 
 export function InvestSummary() {
   const wallet = useWallet()
@@ -23,7 +24,7 @@ export function InvestSummary() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
       {/* 1. Total Invested Card */}
-      <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg group hover:border-primary-coral/40 transition-all">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-primary-coral/40 transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-tertiary">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary-coral/10 text-primary-coral border border-primary-coral/20">
@@ -45,10 +46,10 @@ export function InvestSummary() {
           </div>
           <p className="mt-1 text-xs text-text-tertiary">Principal deposited across Solana vaults</p>
         </div>
-      </div>
+      </Card>
 
       {/* 2. Portfolio Value Card */}
-      <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg group hover:border-primary-gold/40 transition-all">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-primary-gold/40 transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-tertiary">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary-gold/10 text-primary-gold border border-primary-gold/20">
@@ -70,10 +71,10 @@ export function InvestSummary() {
           </div>
           <p className="mt-1 text-xs text-text-tertiary">Real-time vault share valuation</p>
         </div>
-      </div>
+      </Card>
 
       {/* 3. Net Profit / Loss Card */}
-      <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border-subtle bg-bg-elevated/70 backdrop-blur-2xl p-5 shadow-lg group hover:border-emerald-500/40 transition-all">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-emerald-500/40 transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-tertiary">
             <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -127,7 +128,7 @@ export function InvestSummary() {
             />
           </svg>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

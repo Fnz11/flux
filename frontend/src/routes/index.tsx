@@ -58,7 +58,7 @@ function DashboardPage() {
   const totalTVL = vaults.reduce((sum, v) => sum + (v.tvl || 0), 0)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageHeader
         title={!walletAddress ? 'Welcome to FBYT' : isManager ? 'Manager Dashboard' : 'Dashboard'}
         subtitle={!walletAddress ? 'Connect your wallet to get started.' : isManager ? 'Hey Manager, Welcome back!' : 'Hey Investor, Welcome back!'}

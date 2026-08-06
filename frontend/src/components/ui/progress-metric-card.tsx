@@ -149,7 +149,7 @@ export function ProgressMetricCard({
 
   if (loading) {
     return (
-      <Card className={`relative flex h-full min-h-[195px] w-full flex-col justify-between overflow-hidden p-4 bg-bg-elevated/70 backdrop-blur-2xl ${className}`}>
+      <Card className={`relative flex h-full min-h-[195px] w-full flex-col justify-between overflow-hidden p-4 ${className}`}>
         <div className="flex items-center justify-between">
           <div className="h-3.5 w-24 animate-pulse rounded bg-bg-inset" />
           <div className="h-4 w-16 animate-pulse rounded bg-bg-inset" />
@@ -162,7 +162,7 @@ export function ProgressMetricCard({
 
   if (!hasData) {
     return (
-      <Card className={`relative flex h-full min-h-[195px] w-full flex-col justify-between overflow-hidden p-4 bg-bg-elevated/70 backdrop-blur-2xl ${className}`}>
+      <Card className={`relative flex h-full min-h-[195px] w-full flex-col justify-between overflow-hidden p-4 ${className}`}>
         <div className="relative z-10 flex items-center justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
             {title}
@@ -181,7 +181,7 @@ export function ProgressMetricCard({
   }
 
   return (
-    <Card className={`relative flex h-full min-h-[195px] w-full flex-col justify-between overflow-hidden p-4 bg-bg-elevated/70 backdrop-blur-2xl shadow-sm transition-all hover:border-border-medium/60 ${className}`}>
+    <Card className={`relative flex h-full min-h-[195px] w-full flex-col justify-between overflow-hidden p-4 shadow-sm transition-all hover:border-white/25 ${className}`}>
       {/* Background Dot Pattern (Subtle) */}
       <div
         className="pointer-events-none absolute inset-0 text-text-primary/[0.03]"

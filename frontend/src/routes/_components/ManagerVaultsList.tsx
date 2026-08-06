@@ -1,57 +1,38 @@
-import { useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
-import { PlusCircle, ChevronRight, Layers } from 'lucide-react'
-import { useVaultsQuery } from '@/services/hooks'
+import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SweepButton } from '@/components/ui/SweepButton'
+import { VaultSparkline } from '../vaults/_components/VaultSparkline'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { VaultSparkline } from '@/routes/vaults/_components/VaultSparkline'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { Shield, PlusCircle, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface ManagerVaultsListProps {
-  walletAddress: string
-}
+export function ManagerVaultsList({ walletAddress }: { walletAddress?: string }) {
+  const { data: allVaults = [], isLoading } = useVaultsQuery()
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-US', { timeZone: 'UTC' })
-}
-
-export function ManagerVaultsList({ walletAddress }: ManagerVaultsListProps) {
-  const { data: vaults = [], isLoading } = useVaultsQuery({
-    managerAddress: walletAddress,
-    sortBy: 'created_at',
-    sortOrder: 'desc',
-  })
-
-  const createdAtByVaultId = useMemo(() => {
-    const byId: Record<string, string> = {}
-    for (const vault of vaults) {
-      byId[vault.id] = formatDate(vault.createdAt)
-    }
-    return byId
-  }, [vaults])
+  // Filter vaults managed by current wallet
+  const vaults = walletAddress
+    ? allVaults.filter((v) => v.managerAddress.toLowerCase() === walletAddress.toLowerCase())
+    : allVaults
 
   return (
     <SectionCard
-      icon={<Layers className="size-4 text-primary-coral" />}
-      title="Your Vaults"
-      description="Vaults managed by your wallet sorted by creation date"
+      icon={<Shield className="size-4 text-primary-coral" />}
+      title="Managed Vaults"
+      description="Investment vaults created & managed by your account"
       rightContent={
-        <div className="flex items-center gap-3">
-          <Link to="/vaults" className="text-xs text-primary-coral hover:underline font-semibold">
-            View All →
-          </Link>
-          <Link to="/vaults/create">
-            <SweepButton className="h-8 text-xs">
-              Create Vault
-            </SweepButton>
-          </Link>
-        </div>
+        <Link to="/vaults/create">
+          <SweepButton className="h-8 text-xs">
+            <PlusCircle className="mr-1.5 size-3.5" />
+            Create Vault
+          </SweepButton>
+        </Link>
       }
     >
       {isLoading ? (
-        <div className="h-44 w-full animate-pulse rounded-xl border border-border-subtle bg-bg-elevated/40" />
+        <div className="h-40 animate-pulse rounded-xl bg-bg-inset p-4" />
       ) : vaults.length === 0 ? (
         <div className="rounded-xl border border-border-subtle/50 bg-bg-inset/40 p-4">
           <EmptyState
@@ -67,62 +48,60 @@ export function ManagerVaultsList({ walletAddress }: ManagerVaultsListProps) {
           </div>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto rounded-xl border border-border-subtle/60 bg-bg-inset/40 shadow-lg">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-border-subtle bg-bg-inset/60 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
-              <tr>
-                <th className="py-3 px-5">VAULT NAME</th>
-                <th className="py-3 px-4">STATUS</th>
-                <th className="py-3 px-4">TVL</th>
-                <th className="py-3 px-4">PNL</th>
-                <th className="py-3 px-4">CREATED</th>
-                <th className="py-3 px-4">PERFORMANCE</th>
-                <th className="py-3 px-5 text-right">ACTION</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle/50">
-              {vaults.map((vault) => {
-                const pnl = vault.pnlPercent ?? 0
-                const isPositive = pnl >= 0
-                const displayName = vault.metadata.displayName || `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`
-                return (
-                  <tr key={vault.id} className="hover:bg-bg-elevated/60 transition-colors">
-                    <td className="py-3.5 px-5 font-semibold text-text-primary whitespace-nowrap text-xs">
-                      {displayName}
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <StatusBadge status={vault.status} />
-                    </td>
-                    <td className="py-3.5 px-4 font-mono whitespace-nowrap text-xs text-text-primary">
-                      ${vault.tvl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className={cn(
-                      'py-3.5 px-4 font-mono font-semibold whitespace-nowrap text-xs',
-                      isPositive ? 'text-emerald-400' : 'text-rose-400'
-                    )}>
-                      {isPositive ? `+${pnl.toFixed(2)}%` : `${pnl.toFixed(2)}%`}
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-text-tertiary whitespace-nowrap">
-                      {createdAtByVaultId[vault.id]}
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <VaultSparkline isPositive={isPositive} width={80} height={24} />
-                    </td>
-                    <td className="py-3.5 px-5 text-right whitespace-nowrap">
-                      <Link
-                        to="/vaults/$id"
-                        params={{ id: vault.id }}
-                        className="inline-flex items-center text-xs font-medium text-primary-coral hover:underline"
-                      >
-                        Manage <ChevronRight className="ml-1 h-3.5 w-3.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table className="min-w-[640px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="py-3 px-5">VAULT NAME</TableHead>
+              <TableHead className="py-3 px-4">STATUS</TableHead>
+              <TableHead className="py-3 px-4">TVL</TableHead>
+              <TableHead className="py-3 px-4">PNL</TableHead>
+              <TableHead className="py-3 px-4">CREATED</TableHead>
+              <TableHead className="py-3 px-4">PERFORMANCE</TableHead>
+              <TableHead className="py-3 px-5 text-right">ACTION</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {vaults.map((vault) => {
+              const pnl = vault.pnlPercent ?? 0
+              const isPositive = pnl >= 0
+              const displayName = vault.metadata.displayName || `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`
+              return (
+                <TableRow key={vault.id} className="hover:bg-bg-elevated/60 transition-colors">
+                  <TableCell className="py-3.5 px-5 font-semibold text-text-primary whitespace-nowrap text-xs">
+                    {displayName}
+                  </TableCell>
+                  <TableCell className="py-3.5 px-4 whitespace-nowrap">
+                    <StatusBadge status={vault.status} />
+                  </TableCell>
+                  <TableCell className="py-3.5 px-4 font-mono whitespace-nowrap text-xs text-text-primary">
+                    ${vault.tvl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className={cn(
+                    'py-3.5 px-4 font-mono font-semibold whitespace-nowrap text-xs',
+                    isPositive ? 'text-emerald-400' : 'text-rose-400'
+                  )}>
+                    {isPositive ? `+${pnl.toFixed(2)}%` : `${pnl.toFixed(2)}%`}
+                  </TableCell>
+                  <TableCell className="py-3.5 px-4 font-mono text-xs text-text-tertiary whitespace-nowrap">
+                    {new Date(vault.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="py-3.5 px-4 whitespace-nowrap">
+                    <VaultSparkline isPositive={isPositive} />
+                  </TableCell>
+                  <TableCell className="py-3.5 px-5 text-right whitespace-nowrap">
+                    <Link
+                      to="/vaults/$id"
+                      params={{ id: vault.id }}
+                      className="inline-flex items-center justify-center size-7 rounded-lg bg-bg-inset text-text-secondary hover:text-primary-coral hover:bg-primary-coral/10 transition-colors border border-border-subtle"
+                    >
+                      <ChevronRight className="size-4" />
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       )}
     </SectionCard>
   )

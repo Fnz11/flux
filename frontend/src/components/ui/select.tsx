@@ -31,7 +31,11 @@ const SelectContent = React.forwardRef<
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
-      className={cn('relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-border-medium bg-bg-elevated text-text-primary shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out', className)}
+      className={cn(
+        'relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-2xl border border-white/15 bg-bg-elevated/95 text-text-primary shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-3xl data-[state=open]:animate-in data-[state=closed]:animate-out',
+        'max-sm:fixed max-sm:bottom-4 max-sm:left-4 max-sm:right-4 max-sm:w-[calc(100%-2rem)] max-sm:min-h-[60vh] max-sm:max-h-[88vh]',
+        className,
+      )}
       position={position}
       {...props}
     >
