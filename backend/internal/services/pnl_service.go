@@ -8,24 +8,25 @@ import (
 	"github.com/fbyt-clone/backend/internal/cache"
 	"github.com/fbyt-clone/backend/internal/models"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type PnLCalcResult struct {
-	UnrealizedPnL float64
-	TotalPnL      float64
-	ReturnPct     float64
+	UnrealizedPnL decimal.Decimal
+	TotalPnL      decimal.Decimal
+	ReturnPct     decimal.Decimal
 }
 
-func CalculatePnL(sharesOwned, currentPrice, avgEntryPrice, totalInvested float64) PnLCalcResult {
-	costBasis := sharesOwned * avgEntryPrice
-	currentValue := sharesOwned * currentPrice
-	unrealizedPnL := currentValue - costBasis
+func CalculatePnL(sharesOwned, currentPrice, avgEntryPrice, totalInvested decimal.Decimal) PnLCalcResult {
+	costBasis := sharesOwned.Mul(avgEntryPrice)
+	currentValue := sharesOwned.Mul(currentPrice)
+	unrealizedPnL := currentValue.Sub(costBasis)
 
-	var returnPct float64
-	if totalInvested > 0 {
-		returnPct = (unrealizedPnL / totalInvested) * 100
+	var returnPct decimal.Decimal
+	if totalInvested.IsPositive() {
+		returnPct = unrealizedPnL.Div(totalInvested).Mul(decimal.NewFromInt(100))
 	}
 
 	return PnLCalcResult{
@@ -35,7 +36,7 @@ func CalculatePnL(sharesOwned, currentPrice, avgEntryPrice, totalInvested float6
 	}
 }
 
-func UpsertPosition(db *gorm.DB, userID uuid.UUID, vaultID uuid.UUID, shares float64, invested float64, entryPrice float64) error {
+func UpsertPosition(db *gorm.DB, userID uuid.UUID, vaultID uuid.UUID, shares decimal.Decimal, invested decimal.Decimal, entryPrice decimal.Decimal) error {
 	var portfolio models.Portfolio
 	result := db.Where("user_id = ? AND vault_id = ?", userID, vaultID).First(&portfolio)
 
@@ -55,11 +56,11 @@ func UpsertPosition(db *gorm.DB, userID uuid.UUID, vaultID uuid.UUID, shares flo
 		return result.Error
 	}
 
-	totalShares := portfolio.SharesOwned + shares
-	totalInvested := portfolio.TotalInvestedValue + invested
-	var newAvgPrice float64
-	if totalShares > 0 {
-		newAvgPrice = totalInvested / totalShares
+	totalShares := portfolio.SharesOwned.Add(shares)
+	totalInvested := portfolio.TotalInvestedValue.Add(invested)
+	var newAvgPrice decimal.Decimal
+	if totalShares.IsPositive() {
+		newAvgPrice = totalInvested.Div(totalShares)
 	}
 
 	portfolio.SharesOwned = totalShares
@@ -69,19 +70,22 @@ func UpsertPosition(db *gorm.DB, userID uuid.UUID, vaultID uuid.UUID, shares flo
 	return db.Save(&portfolio).Error
 }
 
-func ReducePosition(db *gorm.DB, userID uuid.UUID, vaultID uuid.UUID, sharesSold float64) error {
+func ReducePosition(db *gorm.DB, userID uuid.UUID, vaultID uuid.UUID, sharesSold decimal.Decimal) error {
 	var portfolio models.Portfolio
 	if err := db.Where("user_id = ? AND vault_id = ?", userID, vaultID).First(&portfolio).Error; err != nil {
 		return err
 	}
 
-	if sharesSold > portfolio.SharesOwned {
+	if sharesSold.GreaterThan(portfolio.SharesOwned) {
 		return errors.New("insufficient shares")
 	}
 
-	costBasisSold := (sharesSold / portfolio.SharesOwned) * portfolio.TotalInvestedValue
-	portfolio.SharesOwned -= sharesSold
-	portfolio.TotalInvestedValue -= costBasisSold
+	var costBasisSold decimal.Decimal
+	if portfolio.SharesOwned.IsPositive() {
+		costBasisSold = sharesSold.Div(portfolio.SharesOwned).Mul(portfolio.TotalInvestedValue)
+	}
+	portfolio.SharesOwned = portfolio.SharesOwned.Sub(sharesSold)
+	portfolio.TotalInvestedValue = portfolio.TotalInvestedValue.Sub(costBasisSold)
 
 	return db.Save(&portfolio).Error
 }
@@ -92,15 +96,15 @@ type PnLService struct {
 }
 
 type PnLPosition struct {
-	VaultID            string
-	VaultAddress       string
-	VaultName          string
-	SharesOwned        float64
-	TotalInvestedValue float64
-	AverageEntryPrice  float64
-	CurrentValue       float64
-	PnL                float64
-	PnLPercent         float64
+	VaultID            string          `json:"vault_id"`
+	VaultAddress       string          `json:"vault_address"`
+	VaultName          string          `json:"vault_name"`
+	SharesOwned        decimal.Decimal `json:"shares_owned"`
+	TotalInvestedValue decimal.Decimal `json:"total_invested_value"`
+	AverageEntryPrice  decimal.Decimal `json:"average_entry_price"`
+	CurrentValue       decimal.Decimal `json:"current_value"`
+	PnL                decimal.Decimal `json:"pnl"`
+	PnLPercent         decimal.Decimal `json:"pnl_percent"`
 }
 
 const pnlCacheTTL = 30 * time.Second
@@ -185,14 +189,14 @@ func (s *PnLService) calculateUserPnL(ctx context.Context, userID uuid.UUID) ([]
 	}
 
 	for _, p := range portfolios {
-		var currentValue float64
-		if total := totalByVault[p.VaultID]; total > 0 {
-			currentValue = (p.SharesOwned / total) * p.Vault.TVL
+		var currentValue decimal.Decimal
+		if total := totalByVault[p.VaultID]; total.IsPositive() {
+			currentValue = p.SharesOwned.Div(total).Mul(p.Vault.TVL)
 		}
 
-		var currentPrice float64
-		if p.SharesOwned > 0 {
-			currentPrice = currentValue / p.SharesOwned
+		var currentPrice decimal.Decimal
+		if p.SharesOwned.IsPositive() {
+			currentPrice = currentValue.Div(p.SharesOwned)
 		}
 		res := CalculatePnL(p.SharesOwned, currentPrice, p.AverageEntryPrice, p.TotalInvestedValue)
 
@@ -221,12 +225,12 @@ func (s *PnLService) InvalidateUser(ctx context.Context, userID uuid.UUID) {
 }
 
 type PnLResult struct {
-	CurrentValue       float64
-	PnL                float64
-	PnLPercent         float64
-	TotalInvestedValue float64
-	SharesOwned        float64
-	AverageEntryPrice  float64
+	CurrentValue       decimal.Decimal
+	PnL                decimal.Decimal
+	PnLPercent         decimal.Decimal
+	TotalInvestedValue decimal.Decimal
+	SharesOwned        decimal.Decimal
+	AverageEntryPrice  decimal.Decimal
 }
 
 func (s *PnLService) RecalculatePosition(portfolioID uuid.UUID) (*PnLResult, error) {
@@ -236,7 +240,7 @@ func (s *PnLService) RecalculatePosition(portfolioID uuid.UUID) (*PnLResult, err
 		return nil, err
 	}
 
-	var totalShares float64
+	var totalShares decimal.Decimal
 	if err := s.DB.Model(&models.Portfolio{}).
 		Select("COALESCE(SUM(shares_owned), 0)").
 		Where("vault_id = ?", portfolio.VaultID).
@@ -244,15 +248,15 @@ func (s *PnLService) RecalculatePosition(portfolioID uuid.UUID) (*PnLResult, err
 		return nil, err
 	}
 
-	var currentValue float64
-	if totalShares > 0 {
-		currentValue = (portfolio.SharesOwned / totalShares) * portfolio.Vault.TVL
+	var currentValue decimal.Decimal
+	if totalShares.IsPositive() {
+		currentValue = portfolio.SharesOwned.Div(totalShares).Mul(portfolio.Vault.TVL)
 	}
 
-	pnl := currentValue - portfolio.TotalInvestedValue
-	var pnlPercent float64
-	if portfolio.TotalInvestedValue > 0 {
-		pnlPercent = (pnl / portfolio.TotalInvestedValue) * 100
+	pnl := currentValue.Sub(portfolio.TotalInvestedValue)
+	var pnlPercent decimal.Decimal
+	if portfolio.TotalInvestedValue.IsPositive() {
+		pnlPercent = pnl.Div(portfolio.TotalInvestedValue).Mul(decimal.NewFromInt(100))
 	}
 
 	if err := s.DB.Model(&portfolio).Update("updated_at", gorm.Expr("NOW()")).Error; err != nil {

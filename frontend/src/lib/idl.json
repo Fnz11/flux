@@ -1,35 +1,162 @@
 {
   "version": "0.1.0",
-  "name": "fbyt_vault",
+  "name": "fbyt_clone_vault",
   "instructions": [
     {
       "name": "initializeVault",
       "accounts": [
-        { "name": "manager", "isSigner": true, "isWritable": true },
-        { "name": "vault", "isSigner": false, "isWritable": true },
-        { "name": "systemProgram", "isSigner": false, "isWritable": false }
+        { "name": "manager", "isMut": true, "isSigner": true },
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "shareTokenMint", "isMut": true, "isSigner": true },
+        { "name": "vaultAuthority", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "rent", "isMut": false, "isSigner": false }
       ],
       "args": [
         { "name": "minRaiseAmount", "type": "u64" },
-        { "name": "performanceFee", "type": "u16" },
-        { "name": "managementFee", "type": "u16" },
+        { "name": "performanceFeeBps", "type": "u16" },
+        { "name": "managementFeeBps", "type": "u16" },
         { "name": "lockupPeriod", "type": "i64" }
+      ]
+    },
+    {
+      "name": "deposit",
+      "accounts": [
+        { "name": "investor", "isMut": true, "isSigner": true },
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "vaultAuthority", "isMut": false, "isSigner": false },
+        { "name": "investorTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "vaultTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "depositMint", "isMut": false, "isSigner": false },
+        { "name": "shareTokenMint", "isMut": true, "isSigner": false },
+        { "name": "investorShareAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "associatedTokenProgram", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "rent", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "amount", "type": "u64" }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "accounts": [
+        { "name": "investor", "isMut": true, "isSigner": true },
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "vaultAuthority", "isMut": false, "isSigner": false },
+        { "name": "investorTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "withdrawMint", "isMut": false, "isSigner": false },
+        { "name": "vaultTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "shareTokenMint", "isMut": true, "isSigner": false },
+        { "name": "investorShareAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "sharesToBurn", "type": "u64" }
       ]
     },
     {
       "name": "executeTradePyth",
       "accounts": [
-        { "name": "manager", "isSigner": true, "isWritable": true },
-        { "name": "vault", "isSigner": false, "isWritable": true },
-        { "name": "inputMint", "isSigner": false, "isWritable": false },
-        { "name": "outputMint", "isSigner": false, "isWritable": false },
-        { "name": "pythFeed", "isSigner": false, "isWritable": false },
-        { "name": "systemProgram", "isSigner": false, "isWritable": false }
+        { "name": "manager", "isMut": true, "isSigner": true },
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "vaultAuthority", "isMut": false, "isSigner": false },
+        { "name": "vaultInputTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "vaultInputMint", "isMut": true, "isSigner": false },
+        { "name": "vaultOutputTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "vaultOutputMint", "isMut": true, "isSigner": false },
+        { "name": "priceUpdate", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
       ],
       "args": [
         { "name": "amountIn", "type": "u64" },
-        { "name": "minAmountOut", "type": "u64" },
-        { "name": "slippageBps", "type": "u16" }
+        { "name": "minAmountOut", "type": "u64" }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "VaultState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "manager", "type": "publicKey" },
+          { "name": "minRaiseAmount", "type": "u64" },
+          { "name": "performanceFeeBps", "type": "u16" },
+          { "name": "managementFeeBps", "type": "u16" },
+          { "name": "lockupPeriod", "type": "i64" },
+          { "name": "totalSharesMinted", "type": "u64" },
+          { "name": "totalAssetsDeposited", "type": "u64" },
+          { "name": "vaultBump", "type": "u8" },
+          { "name": "vaultAuthorityBump", "type": "u8" },
+          { "name": "status", "type": { "defined": "VaultStatusCode" } },
+          { "name": "createdAt", "type": "i64" },
+          { "name": "lastTradeAt", "type": "i64" }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "VaultStatusCode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Fundraising" },
+          { "name": "Active" },
+          { "name": "Dormant" }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "VaultInitialized",
+      "fields": [
+        { "name": "vault", "type": "publicKey", "index": false },
+        { "name": "manager", "type": "publicKey", "index": false },
+        { "name": "minRaiseAmount", "type": "u64", "index": false },
+        { "name": "performanceFeeBps", "type": "u16", "index": false },
+        { "name": "managementFeeBps", "type": "u16", "index": false },
+        { "name": "lockupPeriod", "type": "i64", "index": false },
+        { "name": "shareTokenMint", "type": "publicKey", "index": false }
+      ]
+    },
+    {
+      "name": "Deposited",
+      "fields": [
+        { "name": "vault", "type": "publicKey", "index": false },
+        { "name": "investor", "type": "publicKey", "index": false },
+        { "name": "amount", "type": "u64", "index": false },
+        { "name": "sharesMinted", "type": "u64", "index": false },
+        { "name": "tokenMint", "type": "publicKey", "index": false }
+      ]
+    },
+    {
+      "name": "Withdrawn",
+      "fields": [
+        { "name": "vault", "type": "publicKey", "index": false },
+        { "name": "investor", "type": "publicKey", "index": false },
+        { "name": "sharesBurned", "type": "u64", "index": false },
+        { "name": "amountOut", "type": "u64", "index": false },
+        { "name": "tokenMint", "type": "publicKey", "index": false }
+      ]
+    },
+    {
+      "name": "TradeExecuted",
+      "fields": [
+        { "name": "vault", "type": "publicKey", "index": false },
+        { "name": "manager", "type": "publicKey", "index": false },
+        { "name": "inputMint", "type": "publicKey", "index": false },
+        { "name": "outputMint", "type": "publicKey", "index": false },
+        { "name": "amountIn", "type": "u64", "index": false },
+        { "name": "amountOut", "type": "u64", "index": false },
+        { "name": "price", "type": "i64", "index": false },
+        { "name": "priceExponent", "type": "i32", "index": false },
+        { "name": "feedId", "type": "string", "index": false }
       ]
     }
   ],

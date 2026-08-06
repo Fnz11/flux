@@ -1,19 +1,19 @@
 import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useVaultStore } from '@/stores'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableEmpty } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup } from '@/components/ui/toggle-group'
 import { VaultInvestCard, VaultInvestCardSkeleton } from '../_components/VaultInvestCard'
+import { VirtualizedList } from '@/components/ui/VirtualizedList'
 
 export const Route = createFileRoute('/invest/vaults/')({ component: VaultInvestListPage })
 
 const FOCUS_ASSETS = ['All', 'SOL', 'USDC', 'BTC', 'ETH']
 
 function VaultInvestListPage() {
-  const vaults = useVaultStore((s) => s.vaults)
-  const isLoading = useVaultStore((s) => s.isLoading)
+  const { data: vaults = [], isLoading } = useVaultsQuery()
 
   const [search, setSearch] = useState('')
   const [focusFilter, setFocusFilter] = useState('All')
@@ -58,21 +58,34 @@ function VaultInvestListPage() {
 
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <VaultInvestCardSkeleton key={i} />
-          ))}
+          {Array.from({ length: 6 }).map((_, i) => <VaultInvestCardSkeleton key={i} />)}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState
-          title="No vaults found"
-          description={search ? 'Try a different search term.' : 'No vaults available for investment yet.'}
-        />
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Vault Name</TableHead>
+              <TableHead>Focus Assets</TableHead>
+              <TableHead className="text-right">TVL</TableHead>
+              <TableHead className="text-right">Perf. Fee</TableHead>
+              <TableHead className="text-right">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableEmpty
+              colSpan={5}
+              title="No matching vaults found"
+              description="Try adjusting your search keywords or focus asset filters"
+            />
+          </TableBody>
+        </Table>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((vault) => (
-            <VaultInvestCard key={vault.id} vault={vault} />
-          ))}
-        </div>
+        <VirtualizedList
+          items={filtered}
+          pageSize={9}
+          keyExtractor={(v) => v.id}
+          renderItem={(vault) => <VaultInvestCard vault={vault} />}
+        />
       )}
     </div>
   )

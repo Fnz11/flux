@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { Button } from './button'
 
 interface ToggleGroupProps {
   options: { label: string; value: string }[]
@@ -9,22 +10,24 @@ interface ToggleGroupProps {
 
 function ToggleGroup({ options, value, onChange, size = 'md' }: ToggleGroupProps) {
   return (
-    <div className="flex gap-1 rounded-lg bg-bg-inset p-0.5">
+    <div className="flex gap-1 rounded-xl bg-bg-inset p-0.5">
       {options.map((opt) => (
-        <button
+        <Button
           key={opt.value}
           type="button"
+          variant={value === opt.value ? 'default' : 'ghost'}
+          size={size === 'sm' ? 'sm' : 'default'}
           onClick={() => onChange(opt.value)}
           className={cn(
-            'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+            'text-xs font-medium',
             value === opt.value
-              ? 'bg-primary-coral text-black'
+              ? 'bg-primary-coral text-black hover:bg-primary-coral/90'
               : 'text-text-tertiary hover:text-text-primary',
-            size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5',
+            size === 'sm' ? 'h-7 px-2 py-1 text-xs' : 'h-8 px-3 py-1.5',
           )}
         >
           {opt.label}
-        </button>
+        </Button>
       ))}
     </div>
   )

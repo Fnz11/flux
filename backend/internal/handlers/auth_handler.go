@@ -10,12 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/mr-tron/base58"
-	"gorm.io/gorm"
 )
 
 type AuthClaims struct {
@@ -24,13 +23,13 @@ type AuthClaims struct {
 }
 
 type AuthHandler struct {
-	db        *gorm.DB
+	userRepo  domain.UserRepository
 	jwtSecret []byte
 }
 
-func NewAuthHandler(db *gorm.DB, jwtSecret string) *AuthHandler {
+func NewAuthHandler(userRepo domain.UserRepository, jwtSecret string) *AuthHandler {
 	return &AuthHandler{
-		db:        db,
+		userRepo:  userRepo,
 		jwtSecret: []byte(jwtSecret),
 	}
 }
@@ -61,6 +60,14 @@ func (h *AuthHandler) Nonce(c *gin.Context) {
 	}
 
 	req.WalletAddress = strings.TrimSpace(req.WalletAddress)
+	if req.WalletAddress == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wallet_address is required"})
+		return
+	}
+	if !IsValidWalletAddress(req.WalletAddress) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid wallet address"})
+		return
+	}
 
 	random := make([]byte, 32)
 	if _, err := rand.Read(random); err != nil {
@@ -70,13 +77,12 @@ func (h *AuthHandler) Nonce(c *gin.Context) {
 
 	nonce := "Sign this message to authenticate with FBYT: " + hex.EncodeToString(random)
 
-	user := models.User{WalletAddress: req.WalletAddress}
-	if err := h.db.WithContext(c.Request.Context()).Where("wallet_address = ?", req.WalletAddress).FirstOrCreate(&user).Error; err != nil {
+	if _, err := h.userRepo.FindOrCreateByWallet(c.Request.Context(), req.WalletAddress); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
 		return
 	}
 
-	if err := h.db.WithContext(c.Request.Context()).Model(&user).Update("nonce", nonce).Error; err != nil {
+	if err := h.userRepo.UpdateNonce(c.Request.Context(), req.WalletAddress, nonce); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save nonce"})
 		return
 	}
@@ -92,10 +98,14 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 	}
 
 	req.WalletAddress = strings.TrimSpace(req.WalletAddress)
+	if !IsValidWalletAddress(req.WalletAddress) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid wallet address"})
+		return
+	}
 
-	var user models.User
-	if err := h.db.WithContext(c.Request.Context()).Where("wallet_address = ?", req.WalletAddress).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	user, err := h.userRepo.FindByWallet(c.Request.Context(), req.WalletAddress)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "nonce not requested"})
 			return
 		}
@@ -125,7 +135,7 @@ func (h *AuthHandler) Verify(c *gin.Context) {
 		return
 	}
 
-	if err := h.db.WithContext(c.Request.Context()).Model(&user).Update("nonce", "").Error; err != nil {
+	if err := h.userRepo.UpdateNonce(c.Request.Context(), req.WalletAddress, ""); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update nonce"})
 		return
 	}

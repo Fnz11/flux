@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -64,7 +65,7 @@ func NewCachedPortfolioRepository(inner domain.PortfolioRepository, cache Cache)
 	return &CachedPortfolioRepository{inner: inner, cache: cache}
 }
 
-func (c *CachedPortfolioRepository) UpsertPosition(ctx context.Context, userID, vaultID string, shares, invested, entryPrice float64) error {
+func (c *CachedPortfolioRepository) UpsertPosition(ctx context.Context, userID, vaultID string, shares, invested, entryPrice decimal.Decimal) error {
 	err := c.inner.UpsertPosition(ctx, userID, vaultID, shares, invested, entryPrice)
 	if err != nil {
 		return err
@@ -78,7 +79,7 @@ func (c *CachedPortfolioRepository) UpsertPosition(ctx context.Context, userID, 
 	return nil
 }
 
-func (c *CachedPortfolioRepository) ReducePosition(ctx context.Context, userID, vaultID string, sharesSold float64) error {
+func (c *CachedPortfolioRepository) ReducePosition(ctx context.Context, userID, vaultID string, sharesSold decimal.Decimal) error {
 	err := c.inner.ReducePosition(ctx, userID, vaultID, sharesSold)
 	if err != nil {
 		return err
@@ -98,8 +99,8 @@ func (c *CachedPortfolioRepository) GetByUser(ctx context.Context, userID string
 	})
 }
 
-func (c *CachedPortfolioRepository) GetTotalSharesByVault(ctx context.Context, vaultID string) (float64, error) {
-	return cacheGet(ctx, c.cache, vaultTotalSharesKey(vaultID), portfolioTTL, func() (float64, error) {
+func (c *CachedPortfolioRepository) GetTotalSharesByVault(ctx context.Context, vaultID string) (decimal.Decimal, error) {
+	return cacheGet(ctx, c.cache, vaultTotalSharesKey(vaultID), portfolioTTL, func() (decimal.Decimal, error) {
 		return c.inner.GetTotalSharesByVault(ctx, vaultID)
 	})
 }
@@ -114,6 +115,10 @@ func (c *CachedPortfolioRepository) GetUserPnLSummary(ctx context.Context, userI
 	return cacheGet(ctx, c.cache, pnlSummaryKey(userID), summaryTTL, func() (*domain.UserPnLSummary, error) {
 		return c.inner.GetUserPnLSummary(ctx, userID)
 	})
+}
+
+func (c *CachedPortfolioRepository) GetHolderUserIDs(ctx context.Context, vaultID string) ([]string, error) {
+	return c.inner.GetHolderUserIDs(ctx, vaultID)
 }
 
 type CachedTradeRepository struct {
@@ -142,4 +147,8 @@ func (c *CachedTradeRepository) Create(ctx context.Context, trade *domain.TradeD
 
 func (c *CachedTradeRepository) ListByVault(ctx context.Context, vaultID string, tradeType string, page, limit int) ([]domain.TradeDetail, int64, error) {
 	return c.inner.ListByVault(ctx, vaultID, tradeType, page, limit)
+}
+
+func (c *CachedTradeRepository) ListByVaultIDs(ctx context.Context, vaultIDs []string, tradeType string, page, limit int) ([]domain.TradeDetail, int64, error) {
+	return c.inner.ListByVaultIDs(ctx, vaultIDs, tradeType, page, limit)
 }

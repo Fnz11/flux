@@ -47,6 +47,9 @@ func (c *Client) VerifyTradeExecution(ctx context.Context, signature string, vau
 	var anchorIx *AnchorInstruction
 
 	for i := range parsed.Instructions {
+		if c.programID != "" && parsed.Instructions[i].ProgramID != c.programID {
+			continue
+		}
 		ix, err := ParseAnchorInstruction(parsed.Instructions[i].Data)
 		if err != nil {
 			continue
@@ -113,6 +116,9 @@ func (c *Client) VerifyDeposit(ctx context.Context, signature string, userAddres
 	var anchorIx *AnchorInstruction
 
 	for i := range parsed.Instructions {
+		if c.programID != "" && parsed.Instructions[i].ProgramID != c.programID {
+			continue
+		}
 		ix, err := ParseAnchorInstruction(parsed.Instructions[i].Data)
 		if err != nil {
 			continue

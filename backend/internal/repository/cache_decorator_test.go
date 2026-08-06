@@ -9,7 +9,13 @@ import (
 	"time"
 
 	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/shopspring/decimal"
 )
+
+func dec(s string) decimal.Decimal {
+	d, _ := decimal.NewFromString(s)
+	return d
+}
 
 type stubCache struct {
 	mu      sync.Mutex
@@ -91,7 +97,7 @@ type stubPortfolioRepo struct {
 	details        []domain.PortfolioDetail
 	summary        *domain.PortfolioSummary
 	pnlSummary     *domain.UserPnLSummary
-	totalShares    float64
+	totalShares    decimal.Decimal
 	summaryErr     error
 	pnlSummaryErr  error
 }
@@ -101,17 +107,17 @@ func (s *stubPortfolioRepo) GetByUser(ctx context.Context, userID string) ([]dom
 	return s.details, nil
 }
 
-func (s *stubPortfolioRepo) UpsertPosition(ctx context.Context, userID, vaultID string, shares, invested, entryPrice float64) error {
+func (s *stubPortfolioRepo) UpsertPosition(ctx context.Context, userID, vaultID string, shares, invested, entryPrice decimal.Decimal) error {
 	s.upsertCalls++
 	return s.upsertErr
 }
 
-func (s *stubPortfolioRepo) ReducePosition(ctx context.Context, userID, vaultID string, sharesSold float64) error {
+func (s *stubPortfolioRepo) ReducePosition(ctx context.Context, userID, vaultID string, sharesSold decimal.Decimal) error {
 	s.reduceCalls++
 	return s.reduceErr
 }
 
-func (s *stubPortfolioRepo) GetTotalSharesByVault(ctx context.Context, vaultID string) (float64, error) {
+func (s *stubPortfolioRepo) GetTotalSharesByVault(ctx context.Context, vaultID string) (decimal.Decimal, error) {
 	return s.totalShares, nil
 }
 
@@ -121,6 +127,10 @@ func (s *stubPortfolioRepo) GetPortfolioSummary(ctx context.Context, userID stri
 
 func (s *stubPortfolioRepo) GetUserPnLSummary(ctx context.Context, userID string) (*domain.UserPnLSummary, error) {
 	return s.pnlSummary, s.pnlSummaryErr
+}
+
+func (s *stubPortfolioRepo) GetHolderUserIDs(ctx context.Context, vaultID string) ([]string, error) {
+	return nil, nil
 }
 
 type stubTradeRepo struct {
@@ -145,8 +155,12 @@ func (s *stubTradeRepo) ListByVault(ctx context.Context, vaultID string, tradeTy
 	return nil, 0, nil
 }
 
+func (s *stubTradeRepo) ListByVaultIDs(ctx context.Context, vaultIDs []string, tradeType string, page, limit int) ([]domain.TradeDetail, int64, error) {
+	return nil, 0, nil
+}
+
 func TestCachedPortfolioRepository_GetByUser(t *testing.T) {
-	details := []domain.PortfolioDetail{{VaultID: "v1", SharesOwned: 10, PnL: 42.5}}
+	details := []domain.PortfolioDetail{{VaultID: "v1", SharesOwned: dec("10"), PnL: dec("42.5")}}
 
 	t.Run("cache_hit", func(t *testing.T) {
 		cache := newStubCache()
@@ -161,7 +175,7 @@ func TestCachedPortfolioRepository_GetByUser(t *testing.T) {
 		if inner.getByUserCalls != 0 {
 			t.Errorf("inner called %d times on cache hit, want 0", inner.getByUserCalls)
 		}
-		if len(got) != 1 || got[0].VaultID != "v1" || got[0].PnL != 42.5 {
+		if len(got) != 1 || got[0].VaultID != "v1" || !got[0].PnL.Equal(dec("42.5")) {
 			t.Errorf("unexpected result: %+v", got)
 		}
 	})
@@ -254,8 +268,8 @@ func TestCachedPortfolioRepository_GetByUser(t *testing.T) {
 }
 
 func TestCachedPortfolioRepository_Summaries(t *testing.T) {
-	summary := &domain.PortfolioSummary{UserID: "u1", VaultCount: 2, TotalInvested: 1000}
-	pnl := &domain.UserPnLSummary{UserID: "u1", TotalPnL: 500}
+	summary := &domain.PortfolioSummary{UserID: "u1", VaultCount: 2, TotalInvested: dec("1000")}
+	pnl := &domain.UserPnLSummary{UserID: "u1", TotalPnL: dec("500")}
 
 	t.Run("summary_hit", func(t *testing.T) {
 		cache := newStubCache()
@@ -281,7 +295,7 @@ func TestCachedPortfolioRepository_Summaries(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if got.TotalPnL != 500 {
+		if !got.TotalPnL.Equal(dec("500")) {
 			t.Errorf("TotalPnL = %v, want 500", got.TotalPnL)
 		}
 		if ttl, ok := cache.ttl(pnlSummaryKey("u1")); !ok || ttl != summaryTTL {
@@ -335,7 +349,7 @@ func TestCachedPortfolioRepository_WritesInvalidate(t *testing.T) {
 		inner := &stubPortfolioRepo{}
 		repo := NewCachedPortfolioRepository(inner, cache)
 
-		if err := repo.UpsertPosition(context.Background(), "u1", "v1", 10, 100, 10); err != nil {
+		if err := repo.UpsertPosition(context.Background(), "u1", "v1", dec("10"), dec("100"), dec("10")); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if inner.upsertCalls != 1 {
@@ -349,7 +363,7 @@ func TestCachedPortfolioRepository_WritesInvalidate(t *testing.T) {
 		inner := &stubPortfolioRepo{}
 		repo := NewCachedPortfolioRepository(inner, cache)
 
-		if err := repo.ReducePosition(context.Background(), "u1", "v1", 5); err != nil {
+		if err := repo.ReducePosition(context.Background(), "u1", "v1", dec("5")); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if inner.reduceCalls != 1 {
@@ -363,7 +377,7 @@ func TestCachedPortfolioRepository_WritesInvalidate(t *testing.T) {
 		inner := &stubPortfolioRepo{upsertErr: errors.New("db down")}
 		repo := NewCachedPortfolioRepository(inner, cache)
 
-		if err := repo.UpsertPosition(context.Background(), "u1", "v1", 10, 100, 10); err == nil {
+		if err := repo.UpsertPosition(context.Background(), "u1", "v1", dec("10"), dec("100"), dec("10")); err == nil {
 			t.Fatal("expected error")
 		}
 		cache.mu.Lock()
@@ -377,7 +391,7 @@ func TestCachedPortfolioRepository_WritesInvalidate(t *testing.T) {
 		inner := &stubPortfolioRepo{}
 		repo := NewCachedPortfolioRepository(inner, nil)
 
-		if err := repo.UpsertPosition(context.Background(), "u1", "v1", 10, 100, 10); err != nil {
+		if err := repo.UpsertPosition(context.Background(), "u1", "v1", dec("10"), dec("100"), dec("10")); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if inner.upsertCalls != 1 {
@@ -387,7 +401,7 @@ func TestCachedPortfolioRepository_WritesInvalidate(t *testing.T) {
 }
 
 func TestCachedTradeRepository(t *testing.T) {
-	trade := &domain.TradeDetail{ID: "t1", TransactionSignature: "sig-abc", AmountIn: 100}
+	trade := &domain.TradeDetail{ID: "t1", TransactionSignature: "sig-abc", AmountIn: dec("100")}
 
 	t.Run("signature_hit", func(t *testing.T) {
 		cache := newStubCache()

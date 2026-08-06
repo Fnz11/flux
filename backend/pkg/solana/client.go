@@ -12,6 +12,7 @@ import (
 type Client struct {
 	rpcClient *rpc.Client
 	timeout   time.Duration
+	programID string
 }
 
 func NewClient(rpcURL string) *Client {
@@ -24,6 +25,15 @@ func NewClient(rpcURL string) *Client {
 func (c *Client) WithTimeout(timeout time.Duration) *Client {
 	c.timeout = timeout
 	return c
+}
+
+func (c *Client) WithProgramID(programID string) *Client {
+	c.programID = programID
+	return c
+}
+
+func (c *Client) ProgramID() string {
+	return c.programID
 }
 
 func (c *Client) GetTransaction(ctx context.Context, signature string) (*rpc.GetTransactionResult, error) {

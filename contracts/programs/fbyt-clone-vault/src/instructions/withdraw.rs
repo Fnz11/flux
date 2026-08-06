@@ -5,10 +5,11 @@ use anchor_spl::token_interface::{
     burn, Burn,
 };
 use crate::constants::*;
-use crate::instructions::initialize_vault::{VaultState, VaultStatusCode, Withdrawn};
+use crate::events::Withdrawn;
+use crate::state::{VaultState, VaultStatusCode};
 
 #[derive(Accounts)]
-pub struct WithdrawAccountConstraints<'info> {
+pub struct Withdraw<'info> {
     #[account(mut)]
     pub investor: Signer<'info>,
 
@@ -17,6 +18,7 @@ pub struct WithdrawAccountConstraints<'info> {
         seeds = [VAULT_SEED, vault.manager.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.status != VaultStatusCode::Dormant @ crate::errors::VaultError::VaultLocked,
+        constraint = !vault.is_paused @ crate::errors::VaultError::VaultLocked,
     )]
     pub vault: Account<'info, VaultState>,
 
@@ -51,7 +53,6 @@ pub struct WithdrawAccountConstraints<'info> {
 
     #[account(
         mut,
-        constraint = investor_share_account.amount >= shares_to_burn,
         constraint = investor_share_account.owner == investor.key(),
     )]
     pub investor_share_account: InterfaceAccount<'info, TokenAccount>,
@@ -60,7 +61,7 @@ pub struct WithdrawAccountConstraints<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<WithdrawAccountConstraints>, shares_to_burn: u64) -> Result<()> {
+pub fn handler(ctx: Context<Withdraw>, shares_to_burn: u64) -> Result<()> {
     require!(shares_to_burn > 0, crate::errors::VaultError::InvalidAmount);
 
     let vault = &mut ctx.accounts.vault;
@@ -87,12 +88,13 @@ pub fn handler(ctx: Context<WithdrawAccountConstraints>, shares_to_burn: u64) ->
         amount_out <= vault.total_assets_deposited,
         crate::errors::VaultError::InsufficientVaultBalance
     );
+    require!(
+        ctx.accounts.vault_token_account.amount >= amount_out,
+        crate::errors::VaultError::InsufficientVaultBalance
+    );
 
-    let seeds = &[
-        VAULT_AUTHORITY_SEED,
-        vault.key().as_ref(),
-        &[vault.vault_authority_bump],
-    ];
+    let vault_key = vault.key();
+    let seeds = crate::utils::get_vault_authority_seeds(&vault_key, &vault.vault_authority_bump);
     let signer_seeds = &[&seeds[..]];
 
     let burn_accounts = Burn {
@@ -127,12 +129,25 @@ pub fn handler(ctx: Context<WithdrawAccountConstraints>, shares_to_burn: u64) ->
         .checked_sub(amount_out)
         .ok_or(crate::errors::VaultError::MathOverflow)?;
 
+    let nav_per_share = if vault.total_shares_minted == 0 {
+        0
+    } else {
+        ((vault.total_assets_deposited as u128)
+            .checked_mul(1_000_000_000)
+            .ok_or(crate::errors::VaultError::MathOverflow)?
+            .checked_div(vault.total_shares_minted as u128)
+            .ok_or(crate::errors::VaultError::MathOverflow)?) as u64
+    };
+
     emit!(Withdrawn {
         vault: vault.key(),
         investor: ctx.accounts.investor.key(),
         shares_burned: shares_to_burn,
         amount_out,
         token_mint: ctx.accounts.withdraw_mint.key(),
+        nav_per_share,
+        total_assets_after: vault.total_assets_deposited,
+        total_shares_after: vault.total_shares_minted,
     });
 
     Ok(())

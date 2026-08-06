@@ -24,4 +24,22 @@ pub enum VaultError {
     InvalidAmount,
     #[msg("Fee exceeds maximum allowed")]
     FeeTooHigh,
+    #[msg("Invalid token mint for vault operation")]
+    InvalidMint,
+    #[msg("Subtraction underflow")]
+    SubtractionUnderflow,
+    #[msg("Multiplication overflow")]
+    MultiplicationOverflow,
+    #[msg("Division by zero")]
+    DivisionByZero,
+    #[msg("Type cast overflow")]
+    CastOverflow,
+    #[msg("Price confidence interval is too wide")]
+    PriceConfidenceTooWide,
+    #[msg("Invalid price feed for token mint")]
+    InvalidPriceFeedForMint,
+    #[msg("Vault is currently paused")]
+    VaultPaused,
+    #[msg("Share token mint mismatch")]
+    ShareMintMismatch,
 }

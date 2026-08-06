@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto">
+    <div className="relative w-full overflow-auto rounded-xl border border-border-subtle bg-bg-elevated/40">
       <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   ),
@@ -14,7 +14,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('border-b border-border-subtle', className)} {...props} />
+  <thead ref={ref} className={cn('border-b border-border-subtle bg-bg-inset/40', className)} {...props} />
 ))
 TableHeader.displayName = 'TableHeader'
 
@@ -43,7 +43,7 @@ const TableHead = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
-    className={cn('h-12 px-4 text-left align-middle font-medium text-text-muted text-xs uppercase tracking-wider', className)}
+    className={cn('h-10 px-4 text-left align-middle font-medium text-text-muted text-[11px] uppercase tracking-wider', className)}
     {...props}
   />
 ))
@@ -53,8 +53,28 @@ const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn('p-4 align-middle', className)} {...props} />
+  <td ref={ref} className={cn('p-3.5 align-middle text-xs', className)} {...props} />
 ))
 TableCell.displayName = 'TableCell'
 
-export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell }
+interface TableEmptyProps {
+  colSpan: number
+  title?: string
+  description?: string
+  minHeight?: string
+}
+
+function TableEmpty({ colSpan, title = 'No records found', description, minHeight = 'h-[200px]' }: TableEmptyProps) {
+  return (
+    <TableRow className="hover:bg-transparent border-0">
+      <TableCell colSpan={colSpan} className={cn('text-center py-12', minHeight)}>
+        <div className="flex flex-col items-center justify-center space-y-1">
+          <p className="text-sm font-medium text-text-secondary">{title}</p>
+          {description && <p className="text-xs text-text-muted">{description}</p>}
+        </div>
+      </TableCell>
+    </TableRow>
+  )
+}
+
+export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty }

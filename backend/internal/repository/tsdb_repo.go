@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -48,11 +49,11 @@ type priceHistoryRepo struct {
 
 type ohlcvRow struct {
 	Bucket string
-	Open   float64
-	High   float64
-	Low    float64
-	Close  float64
-	Volume float64
+	Open   decimal.Decimal
+	High   decimal.Decimal
+	Low    decimal.Decimal
+	Close  decimal.Decimal
+	Volume decimal.Decimal
 }
 
 func NewPriceHistoryRepository(db *gorm.DB) domain.PriceHistoryRepository {

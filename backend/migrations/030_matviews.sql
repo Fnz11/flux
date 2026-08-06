@@ -120,6 +120,7 @@ SELECT
     x.user_id                                   AS user_id,
     x.vault_id                                  AS vault_id,
     v.address                                   AS vault_address,
+    COALESCE(NULLIF(v.metadata->>'name', ''), NULLIF(v.metadata->>'displayName', ''), v.address) AS vault_name,
     COALESCE(x.shares_owned, 0)::numeric(36,18) AS shares_owned,
     COALESCE(x.total_invested, 0)::numeric(36,18) AS total_invested,
     x.avg_entry_price::numeric(36,18)           AS average_entry_price,

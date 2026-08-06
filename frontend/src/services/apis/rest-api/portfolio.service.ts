@@ -1,6 +1,9 @@
 import { api } from '@/lib/api'
-import type { PortfolioPosition } from '@/types'
+import { mapApiPortfolioToPortfolio } from '@/lib/mappers'
+import type { PortfolioPosition, ApiPortfolioResponse } from '@/types'
 
-export function getPortfolio(wallet: string): Promise<PortfolioPosition[]> {
-  return api.get(`/portfolio?wallet=${wallet}`)
+export async function getPortfolio(wallet: string): Promise<PortfolioPosition[]> {
+  const res = await api.get<ApiPortfolioResponse | any[]>(`/portfolio?wallet=${wallet}`)
+  const items = Array.isArray(res) ? res : (res?.positions ?? [])
+  return items.map(mapApiPortfolioToPortfolio)
 }

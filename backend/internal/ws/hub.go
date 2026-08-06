@@ -126,21 +126,24 @@ func (h *Hub) Unsubscribe(client *Client, channel string) {
 func (h *Hub) BroadcastToChannel(channel string, message []byte) {
 	h.mu.RLock()
 	clients, ok := h.channelClients[channel]
-	h.mu.RUnlock()
-
 	if !ok {
+		h.mu.RUnlock()
 		return
 	}
 
-	h.mu.RLock()
+	targets := make([]*Client, 0, len(clients))
 	for client := range clients {
+		targets = append(targets, client)
+	}
+	h.mu.RUnlock()
+
+	for _, client := range targets {
 		select {
 		case client.send <- message:
 		default:
 			go h.unregisterClient(client)
 		}
 	}
-	h.mu.RUnlock()
 }
 
 func (h *Hub) BroadcastToChannels(channels []string, message []byte) {

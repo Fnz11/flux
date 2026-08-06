@@ -44,21 +44,21 @@ export function VaultCard({ vault }: VaultCardProps) {
         <Link
           to="/vaults/$id/edit"
           params={{ id: vault.id }}
-          className="rounded-lg border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
+          className="rounded-xl border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
         >
           Edit
         </Link>
         <Link
           to="/trade"
           search={{ vaultId: vault.id }}
-          className="rounded-lg border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
+          className="rounded-xl border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
         >
           Trade
         </Link>
         <Link
           to="/vaults/$id"
           params={{ id: vault.id }}
-          className="ml-auto rounded-lg bg-primary-coral px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-primary-coral/90"
+          className="ml-auto rounded-xl bg-primary-coral px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-primary-coral/90"
         >
           View
         </Link>

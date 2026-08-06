@@ -1,8 +1,11 @@
+import { cn } from '@/lib/utils'
+
 type BadgeStatus = 'Active' | 'Fundraising' | 'Dormant' | 'Pending' | 'Failed' | 'success' | 'failed'
 
 interface StatusBadgeProps {
   status: BadgeStatus
   label?: string
+  className?: string
 }
 
 const colorMap: Record<BadgeStatus, { bg: string; dot: string }> = {
@@ -15,13 +18,17 @@ const colorMap: Record<BadgeStatus, { bg: string; dot: string }> = {
   failed: { bg: 'bg-status-error/20 text-status-error', dot: 'bg-status-error' },
 }
 
-export function StatusBadge({ status, label }: StatusBadgeProps) {
+export function StatusBadge({ status, label, className }: StatusBadgeProps) {
   const colors = colorMap[status]
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${colors.bg}`}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
+        colors.bg,
+        className,
+      )}
     >
-      <span className={`size-1.5 rounded-full ${colors.dot}`} />
+      <span className={cn('size-1.5 rounded-full', colors.dot)} />
       {label ?? status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   )

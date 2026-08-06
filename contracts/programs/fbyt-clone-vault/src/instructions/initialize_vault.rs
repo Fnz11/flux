@@ -1,75 +1,11 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface};
 use crate::constants::*;
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]
-pub enum VaultStatusCode {
-    Fundraising,
-    Active,
-    Dormant,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct VaultState {
-    pub manager: Pubkey,
-    pub min_raise_amount: u64,
-    pub performance_fee_bps: u16,
-    pub management_fee_bps: u16,
-    pub lockup_period: i64,
-    pub total_shares_minted: u64,
-    pub total_assets_deposited: u64,
-    pub vault_bump: u8,
-    pub vault_authority_bump: u8,
-    pub status: VaultStatusCode,
-    pub created_at: i64,
-    pub last_trade_at: i64,
-}
-
-#[event]
-pub struct VaultInitialized {
-    pub vault: Pubkey,
-    pub manager: Pubkey,
-    pub min_raise_amount: u64,
-    pub performance_fee_bps: u16,
-    pub management_fee_bps: u16,
-    pub lockup_period: i64,
-    pub share_token_mint: Pubkey,
-}
-
-#[event]
-pub struct Deposited {
-    pub vault: Pubkey,
-    pub investor: Pubkey,
-    pub amount: u64,
-    pub shares_minted: u64,
-    pub token_mint: Pubkey,
-}
-
-#[event]
-pub struct Withdrawn {
-    pub vault: Pubkey,
-    pub investor: Pubkey,
-    pub shares_burned: u64,
-    pub amount_out: u64,
-    pub token_mint: Pubkey,
-}
-
-#[event]
-pub struct TradeExecuted {
-    pub vault: Pubkey,
-    pub manager: Pubkey,
-    pub input_mint: Pubkey,
-    pub output_mint: Pubkey,
-    pub amount_in: u64,
-    pub amount_out: u64,
-    pub price: i64,
-    pub price_exponent: i32,
-    pub feed_id: String,
-}
+use crate::events::VaultInitialized;
+use crate::state::{VaultState, VaultStatusCode};
 
 #[derive(Accounts)]
-pub struct InitializeVaultAccountConstraints<'info> {
+pub struct InitializeVault<'info> {
     #[account(mut)]
     pub manager: Signer<'info>,
 
@@ -81,6 +17,9 @@ pub struct InitializeVaultAccountConstraints<'info> {
         bump
     )]
     pub vault: Account<'info, VaultState>,
+
+    /// The mint of the accepted deposit token (e.g. USDC)
+    pub deposit_mint: InterfaceAccount<'info, Mint>,
 
     #[account(
         init,
@@ -99,15 +38,15 @@ pub struct InitializeVaultAccountConstraints<'info> {
 
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn handler(
-    ctx: Context<InitializeVaultAccountConstraints>,
+    ctx: Context<InitializeVault>,
     min_raise_amount: u64,
     performance_fee_bps: u16,
     management_fee_bps: u16,
     lockup_period: i64,
+    allowed_output_mints: [Pubkey; 4],
 ) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
     let clock = Clock::get()?;
@@ -118,21 +57,28 @@ pub fn handler(
     );
 
     vault.manager = ctx.accounts.manager.key();
+    vault.pending_manager = None;
+    vault.deposit_mint = ctx.accounts.deposit_mint.key();
+    vault.allowed_output_mints = allowed_output_mints;
     vault.min_raise_amount = min_raise_amount;
     vault.performance_fee_bps = performance_fee_bps;
     vault.management_fee_bps = management_fee_bps;
+    vault.accrued_performance_fee = 0;
+    vault.accrued_management_fee = 0;
     vault.lockup_period = lockup_period;
     vault.total_shares_minted = 0;
     vault.total_assets_deposited = 0;
     vault.vault_bump = ctx.bumps.vault;
     vault.vault_authority_bump = ctx.bumps.vault_authority;
     vault.status = VaultStatusCode::Fundraising;
+    vault.is_paused = false;
     vault.created_at = clock.unix_timestamp;
     vault.last_trade_at = clock.unix_timestamp;
 
     emit!(VaultInitialized {
         vault: vault.key(),
         manager: ctx.accounts.manager.key(),
+        deposit_mint: ctx.accounts.deposit_mint.key(),
         min_raise_amount,
         performance_fee_bps,
         management_fee_bps,

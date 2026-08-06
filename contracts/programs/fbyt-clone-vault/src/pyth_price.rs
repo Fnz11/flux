@@ -14,33 +14,106 @@ pub fn read_pyth_price(price_update: &Account<PriceUpdateV2>) -> Result<PythPric
     let feed_id = get_feed_id_from_hex(SOL_USD_FEED_ID)?;
     let clock = Clock::get()?;
     let price = price_update.get_price_no_older_than(&clock, MAXIMUM_AGE, &feed_id)?;
+
+    let conf = price.conf;
+    let price_val = price.price;
+    require!(price_val > 0, crate::errors::VaultError::InvalidTradeParams);
+
+    let conf_check = (conf as u128)
+        .checked_mul(100)
+        .ok_or(crate::errors::VaultError::MathOverflow)?;
+    require!(
+        conf_check <= (price_val.unsigned_abs() as u128),
+        crate::errors::VaultError::PriceConfidenceTooWide
+    );
+
     Ok(PythPriceResult {
-        price: price.price,
-        conf: price.conf,
+        price: price_val,
+        conf,
         expo: price.exponent,
     })
 }
 
-pub fn calculate_amount_out(amount_in: u64, price: i64, expo: i32) -> Result<u64> {
-    if expo >= 0 {
+pub fn calculate_amount_out(
+    amount_in: u64,
+    price: i64,
+    expo: i32,
+    input_decimals: u8,
+    output_decimals: u8,
+) -> Result<u64> {
+    require!(price > 0, crate::errors::VaultError::InvalidTradeParams);
+
+    let total_expo = expo + (output_decimals as i32) - (input_decimals as i32);
+    if total_expo >= 0 {
         let multiplier = 10u64
-            .checked_pow(expo as u32)
+            .checked_pow(total_expo as u32)
             .ok_or(crate::errors::VaultError::MathOverflow)?;
-        (amount_in as u128)
+        let val = (amount_in as u128)
             .checked_mul(price as u128)
             .ok_or(crate::errors::VaultError::MathOverflow)?
             .checked_mul(multiplier as u128)
-            .ok_or(crate::errors::VaultError::MathOverflow)
-            .map(|v| v as u64)
+            .ok_or(crate::errors::VaultError::MathOverflow)?;
+        u64::try_from(val).map_err(|_| crate::errors::VaultError::MathOverflow.into())
     } else {
         let divisor = 10u64
-            .checked_pow((-expo) as u32)
+            .checked_pow((-total_expo) as u32)
             .ok_or(crate::errors::VaultError::MathOverflow)?;
-        (amount_in as u128)
+        let val = (amount_in as u128)
             .checked_mul(price as u128)
             .ok_or(crate::errors::VaultError::MathOverflow)?
             .checked_div(divisor as u128)
-            .ok_or(crate::errors::VaultError::MathOverflow)
-            .map(|v| v as u64)
+            .ok_or(crate::errors::VaultError::MathOverflow)?;
+        u64::try_from(val).map_err(|_| crate::errors::VaultError::MathOverflow.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_amount_out_negative_expo_sol_to_usdc() {
+        // 1 SOL (1e9 lamports) at $150 with -8 expo, 9 input decimals, 6 output decimals
+        // total_expo = -8 + 6 - 9 = -11 -> divide by 1e11
+        // val = 1e9 * 15_000_000_000 / 1e11 = 150_000_000 (150 USDC in 6 decimals)
+        let result = calculate_amount_out(1_000_000_000, 15_000_000_000, -8, 9, 6).unwrap();
+        assert_eq!(result, 150_000_000);
+    }
+
+    #[test]
+    fn test_calculate_amount_out_positive_expo() {
+        let result = calculate_amount_out(100, 50, 2, 0, 0).unwrap();
+        assert_eq!(result, 500_000); // 100 * 50 * 100
+    }
+
+    #[test]
+    fn test_calculate_amount_out_zero_expo() {
+        let result = calculate_amount_out(500, 3, 0, 0, 0).unwrap();
+        assert_eq!(result, 1_500);
+    }
+
+    #[test]
+    fn test_calculate_amount_out_zero_price() {
+        let result = calculate_amount_out(1_000_000, 0, -8, 9, 6);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_calculate_amount_out_negative_price_rejection() {
+        let result = calculate_amount_out(1_000_000, -1, -8, 9, 6);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_calculate_amount_out_same_decimals() {
+        // 1e6 input, price 2, expo -6, 6 input, 6 output -> total_expo = -6+6-6 = -6
+        let result = calculate_amount_out(1_000_000, 2, -6, 6, 6).unwrap();
+        assert_eq!(result, 2);
+    }
+
+    #[test]
+    fn test_calculate_amount_out_overflow_error() {
+        let result = calculate_amount_out(u64::MAX, i64::MAX, 0, 0, 0);
+        assert!(result.is_err());
     }
 }

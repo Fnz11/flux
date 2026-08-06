@@ -1,34 +1,53 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/fbyt-clone/backend/internal/cache"
-	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/fbyt-clone/backend/internal/middleware"
 	"github.com/fbyt-clone/backend/internal/services"
 	"github.com/fbyt-clone/backend/pkg/solana"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"github.com/shopspring/decimal"
 )
 
-var (
-	syncDB           *gorm.DB
-	syncClient       *solana.Client
-	syncEventService *services.EventService
-	syncCache        cache.Cache
-)
-
-func InitSyncHandler(db *gorm.DB, client *solana.Client, eventService *services.EventService) {
-	syncDB = db
-	syncClient = client
-	syncEventService = eventService
+type SyncHandler struct {
+	vaultRepo     domain.VaultRepository
+	userRepo      domain.UserRepository
+	tradeRepo     domain.TradeRepository
+	portfolioRepo domain.PortfolioRepository
+	txManager     domain.TxManager
+	client        *solana.Client
+	eventService  *services.EventService
+	cache         cache.Cache
 }
 
-func SetSyncCache(c cache.Cache) {
-	syncCache = c
+func NewSyncHandler(
+	vaultRepo domain.VaultRepository,
+	userRepo domain.UserRepository,
+	tradeRepo domain.TradeRepository,
+	portfolioRepo domain.PortfolioRepository,
+	txManager domain.TxManager,
+	client *solana.Client,
+	eventService *services.EventService,
+) *SyncHandler {
+	return &SyncHandler{
+		vaultRepo:     vaultRepo,
+		userRepo:      userRepo,
+		tradeRepo:     tradeRepo,
+		portfolioRepo: portfolioRepo,
+		txManager:     txManager,
+		client:        client,
+		eventService:  eventService,
+	}
+}
+
+func (h *SyncHandler) SetCache(c cache.Cache) {
+	h.cache = c
 }
 
 type SyncVaultRequest struct {
@@ -41,14 +60,26 @@ type SyncTradeRequest struct {
 	VaultID   string `json:"vault_id" binding:"required"`
 }
 
-func SyncVault(c *gin.Context) {
+func (h *SyncHandler) SyncVault(c *gin.Context) {
 	var req SyncVaultRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	txResult, err := syncClient.GetTransaction(c.Request.Context(), req.Signature)
+	req.ManagerAddress = strings.TrimSpace(req.ManagerAddress)
+	if !IsValidWalletAddress(req.ManagerAddress) {
+		ErrorResponse(c, http.StatusBadRequest, "invalid wallet address")
+		return
+	}
+
+	jwtWallet := middleware.GetWalletAddress(c)
+	if jwtWallet == "" || req.ManagerAddress != jwtWallet {
+		ErrorResponse(c, http.StatusForbidden, "Manager address mismatch")
+		return
+	}
+
+	txResult, err := h.client.GetTransaction(c.Request.Context(), req.Signature)
 	if err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "invalid signature") {
@@ -91,79 +122,58 @@ func SyncVault(c *gin.Context) {
 		return
 	}
 
-	var existing models.Vault
-	result := syncDB.WithContext(c.Request.Context()).Where("address = ?", vaultAddress).First(&existing)
-	if result.Error == nil {
-		if err := syncDB.WithContext(c.Request.Context()).Preload("Manager").First(&existing, existing.ID).Error; err != nil {
-			SuccessResponse(c, existing)
-			return
-		}
+	existing, err := h.vaultRepo.GetByAddress(c.Request.Context(), vaultAddress)
+	if err == nil && existing != nil {
 		SuccessResponse(c, existing)
 		return
 	}
-	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		ErrorResponse(c, http.StatusInternalServerError, "Database error")
 		return
 	}
 
-	user := &models.User{}
-	if err := syncDB.WithContext(c.Request.Context()).Where("wallet_address = ?", req.ManagerAddress).FirstOrCreate(user, models.User{WalletAddress: req.ManagerAddress}).Error; err != nil {
+	user, err := h.userRepo.FindOrCreateByWallet(c.Request.Context(), req.ManagerAddress)
+	if err != nil {
 		ErrorResponse(c, http.StatusInternalServerError, "Failed to create user")
 		return
 	}
 
-	vault := models.Vault{
+	vaultDetail := domain.VaultDetail{
 		Address:   vaultAddress,
 		ManagerID: user.ID,
 		Status:    "Fundraising",
 	}
 
-	if err := syncDB.WithContext(c.Request.Context()).Create(&vault).Error; err != nil {
+	if err := h.vaultRepo.Create(c.Request.Context(), &vaultDetail); err != nil {
 		ErrorResponse(c, http.StatusInternalServerError, "Failed to create vault")
 		return
 	}
 
-	invalidateLeaderboardCache(syncCache, c.Request.Context())
+	invalidateLeaderboardCache(h.cache, c.Request.Context())
 
-	if err := syncDB.WithContext(c.Request.Context()).Preload("Manager").First(&vault, vault.ID).Error; err != nil {
-		SuccessResponse(c, vault)
+	reloaded, err := h.vaultRepo.GetByAddress(c.Request.Context(), vaultAddress)
+	if err != nil {
+		SuccessResponse(c, vaultDetail)
 		return
 	}
 
-	if syncEventService != nil {
-		syncEventService.DispatchVaultUpdate(vault.ID.String())
+	if h.eventService != nil {
+		h.eventService.DispatchVaultUpdate(reloaded.ID)
 	}
 
-	SuccessResponse(c, vault)
+	SuccessResponse(c, reloaded)
 }
 
-func SyncTrade(c *gin.Context) {
+func (h *SyncHandler) SyncTrade(c *gin.Context) {
 	var req SyncTradeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	var existing models.TradeHistory
-	result := syncDB.WithContext(c.Request.Context()).Where("transaction_signature = ?", req.Signature).First(&existing)
-	if result.Error == nil {
-		ErrorResponse(c, http.StatusConflict, "Transaction already synced")
-		return
-	}
-	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		ErrorResponse(c, http.StatusInternalServerError, "Database error")
-		return
-	}
-
-	vaultID, err := uuid.Parse(req.VaultID)
+	vault, err := h.vaultRepo.GetByID(c.Request.Context(), req.VaultID)
 	if err != nil {
-		ErrorResponse(c, http.StatusBadRequest, "Invalid vault ID")
-		return
-	}
-
-	var vault models.Vault
-	if err := syncDB.WithContext(c.Request.Context()).First(&vault, "id = ?", vaultID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			ErrorResponse(c, http.StatusNotFound, "Vault not found")
 			return
 		}
@@ -171,9 +181,14 @@ func SyncTrade(c *gin.Context) {
 		return
 	}
 
-	// PgBouncer (transaction pool mode): no gorm transaction spans the external RPC call —
-	// every statement above and below checks out its own pooled connection.
-	txResult, err := syncClient.GetTransaction(c.Request.Context(), req.Signature)
+	// Signature pre-check outside transaction
+	if existing, err := h.tradeRepo.FindBySignature(c.Request.Context(), req.Signature); err == nil && existing != nil {
+		ErrorResponse(c, http.StatusConflict, "Transaction already synced")
+		return
+	}
+
+	// Fetch transaction from Solana RPC outside DB transaction span
+	txResult, err := h.client.GetTransaction(c.Request.Context(), req.Signature)
 	if err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "invalid signature") {
@@ -195,64 +210,82 @@ func SyncTrade(c *gin.Context) {
 		return
 	}
 
+	jwtWallet := middleware.GetWalletAddress(c)
+	if jwtWallet == "" || parsed.Signer != jwtWallet {
+		ErrorResponse(c, http.StatusForbidden, "Signer mismatch with authenticated user")
+		return
+	}
+
 	tradeType, amountIn, amountOut, priceAtExecution := classifyInstructions(parsed, vault.Address)
 	if tradeType == "" {
 		ErrorResponse(c, http.StatusBadRequest, "No recognized instruction found in transaction")
 		return
 	}
 
-	actor := &models.User{}
-	if err := syncDB.WithContext(c.Request.Context()).Where("wallet_address = ?", parsed.Signer).FirstOrCreate(actor, models.User{WalletAddress: parsed.Signer}).Error; err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, "Failed to resolve user")
-		return
-	}
+	var tradeDetail *domain.TradeDetail
 
-	trade := models.TradeHistory{
-		VaultID:              vaultID,
-		ActorID:              actor.ID,
-		TransactionSignature: req.Signature,
-		TradeType:            tradeType,
-		AmountIn:             amountIn,
-		AmountOut:            amountOut,
-		PriceAtExecution:     priceAtExecution,
-		ExecutedAt:           parsed.BlockTime,
-	}
+	// Wrap trade insert and portfolio position recalculation inside a single database transaction
+	err = h.txManager.ExecTx(c.Request.Context(), func(ctx context.Context) error {
+		// Re-check unique signature inside tx to avoid race conditions
+		if existing, err := h.tradeRepo.FindBySignature(ctx, req.Signature); err == nil && existing != nil {
+			return errors.New("already_synced")
+		}
 
-	if err := syncDB.WithContext(c.Request.Context()).Create(&trade).Error; err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, "Failed to create trade record")
-		return
-	}
+		actor, err := h.userRepo.FindOrCreateByWallet(ctx, parsed.Signer)
+		if err != nil {
+			return err
+		}
 
-	switch tradeType {
-	case "Deposit":
-		if err := services.UpsertPosition(syncDB, actor.ID, vaultID, amountIn, amountOut, priceAtExecution); err != nil {
-			ErrorResponse(c, http.StatusInternalServerError, "Failed to update portfolio")
+		tradeDetail = &domain.TradeDetail{
+			VaultID:              vault.ID,
+			ActorID:              actor.ID,
+			TransactionSignature: req.Signature,
+			TradeType:            tradeType,
+			AmountIn:             amountIn,
+			AmountOut:            amountOut,
+			PriceAtExecution:     priceAtExecution,
+			ExecutedAt:           parsed.BlockTime,
+		}
+
+		if err := h.tradeRepo.Create(ctx, tradeDetail); err != nil {
+			return err
+		}
+
+		switch tradeType {
+		case "Deposit", "Buy":
+			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountIn, amountOut, priceAtExecution); err != nil {
+				return err
+			}
+		case "Withdraw":
+			if err := h.portfolioRepo.ReducePosition(ctx, actor.ID, vault.ID, amountIn); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if err.Error() == "already_synced" {
+			ErrorResponse(c, http.StatusConflict, "Transaction already synced")
 			return
 		}
-	case "Withdraw":
-		if err := services.ReducePosition(syncDB, actor.ID, vaultID, amountIn); err != nil {
-			ErrorResponse(c, http.StatusInternalServerError, "Failed to update portfolio")
-			return
-		}
-	}
-
-	invalidateVaultPortfolioCaches(syncCache, syncDB, c.Request.Context(), vaultID)
-	invalidateLeaderboardCache(syncCache, c.Request.Context())
-	invalidateVaultSummaryCache(syncCache, c.Request.Context(), vault.Address)
-
-	if err := syncDB.WithContext(c.Request.Context()).Preload("Actor").Preload("Vault").First(&trade, trade.ID).Error; err != nil {
-		SuccessResponse(c, trade)
+		ErrorResponse(c, http.StatusInternalServerError, "Failed to record trade and update portfolio")
 		return
 	}
 
-	if syncEventService != nil {
-		syncEventService.DispatchTradeConfirmed(trade.VaultID.String(), trade.TransactionSignature, trade.TradeType)
+	invalidateVaultPortfolioCaches(h.cache, h.portfolioRepo, c.Request.Context(), vault.ID)
+	invalidateLeaderboardCache(h.cache, c.Request.Context())
+	invalidateVaultSummaryCache(h.cache, c.Request.Context(), vault.Address)
+
+	if h.eventService != nil {
+		h.eventService.DispatchTradeConfirmed(tradeDetail.VaultID, tradeDetail.TransactionSignature, tradeDetail.TradeType)
 	}
 
-	SuccessResponse(c, trade)
+	SuccessResponse(c, tradeDetail)
 }
 
-func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string) (tradeType string, amountIn, amountOut, priceAtExecution float64) {
+func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string) (tradeType string, amountIn, amountOut, priceAtExecution decimal.Decimal) {
 	for _, ix := range parsed.Instructions {
 		anchorIx, err := solana.ParseAnchorInstruction(ix.Data)
 		if err != nil {
@@ -274,13 +307,13 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string)
 			}
 			tradeType = "Buy"
 			if v, ok := anchorIx.Args["amount_in"].(uint64); ok {
-				amountIn = float64(v)
+				amountIn = decimal.NewFromUint64(v)
 			}
 			if v, ok := anchorIx.Args["amount_out"].(uint64); ok {
-				amountOut = float64(v)
+				amountOut = decimal.NewFromUint64(v)
 			}
-			if amountIn > 0 {
-				priceAtExecution = amountOut / amountIn
+			if amountIn.IsPositive() {
+				priceAtExecution = amountOut.Div(amountIn)
 			}
 			return
 		case "deposit":
@@ -289,10 +322,10 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string)
 			}
 			tradeType = "Deposit"
 			if v, ok := anchorIx.Args["amount"].(uint64); ok {
-				amountIn = float64(v)
+				amountIn = decimal.NewFromUint64(v)
 			}
 			amountOut = amountIn
-			priceAtExecution = 1.0
+			priceAtExecution = decimal.NewFromInt(1)
 			return
 		case "withdraw":
 			if !hasVault {
@@ -300,7 +333,7 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string)
 			}
 			tradeType = "Withdraw"
 			if v, ok := anchorIx.Args["shares"].(uint64); ok {
-				amountIn = float64(v)
+				amountIn = decimal.NewFromUint64(v)
 			}
 			return
 		}

@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils'
+
 interface PriceState {
   price: number
   confidence: number
@@ -27,14 +29,14 @@ export function PriceDisplay({ data, label = 'Pyth Oracle Price' }: PriceDisplay
         <p className="text-xs font-medium text-text-tertiary">{label}</p>
         <div className="flex items-center gap-1.5">
           <span
-            className={`size-2 rounded-full ${cfg.dot} ${cfg.pulse ? 'animate-pulse' : ''}`}
+            className={cn('size-2 rounded-full', cfg.dot, cfg.pulse && 'animate-pulse')}
           />
           <span className="text-xs text-text-muted">{cfg.text}</span>
         </div>
       </div>
 
       {data.status === 'loading' ? (
-        <div className="mt-2 h-7 w-32 animate-pulse rounded-md bg-bg-inset" />
+        <div className="mt-2 h-7 w-32 animate-pulse rounded-xl bg-bg-inset" />
       ) : data.status === 'error' || data.status === 'offline' ? (
         <p className="mt-2 text-sm text-text-tertiary">Price unavailable</p>
       ) : (

@@ -50,3 +50,7 @@ func PaginatedResponse(c *gin.Context, data interface{}, total int, page int, li
 		},
 	})
 }
+
+func IsValidWalletAddress(addr string) bool {
+	return len(addr) >= 32 && len(addr) <= 44
+}

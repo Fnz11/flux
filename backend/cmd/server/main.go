@@ -11,9 +11,11 @@ import (
 	"github.com/fbyt-clone/backend/internal/cache"
 	"github.com/fbyt-clone/backend/internal/config"
 	"github.com/fbyt-clone/backend/internal/database"
+	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/fbyt-clone/backend/internal/handlers"
 	"github.com/fbyt-clone/backend/internal/jobs"
 	"github.com/fbyt-clone/backend/internal/middleware"
+	"github.com/fbyt-clone/backend/internal/repository"
 	"github.com/fbyt-clone/backend/internal/router"
 	"github.com/fbyt-clone/backend/internal/server"
 	"github.com/fbyt-clone/backend/internal/services"
@@ -35,7 +37,14 @@ func main() {
 		logger.Fatalf("failed to connect database: %v", err)
 	}
 
-	handlers.SetHealthDB(db)
+	userRepo := repository.NewUserRepository(db)
+	vaultRepo := repository.NewVaultRepository(db)
+	tradeRepo := repository.NewTradeRepository(db)
+	portfolioRepo := repository.NewPortfolioRepository(db)
+	metricsRepo := repository.NewMetricsRepository(db)
+	txManager := repository.NewTxManager(db)
+
+	pinger, _ := txManager.(domain.Pinger)
 
 	redisClient, err := cache.NewRedisClient("")
 	if err != nil {
@@ -46,40 +55,55 @@ func main() {
 		c = cache.NewRedisCache(redisClient)
 	}
 
-	solanaClient := solana.NewClient(cfg.SolanaRPCURL)
+	solanaClient := solana.NewClient(cfg.SolanaRPCURL).WithProgramID(cfg.SolanaProgramID)
 	hub := ws.NewHub()
 	go hub.Run()
 	eventService := services.NewEventService(hub, db)
-	handlers.InitSyncHandler(db, solanaClient, eventService)
-	handlers.SetSyncCache(c)
+
+	syncHandler := handlers.NewSyncHandler(vaultRepo, userRepo, tradeRepo, portfolioRepo, txManager, solanaClient, eventService)
+	syncHandler.SetCache(c)
 
 	vaultSvc := services.NewVaultService(db)
-	vaultHandler := handlers.NewVaultHandler(db, vaultSvc, cfg.FocusAssetsWhitelist)
+	vaultHandler := handlers.NewVaultHandler(vaultRepo, portfolioRepo, userRepo, vaultSvc, cfg.FocusAssetsWhitelist)
 	vaultHandler.SetCache(c)
-	authHandler := handlers.NewAuthHandler(db, cfg.JWTSecret)
-	tradeHandler := &handlers.TradeHandler{DB: db}
+
+	authHandler := handlers.NewAuthHandler(userRepo, cfg.JWTSecret)
+
+	tradeHandler := handlers.NewTradeHandler(tradeRepo, vaultRepo)
 	tradeHandler.SetCache(c)
 
 	portfolioSvc := services.NewPortfolioService(db, c)
-	portfolioHandler := &handlers.PortfolioHandler{DB: db}
+	portfolioHandler := handlers.NewPortfolioHandler(userRepo, portfolioRepo)
 	portfolioHandler.SetService(portfolioSvc)
 
-	wsHandler := handlers.NewWSHandler(hub)
+	wsHandler := handlers.NewWSHandler(hub, cfg.JWTSecret)
 
-	handlers.SetAppConfig(&handlers.AppConfig{
+	healthHandler := handlers.NewHealthHandler(pinger)
+	healthHandler.SetCache(c)
+
+	configHandler := handlers.NewConfigHandler(&handlers.AppConfig{
 		DustThreshold:        cfg.DustThreshold,
 		FocusAssetsWhitelist: cfg.FocusAssetsWhitelist,
 	})
+
+	metricsHandler := handlers.NewMetricsHandler(metricsRepo)
+	transactionHandler := handlers.NewTransactionHandler()
 
 	mvWorker := jobs.NewMVRefreshWorker(db, logger, 0)
 	mvWorker.Start(context.Background())
 
 	r := router.Setup(&router.HandlerSet{
-		Auth:      authHandler,
-		Vault:     vaultHandler,
-		Trade:     tradeHandler,
-		Portfolio: portfolioHandler,
-		WS:        wsHandler,
+		Auth:        authHandler,
+		Vault:       vaultHandler,
+		Trade:       tradeHandler,
+		Portfolio:   portfolioHandler,
+		Sync:        syncHandler,
+		Health:      healthHandler,
+		Config:      configHandler,
+		WS:          wsHandler,
+		Metrics:     metricsHandler,
+		Transaction: transactionHandler,
+		JWTSecret:   cfg.JWTSecret,
 	})
 
 	if cfg.EnablePprof {
@@ -99,5 +123,5 @@ func main() {
 		}
 	}()
 
-	server.GracefulShutdown(srv, db, hub, logger, mvWorker.Stop)
+	server.GracefulShutdown(srv, db, hub, logger, mvWorker.Stop, vaultSvc.Stop)
 }

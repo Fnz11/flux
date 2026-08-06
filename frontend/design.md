@@ -132,8 +132,8 @@ background-clip: text;
 - **Border Radius Scale**: 
   - `2px` (`rounded-sm`): Tags, micro-elements
   - `5px` (`rounded-[5px]`): Buttons, inputs
-  - `8px` (`rounded-lg`): Cards, panels
-  - `16px` (`rounded-2xl`): Feature cards, modals
+  - `8px` (`rounded-xl`): Cards, panels
+  - `16px` (`rounded-xl`): Feature cards, modals
   - `24px` (`rounded-3xl`): Hero containers, immersive frames
   - `9999px` (`rounded-full`): Pills, avatars, status dots
 - **Padding Convention**: `px-4 sm:px-6 lg:px-8` for responsive container padding.
@@ -151,7 +151,7 @@ Structure:
 - Border: 1px solid rgba(255,255,255,0.20)
 - Background: bg-black
 - Padding: py-2 pr-4 pl-11 (left padding for icon box)
-- Border Radius: rounded-lg (8px)
+- Border Radius: rounded-xl (8px)
 - Tracking: tracking-tight
 
 Icon Box (left side):
@@ -176,14 +176,14 @@ Two variants based on background:
 - Background: near-black with subtle texture
 - Border: none (contrast provides separation)
 - Padding: `p-4` to `p-6`
-- Radius: `rounded-2xl` (16px)
+- Radius: `rounded-xl` (16px)
 - Decorative: blurred ellipse glows in corners (`blur-3xl`, `fill-white/80`)
 
 **Light Card** (`bg-natural-white`)
 - Background: `#FAFAFA` or off-white
 - Shadow: `shadow-lg shadow-black/10`, `ring-1 ring-black/5`
 - Text: `text-black` primary, `text-neutral-700` secondary
-- Radius: `rounded-2xl` (16px)
+- Radius: `rounded-xl` (16px)
 
 ### 5.3 Status Badges
 ```
@@ -196,7 +196,7 @@ Variants:
 
 ### 5.4 Notification Stack
 Stacked cards representing agent activity:
-- Card: `rounded-lg`, `bg-white`, `shadow-black/10`, `ring-black/5`
+- Card: `rounded-xl`, `bg-white`, `shadow-black/10`, `ring-black/5`
 - Height: fixed `h-20` (80px)
 - Stacked with `scale(0.94)`, `scale(0.88)` and negative top offsets
 - Meta label: `font-mono text-xs text-neutral-500`
@@ -210,7 +210,7 @@ Stacked cards representing agent activity:
 ### 5.6 Input / Chat Field
 - Background: `bg-neutral-950` or `bg-[#E6E6E6]` (light mode)
 - Border: subtle or `border-white/20`
-- Radius: `rounded-lg`
+- Radius: `rounded-xl`
 - Focus: ring transition to `primary-coral`
 
 ---
@@ -383,11 +383,11 @@ Background decorative element:
 
 ### The Sweep Button
 ```html
-<button class="group relative flex w-fit items-center gap-2 rounded-lg border border-white/20 bg-black py-2 pr-4 pl-11">
+<button class="group relative flex w-fit items-center gap-2 rounded-xl border border-white/20 bg-black py-2 pr-4 pl-11">
   <div class="absolute inset-y-0 left-1 my-auto flex size-8 items-center justify-center rounded-[5px] bg-primary transition-all duration-400 ease-out group-hover:left-[calc(100%-2.3rem)] group-hover:rotate-180">
     <!-- Icon -->
   </div>
-  <div class="absolute -inset-px rounded-lg bg-white/20 transition-[clip-path] duration-400 [clip-path:inset(0_100%_0_0)] group-hover:[clip-path:inset(0_0%_0_0)]"></div>
+  <div class="absolute -inset-px rounded-xl bg-white/20 transition-[clip-path] duration-400 [clip-path:inset(0_100%_0_0)] group-hover:[clip-path:inset(0_0%_0_0)]"></div>
   <span class="text-white transition-transform duration-400 group-hover:-translate-x-8">Chat with Agent</span>
 </button>
 ```

@@ -11,6 +11,7 @@ interface ConfigState {
 
 interface ConfigActions {
   fetchConfig: () => Promise<void>
+  updateConfig: (newConfig: Partial<AppConfig>) => void
 }
 
 type ConfigStore = ConfigState & ConfigActions
@@ -40,4 +41,9 @@ export const useConfigStore = create<ConfigStore>()((set) => ({
       })
     }
   },
+
+  updateConfig: (newConfig) =>
+    set((s) => ({
+      config: s.config ? { ...s.config, ...newConfig } : { ...DEFAULT_CONFIG, ...newConfig },
+    })),
 }))

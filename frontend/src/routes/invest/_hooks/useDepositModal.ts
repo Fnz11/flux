@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useDeposit } from '@/hooks/useDeposit'
-import { useVaultStore } from '@/stores'
+import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { TOKENS as ALL_TOKENS } from '@/constants/tokens'
 
 const DEPOSIT_SYMBOLS = new Set(['SOL', 'USDC'])
@@ -8,7 +8,8 @@ export const TOKENS = ALL_TOKENS.filter((t) => DEPOSIT_SYMBOLS.has(t.symbol))
 
 export function useDepositModal(vaultId: string) {
   const { execute } = useDeposit()
-  const vault = useVaultStore((s) => s.vaults.find((v) => v.id === vaultId))
+  const { data: vaults = [] } = useVaultsQuery()
+  const vault = vaults.find((v) => v.id === vaultId)
 
   const [step, setStep] = useState(0)
   const [selectedToken, setSelectedToken] = useState(TOKENS[0])

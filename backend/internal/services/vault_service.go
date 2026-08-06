@@ -14,9 +14,10 @@ type cacheEntry struct {
 }
 
 type VaultService struct {
-	db    *gorm.DB
-	cache sync.Map
-	stop  chan struct{}
+	db       *gorm.DB
+	cache    sync.Map
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 func NewVaultService(db *gorm.DB) *VaultService {
@@ -26,7 +27,9 @@ func NewVaultService(db *gorm.DB) *VaultService {
 }
 
 func (vs *VaultService) Stop() {
-	close(vs.stop)
+	vs.stopOnce.Do(func() {
+		close(vs.stop)
+	})
 }
 
 func (vs *VaultService) cleanupLoop() {

@@ -13,8 +13,8 @@ interface WebSocketState {
 interface WebSocketActions {
   connect: (url: string) => void
   disconnect: () => void
-  subscribe: (vaultId: string) => void
-  unsubscribe: (vaultId: string) => void
+  subscribe: (channel: string) => void
+  unsubscribe: (channel: string) => void
   onMessage: (handler: MessageHandler) => () => void
 }
 
@@ -40,8 +40,8 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
     socket.onopen = () => {
       set({ isConnected: true, reconnectAttempts: 0 })
       const { subscriptions } = get()
-      subscriptions.forEach((vaultId) => {
-        socket.send(JSON.stringify({ type: 'subscribe', vaultId }))
+      subscriptions.forEach((channel) => {
+        socket.send(JSON.stringify({ type: 'subscribe', channel }))
       })
     }
 
@@ -78,21 +78,21 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
     set({ ws: null, isConnected: false, subscriptions: [] })
   },
 
-  subscribe: (vaultId) =>
+  subscribe: (channel) =>
     set((s) => {
-      if (s.subscriptions.includes(vaultId)) return s
+      if (s.subscriptions.includes(channel)) return s
       if (s.ws?.readyState === WebSocket.OPEN) {
-        s.ws.send(JSON.stringify({ type: 'subscribe', vaultId }))
+        s.ws.send(JSON.stringify({ type: 'subscribe', channel }))
       }
-      return { subscriptions: [...s.subscriptions, vaultId] }
+      return { subscriptions: [...s.subscriptions, channel] }
     }),
 
-  unsubscribe: (vaultId) =>
+  unsubscribe: (channel) =>
     set((s) => {
       if (s.ws?.readyState === WebSocket.OPEN) {
-        s.ws.send(JSON.stringify({ type: 'unsubscribe', vaultId }))
+        s.ws.send(JSON.stringify({ type: 'unsubscribe', channel }))
       }
-      return { subscriptions: s.subscriptions.filter((id) => id !== vaultId) }
+      return { subscriptions: s.subscriptions.filter((c) => c !== channel) }
     }),
 
   onMessage: (handler) => {

@@ -1,43 +1,50 @@
 import { create } from 'zustand'
+import type { PortfolioPosition } from '@/types'
 import { getPortfolio } from '@/services/apis/rest-api/portfolio.service'
-import { formatError } from '@/lib/errors'
-import type { PortfolioPosition } from '../types'
 
-interface PortfolioState {
+interface PortfolioUIState {
+  selectedPositionId: string | null
+  timeRange: string
+  sortBy: string
   positions: PortfolioPosition[]
   isLoading: boolean
   error: string | null
 }
 
-interface PortfolioActions {
-  fetchPortfolio: (walletAddress: string) => Promise<void>
-  updatePosition: (vaultId: string, updates: Partial<PortfolioPosition>) => void
+interface PortfolioUIActions {
+  setSelectedPositionId: (id: string | null) => void
+  setTimeRange: (range: string) => void
+  setSortBy: (sort: string) => void
+  fetchPortfolio: (walletAddress: string) => Promise<PortfolioPosition[]>
+  reset: () => void
 }
 
-type PortfolioStore = PortfolioState & PortfolioActions
+export type PortfolioStore = PortfolioUIState & PortfolioUIActions
 
 export const usePortfolioStore = create<PortfolioStore>()((set) => ({
+  selectedPositionId: null,
+  timeRange: '30d',
+  sortBy: 'value',
   positions: [],
   isLoading: false,
   error: null,
+
+  setSelectedPositionId: (id) => set({ selectedPositionId: id }),
+  setTimeRange: (range) => set({ timeRange: range }),
+  setSortBy: (sort) => set({ sortBy: sort }),
 
   fetchPortfolio: async (walletAddress) => {
     set({ isLoading: true, error: null })
     try {
       const positions = await getPortfolio(walletAddress)
       set({ positions, isLoading: false })
+      return positions
     } catch (err) {
-      set({
-        isLoading: false,
-        error: formatError(err, 'Failed to fetch portfolio'),
-      })
+      const msg = err instanceof Error ? err.message : String(err)
+      set({ error: msg, isLoading: false })
+      return []
     }
   },
 
-  updatePosition: (vaultId, updates) =>
-    set((s) => ({
-      positions: s.positions.map((pos) =>
-        pos.vaultId === vaultId ? { ...pos, ...updates } : pos,
-      ),
-    })),
+  reset: () => set({ selectedPositionId: null, timeRange: '30d', sortBy: 'value', positions: [], isLoading: false, error: null }),
 }))

@@ -39,6 +39,10 @@ export interface Vault {
   tvl: number
   createdAt: string
   updatedAt: string
+  pnlPercent?: number
+  minRaiseAmount?: number
+  lockupPeriod?: number
+  investorCount?: number
 }
 
 // ── Portfolio position ──

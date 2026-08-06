@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui/table'
 import { SolscanLink } from '@/components/ui/SolscanLink'
-import { StatusBadge } from '@/components/ui/StatusBadge'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton'
 import { useWebSocketStore } from '@/stores'
 import * as tradeService from '@/services/apis/rest-api/trade.service'
 import type { ApiTrade, WsTradeConfirmedData } from '@/types'
+import { cn } from '@/lib/utils'
 
 interface VaultTradesTabProps {
   vaultId: string
@@ -27,7 +25,7 @@ export function VaultTradesTab({ vaultId }: VaultTradesTabProps) {
       .catch(() => setTrades([]))
       .finally(() => setIsLoading(false))
 
-    subscribe(vaultId)
+    subscribe(`vault:${vaultId}`)
 
     const unsub = onMessage((msg) => {
       if ((msg.type as string) === 'trade_confirmed' || msg.type === 'TRADE_EXECUTED') {
@@ -40,58 +38,56 @@ export function VaultTradesTab({ vaultId }: VaultTradesTabProps) {
 
     return () => {
       unsub()
-      unsubscribe(vaultId)
+      unsubscribe(`vault:${vaultId}`)
     }
   }, [vaultId, subscribe, unsubscribe, onMessage])
 
-  if (isLoading) return <LoadingSkeleton lines={5} />
-
-  if (trades.length === 0) {
-    return <EmptyState title="No trades yet" description="Trades will appear here once executed." />
-  }
-
   return (
-    <div className="rounded-2xl border border-border-subtle bg-bg-elevated">
+    <div className="rounded-xl border border-border-subtle bg-bg-elevated/40">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead>Asset</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>TX</TableHead>
+            <TableHead>Input</TableHead>
+            <TableHead>Output</TableHead>
+            <TableHead className="text-right">Price</TableHead>
+            <TableHead>Tx</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {trades.map((trade) => {
-            const typeColor =
-              trade.trade_type === 'Buy'
-                ? 'text-status-success'
-                : trade.trade_type === 'Sell'
-                  ? 'text-status-error'
-                  : 'text-text-primary'
-            return (
-              <TableRow key={trade.id}>
-                <TableCell>{new Date(trade.executed_at).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <span className={`font-medium ${typeColor}`}>
-                    {trade.trade_type}
-                  </span>
-                </TableCell>
-                <TableCell className="font-mono text-xs">{trade.input_token}/{trade.output_token}</TableCell>
-                <TableCell className="font-mono">{trade.amount_in.toFixed(4)}</TableCell>
-                <TableCell className="font-mono">${trade.price_at_execution.toFixed(6)}</TableCell>
-                <TableCell>
-                  <StatusBadge status="success" />
-                </TableCell>
-                <TableCell>
-                  <SolscanLink signature={trade.transaction_signature} />
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell colSpan={6}>
+                  <div className="h-5 w-full animate-pulse rounded bg-bg-inset" />
                 </TableCell>
               </TableRow>
-            )
-          })}
+            ))
+          ) : trades.length === 0 ? (
+            <TableEmpty
+              colSpan={6}
+              title="No trades recorded yet"
+              description="Trades executed on this vault will appear here in real-time"
+            />
+          ) : (
+            trades.map((t) => (
+              <TableRow key={t.id}>
+                <TableCell className="whitespace-nowrap text-text-tertiary">
+                  {new Date(t.executed_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell className={cn('font-medium', t.trade_type === 'Buy' ? 'text-status-success' : 'text-status-error')}>
+                  {t.trade_type}
+                </TableCell>
+                <TableCell className="font-mono text-xs">{t.amount_in} {t.input_token}</TableCell>
+                <TableCell className="font-mono text-xs">{t.amount_out.toFixed(4)} {t.output_token}</TableCell>
+                <TableCell className="text-right font-mono text-xs">${t.price_at_execution.toFixed(4)}</TableCell>
+                <TableCell>
+                  <SolscanLink signature={t.transaction_signature} />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

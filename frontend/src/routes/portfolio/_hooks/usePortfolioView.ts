@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
+import type { PortfolioPosition } from '@/types'
 
 type SortKey = 'value' | 'pnl' | 'name'
 
-export function usePortfolioView() {
-  const { totalPnl, totalInvested, totalValue, positions: enriched } = usePortfolioPnl()
+export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPosition[]) {
+  const { totalPnl, totalInvested, totalValue, positions: enriched } = usePortfolioPnl(walletAddressOrPositions)
 
   const [sortBy, setSortBy] = useState<SortKey>('value')
   const [sortAsc, setSortAsc] = useState(false)

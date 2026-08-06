@@ -6,10 +6,11 @@ use anchor_spl::token_interface::{
     mint_to, MintTo,
 };
 use crate::constants::*;
-use crate::instructions::initialize_vault::{VaultState, VaultStatusCode, Deposited};
+use crate::events::Deposited;
+use crate::state::{VaultState, VaultStatusCode};
 
 #[derive(Accounts)]
-pub struct DepositAccountConstraints<'info> {
+pub struct Deposit<'info> {
     #[account(mut)]
     pub investor: Signer<'info>,
 
@@ -18,6 +19,7 @@ pub struct DepositAccountConstraints<'info> {
         seeds = [VAULT_SEED, vault.manager.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.status != VaultStatusCode::Dormant @ crate::errors::VaultError::VaultLocked,
+        constraint = !vault.is_paused @ crate::errors::VaultError::VaultLocked,
     )]
     pub vault: Account<'info, VaultState>,
 
@@ -41,6 +43,7 @@ pub struct DepositAccountConstraints<'info> {
     #[account(
         constraint = deposit_mint.key() == investor_token_account.mint,
         constraint = deposit_mint.key() == vault_token_account.mint,
+        constraint = deposit_mint.key() == vault.deposit_mint @ crate::errors::VaultError::InvalidMint,
     )]
     pub deposit_mint: InterfaceAccount<'info, Mint>,
 
@@ -61,10 +64,9 @@ pub struct DepositAccountConstraints<'info> {
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<DepositAccountConstraints>, amount: u64) -> Result<()> {
+pub fn handler(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     require!(amount > 0, crate::errors::VaultError::InvalidAmount);
 
     let vault = &mut ctx.accounts.vault;
@@ -95,11 +97,8 @@ pub fn handler(ctx: Context<DepositAccountConstraints>, amount: u64) -> Result<(
         to: ctx.accounts.investor_share_account.to_account_info(),
         authority: ctx.accounts.vault_authority.to_account_info(),
     };
-    let seeds = &[
-        VAULT_AUTHORITY_SEED,
-        vault.key().as_ref(),
-        &[vault.vault_authority_bump],
-    ];
+    let vault_key = vault.key();
+    let seeds = crate::utils::get_vault_authority_seeds(&vault_key, &vault.vault_authority_bump);
     let signer_seeds = &[&seeds[..]];
     let cpi_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.key(),
@@ -117,12 +116,25 @@ pub fn handler(ctx: Context<DepositAccountConstraints>, amount: u64) -> Result<(
         .checked_add(shares_to_mint)
         .ok_or(crate::errors::VaultError::MathOverflow)?;
 
+    let nav_per_share = if vault.total_shares_minted == 0 {
+        0
+    } else {
+        ((vault.total_assets_deposited as u128)
+            .checked_mul(1_000_000_000)
+            .ok_or(crate::errors::VaultError::MathOverflow)?
+            .checked_div(vault.total_shares_minted as u128)
+            .ok_or(crate::errors::VaultError::MathOverflow)?) as u64
+    };
+
     emit!(Deposited {
         vault: vault.key(),
         investor: ctx.accounts.investor.key(),
         amount,
         shares_minted: shares_to_mint,
         token_mint: ctx.accounts.deposit_mint.key(),
+        nav_per_share,
+        total_assets_after: vault.total_assets_deposited,
+        total_shares_after: vault.total_shares_minted,
     });
 
     Ok(())

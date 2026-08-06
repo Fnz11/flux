@@ -1,11 +1,28 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useWithdraw } from '@/hooks/useWithdraw'
-import { usePortfolioStore, useVaultStore } from '@/stores'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useVaultsQuery, usePortfolioQuery } from '@/services/hooks'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
+import { Loader2 } from 'lucide-react'
+
+const withdrawSchema = z.object({
+  shareAmount: z
+    .string()
+    .min(1, 'Share amount is required')
+    .refine((val) => {
+      const num = Number(val)
+      return !isNaN(num) && num > 0
+    }, { message: 'Amount must be greater than 0' }),
+})
+
+type WithdrawFormValues = z.infer<typeof withdrawSchema>
 
 interface WithdrawModalProps {
   vaultId: string
@@ -15,30 +32,49 @@ interface WithdrawModalProps {
 
 export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
   const { execute } = useWithdraw()
-  const vault = useVaultStore((s) => s.vaults.find((v) => v.id === vaultId))
-  const position = usePortfolioStore((s) => s.positions.find((p) => p.vaultId === vaultId))
+  const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
+  const { data: vaults = [], isLoading: isVaultsLoading } = useVaultsQuery()
+  const { data: positions = [], isLoading: isPortfolioLoading } = usePortfolioQuery(walletAddress)
 
-  const [shareAmount, setShareAmount] = useState('')
+  const vault = vaults.find((v) => v.id === vaultId)
+  const position = positions.find((p) => p.vaultId === vaultId)
+
   const [signature, setSignature] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  if (!open || !position) return null
+  const form = useForm<WithdrawFormValues>({
+    resolver: zodResolver(withdrawSchema),
+    defaultValues: {
+      shareAmount: '',
+    },
+  })
 
-  const sharePercent = position.sharesOwned > 0
+  if (!open) return null
+
+  const isLoadingData = isVaultsLoading || isPortfolioLoading
+  const shareAmount = form.watch('shareAmount')
+
+  const sharePercent = position && position.sharesOwned > 0
     ? (Number(shareAmount) / position.sharesOwned) * 100
     : 0
 
-  const estimatedValue = position.sharesOwned > 0
+  const estimatedValue = position && position.sharesOwned > 0
     ? (Number(shareAmount) / position.sharesOwned) * position.currentValue
     : 0
 
-  const handleWithdraw = async () => {
-    if (!vault || !shareAmount) return
+  const handleWithdraw = async (data: WithdrawFormValues) => {
+    if (!vault || !data.shareAmount) return
+    if (position && Number(data.shareAmount) > position.sharesOwned) {
+      form.setError('shareAmount', { message: `Amount cannot exceed ${position.sharesOwned.toFixed(6)} shares` })
+      return
+    }
+
     setLoading(true)
     try {
       const sig = await execute({
         vaultAddress: vault.address,
-        shareAmount: Number(shareAmount),
+        shareAmount: Number(data.shareAmount),
         vaultId,
       })
       setSignature(sig)
@@ -50,74 +86,102 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
   }
 
   const handleClose = () => {
-    setShareAmount('')
+    form.reset()
     setSignature(null)
     onClose()
   }
 
   return (
     <Modal open={open} onOpenChange={(o) => { if (!o) handleClose() }} title="Withdraw">
-      <p className="text-sm text-text-tertiary">Available: {position.sharesOwned.toFixed(6)} shares</p>
+      {isLoadingData ? (
+        <div className="py-8 flex flex-col items-center justify-center text-text-tertiary gap-2">
+          <Loader2 className="size-6 animate-spin text-primary-coral" />
+          <p className="text-xs">Loading position details...</p>
+        </div>
+      ) : !position ? (
+        <div className="py-6 text-center text-sm text-text-tertiary">
+          No position found for this vault.
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleWithdraw)}>
+            <p className="text-sm text-text-tertiary">Available: {position.sharesOwned.toFixed(6)} shares</p>
 
-      <div className="mt-4">
-        <Label htmlFor="share-amount" className="mb-1.5 text-xs font-medium">Share Amount</Label>
-        <Input
-          id="share-amount"
-          type="number"
-          value={shareAmount}
-          onChange={(e) => setShareAmount(e.target.value)}
-          placeholder="0.00"
-          max={position.sharesOwned}
-          className="text-lg font-mono"
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShareAmount(String(position.sharesOwned))}
-          className="mt-1 h-auto p-0 text-xs text-primary-coral hover:underline"
-        >
-          Max ({position.sharesOwned.toFixed(6)})
-        </Button>
-      </div>
+            <div className="mt-4">
+              <FormField
+                control={form.control}
+                name="shareAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="mb-1.5 text-xs font-medium">Share Amount</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="share-amount"
+                        type="number"
+                        step="any"
+                        placeholder="0.00"
+                        max={position.sharesOwned}
+                        className="text-lg font-mono"
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => form.setValue('shareAmount', String(position.sharesOwned), { shouldValidate: true })}
+                      className="mt-1 h-auto p-0 text-xs text-primary-coral hover:underline"
+                    >
+                      Max ({position.sharesOwned.toFixed(6)})
+                    </Button>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-      <div className="mt-4 rounded-xl border border-border-subtle bg-bg-inset p-4 space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-text-muted">Share of vault</span>
-          <span className="text-text-primary font-medium">{sharePercent.toFixed(2)}%</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-text-muted">Estimated value</span>
-          <span className="text-text-primary font-medium">${estimatedValue.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-text-muted">Remaining shares</span>
-          <span className="text-text-primary font-medium font-mono">
-            {(position.sharesOwned - Number(shareAmount || 0)).toFixed(6)}
-          </span>
-        </div>
-      </div>
+            <div className="mt-4 rounded-xl border border-border-subtle bg-bg-inset p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-text-muted">Share of vault</span>
+                <span className="text-text-primary font-medium">{sharePercent.toFixed(2)}%</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-muted">Estimated value</span>
+                <span className="text-text-primary font-medium">${estimatedValue.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-muted">Remaining shares</span>
+                <span className="text-text-primary font-medium font-mono">
+                  {Math.max(0, position.sharesOwned - Number(shareAmount || 0)).toFixed(6)}
+                </span>
+              </div>
+            </div>
 
-      {signature && (
-        <div className="mt-4 rounded-xl border border-border-subtle bg-bg-inset p-3">
-          <SolscanLink signature={signature} />
-        </div>
+            {signature && (
+              <div className="mt-4 rounded-xl border border-border-subtle bg-bg-inset p-3">
+                <SolscanLink signature={signature} />
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+                {signature ? 'Close' : 'Cancel'}
+              </Button>
+              {!signature && (
+                <Button
+                  type="submit"
+                  variant="default"
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  {loading ? 'Withdrawing...' : 'Withdraw'}
+                </Button>
+              )}
+            </div>
+          </form>
+        </Form>
       )}
-
-      <div className="mt-6 flex gap-3">
-        <Button variant="outline" onClick={handleClose} className="flex-1">
-          {signature ? 'Close' : 'Cancel'}
-        </Button>
-        {!signature && (
-          <Button
-            variant="default"
-            onClick={handleWithdraw}
-            disabled={loading || !shareAmount || Number(shareAmount) <= 0}
-            className="flex-1"
-          >
-            {loading ? 'Withdrawing...' : 'Withdraw'}
-          </Button>
-        )}
-      </div>
     </Modal>
   )
 }
+

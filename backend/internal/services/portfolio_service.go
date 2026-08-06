@@ -8,6 +8,7 @@ import (
 	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/fbyt-clone/backend/internal/models"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -129,7 +130,7 @@ func (s *PortfolioService) loadPortfolioFromDB(ctx context.Context, userID uuid.
 
 	details := make([]domain.PortfolioDetail, 0, len(portfolios))
 	vaultIDs := make([]uuid.UUID, 0, len(portfolios))
-	tvlByVault := make(map[uuid.UUID]float64, len(portfolios))
+	tvlByVault := make(map[uuid.UUID]decimal.Decimal, len(portfolios))
 	for _, p := range portfolios {
 		details = append(details, domain.PortfolioDetail{
 			VaultID:            p.VaultID.String(),
@@ -155,27 +156,27 @@ func (s *PortfolioService) loadPortfolioFromDB(ctx context.Context, userID uuid.
 	return details, nil
 }
 
-func (s *PortfolioService) tvlByVault(ctx context.Context, vaultIDs []uuid.UUID) (map[uuid.UUID]float64, error) {
+func (s *PortfolioService) tvlByVault(ctx context.Context, vaultIDs []uuid.UUID) (map[uuid.UUID]decimal.Decimal, error) {
 	var vaults []struct {
 		ID  uuid.UUID
-		TVL float64
+		TVL decimal.Decimal
 	}
 	if err := s.DB.WithContext(ctx).Model(&models.Vault{}).
 		Select("id, tvl").Where("id IN ?", vaultIDs).Scan(&vaults).Error; err != nil {
 		return nil, err
 	}
 
-	tvl := make(map[uuid.UUID]float64, len(vaults))
+	tvl := make(map[uuid.UUID]decimal.Decimal, len(vaults))
 	for _, v := range vaults {
 		tvl[v.ID] = v.TVL
 	}
 	return tvl, nil
 }
 
-func totalSharesByVault(ctx context.Context, db *gorm.DB, vaultIDs []uuid.UUID) (map[uuid.UUID]float64, error) {
+func totalSharesByVault(ctx context.Context, db *gorm.DB, vaultIDs []uuid.UUID) (map[uuid.UUID]decimal.Decimal, error) {
 	var sums []struct {
 		VaultID uuid.UUID
-		Total   float64
+		Total   decimal.Decimal
 	}
 	if err := db.WithContext(ctx).Model(&models.Portfolio{}).
 		Select("vault_id, COALESCE(SUM(shares_owned), 0) AS total").
@@ -185,29 +186,29 @@ func totalSharesByVault(ctx context.Context, db *gorm.DB, vaultIDs []uuid.UUID) 
 		return nil, err
 	}
 
-	total := make(map[uuid.UUID]float64, len(sums))
+	total := make(map[uuid.UUID]decimal.Decimal, len(sums))
 	for _, s := range sums {
 		total[s.VaultID] = s.Total
 	}
 	return total, nil
 }
 
-func computePnL(details []domain.PortfolioDetail, totalByVault, tvlByVault map[uuid.UUID]float64) {
+func computePnL(details []domain.PortfolioDetail, totalByVault, tvlByVault map[uuid.UUID]decimal.Decimal) {
 	for i := range details {
 		vid, err := uuid.Parse(details[i].VaultID)
 		if err != nil {
 			continue
 		}
 
-		var currentValue float64
-		if total := totalByVault[vid]; total > 0 {
-			currentValue = (details[i].SharesOwned / total) * tvlByVault[vid]
+		var currentValue decimal.Decimal
+		if total := totalByVault[vid]; total.IsPositive() {
+			currentValue = details[i].SharesOwned.Div(total).Mul(tvlByVault[vid])
 		}
 
 		details[i].CurrentValue = currentValue
-		details[i].PnL = currentValue - details[i].TotalInvestedValue
-		if details[i].TotalInvestedValue > 0 {
-			details[i].PnLPercent = (details[i].PnL / details[i].TotalInvestedValue) * 100
+		details[i].PnL = currentValue.Sub(details[i].TotalInvestedValue)
+		if details[i].TotalInvestedValue.IsPositive() {
+			details[i].PnLPercent = details[i].PnL.Div(details[i].TotalInvestedValue).Mul(decimal.NewFromInt(100))
 		}
 	}
 }
@@ -223,18 +224,18 @@ func (s *PortfolioService) invalidateUser(userID uuid.UUID) {
 	}
 }
 
-func (s *PortfolioService) UpdateAfterDeposit(portfolioID uuid.UUID, additionalInvested float64, additionalShares float64) error {
+func (s *PortfolioService) UpdateAfterDeposit(portfolioID uuid.UUID, additionalInvested decimal.Decimal, additionalShares decimal.Decimal) error {
 	var portfolio models.Portfolio
 	if err := s.DB.First(&portfolio, "id = ?", portfolioID).Error; err != nil {
 		return err
 	}
 
-	newTotalInvested := portfolio.TotalInvestedValue + additionalInvested
-	newShares := portfolio.SharesOwned + additionalShares
+	newTotalInvested := portfolio.TotalInvestedValue.Add(additionalInvested)
+	newShares := portfolio.SharesOwned.Add(additionalShares)
 
-	var avgPrice float64
-	if newShares > 0 {
-		avgPrice = newTotalInvested / newShares
+	var avgPrice decimal.Decimal
+	if newShares.IsPositive() {
+		avgPrice = newTotalInvested.Div(newShares)
 	}
 
 	if err := s.DB.Model(&portfolio).Updates(map[string]interface{}{
@@ -249,19 +250,19 @@ func (s *PortfolioService) UpdateAfterDeposit(portfolioID uuid.UUID, additionalI
 	return nil
 }
 
-func (s *PortfolioService) UpdateAfterWithdraw(portfolioID uuid.UUID, withdrawnValue float64, withdrawnShares float64) error {
+func (s *PortfolioService) UpdateAfterWithdraw(portfolioID uuid.UUID, withdrawnValue decimal.Decimal, withdrawnShares decimal.Decimal) error {
 	var portfolio models.Portfolio
 	if err := s.DB.First(&portfolio, "id = ?", portfolioID).Error; err != nil {
 		return err
 	}
 
-	newShares := portfolio.SharesOwned - withdrawnShares
-	if newShares < 0 {
-		newShares = 0
+	newShares := portfolio.SharesOwned.Sub(withdrawnShares)
+	if newShares.IsNegative() {
+		newShares = decimal.Zero
 	}
-	newInvested := portfolio.TotalInvestedValue - withdrawnValue
-	if newInvested < 0 {
-		newInvested = 0
+	newInvested := portfolio.TotalInvestedValue.Sub(withdrawnValue)
+	if newInvested.IsNegative() {
+		newInvested = decimal.Zero
 	}
 
 	if err := s.DB.Model(&portfolio).Updates(map[string]interface{}{

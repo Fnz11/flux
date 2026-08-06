@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import type { Vault } from '@/types'
+import { cn } from '@/lib/utils'
 
 interface VaultInvestCardProps {
   vault: Vault
@@ -13,7 +14,7 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
   }[vault.status]
 
   return (
-    <div className="group rounded-2xl border border-border-subtle bg-bg-elevated p-6 transition-colors hover:border-border-medium hover:bg-bg-elevated/80">
+    <div className="group rounded-xl border border-border-subtle bg-bg-elevated p-6 transition-colors hover:border-border-medium hover:bg-bg-elevated/80">
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-lg font-semibold text-text-primary">
@@ -23,7 +24,7 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
             {vault.address.slice(0, 4)}...{vault.address.slice(-4)}
           </p>
         </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor} bg-bg-inset`}>
+        <span className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium bg-bg-inset', statusColor)}>
           {vault.status}
         </span>
       </div>
@@ -43,14 +44,14 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
         <Link
           to="/invest/vaults/$id"
           params={{ id: vault.id }}
-          className="flex-1 rounded-lg bg-primary-coral px-4 py-2 text-center text-sm font-medium text-black transition-opacity hover:opacity-90"
+          className="flex-1 rounded-xl bg-primary-coral px-4 py-2 text-center text-sm font-medium text-black transition-opacity hover:opacity-90"
         >
           Deposit
         </Link>
         <Link
           to="/invest/vaults/$id"
           params={{ id: vault.id }}
-          className="flex-1 rounded-lg border border-border-medium px-4 py-2 text-center text-sm font-medium text-text-primary transition-colors hover:bg-bg-inset"
+          className="flex-1 rounded-xl border border-border-medium px-4 py-2 text-center text-sm font-medium text-text-primary transition-colors hover:bg-bg-inset"
         >
           Withdraw
         </Link>
@@ -61,7 +62,7 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
 
 export function VaultInvestCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-border-subtle bg-bg-elevated p-6">
+    <div className="animate-pulse rounded-xl border border-border-subtle bg-bg-elevated p-6">
       <div className="flex items-start justify-between">
         <div className="h-5 w-36 rounded bg-bg-inset" />
         <div className="h-5 w-20 rounded-full bg-bg-inset" />
@@ -71,8 +72,8 @@ export function VaultInvestCardSkeleton() {
         <div className="h-4 w-20 rounded bg-bg-inset" />
       </div>
       <div className="mt-4 flex gap-2">
-        <div className="h-10 flex-1 rounded-lg bg-bg-inset" />
-        <div className="h-10 flex-1 rounded-lg bg-bg-inset" />
+        <div className="h-10 flex-1 rounded-xl bg-bg-inset" />
+        <div className="h-10 flex-1 rounded-xl bg-bg-inset" />
       </div>
     </div>
   )

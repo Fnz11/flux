@@ -20,3 +20,5 @@ frontend/.output
 frontend/.vinxi
 frontend/__unconfig*
 frontend/todos.json
+test-ledger
+/backend/.env

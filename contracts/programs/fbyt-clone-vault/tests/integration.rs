@@ -1,30 +1,17 @@
-use litesvm::LiteSVM;
+mod common;
+
+use common::*;
 use solana_keypair::Keypair;
-use solana_pubkey::{pubkey, Pubkey};
+use solana_pubkey::Pubkey;
 use solana_signer::Signer;
-use solana_message::Message;
 use solana_transaction::Transaction;
+use solana_message::Message;
 use solana_instruction::{AccountMeta, Instruction};
-use anchor_lang::solana_program::rent;
 use anchor_lang::InstructionData;
-
-const TOKEN_PROGRAM_ID: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
-
-fn setup_svm() -> (LiteSVM, Keypair, Pubkey) {
-    let mut svm = LiteSVM::new();
-    let payer = Keypair::new();
-    svm.airdrop(&payer.pubkey(), 1_000_000_000_000).unwrap();
-
-    let program_id = fbyt_clone_vault::ID;
-    let program_bytes = include_bytes!("../../../target/deploy/fbyt_clone_vault.so");
-    svm.add_program(&program_id, program_bytes).unwrap();
-
-    (svm, payer, program_id)
-}
 
 #[test]
 fn test_program_deployed() {
-    let (mut svm, _payer, program_id) = setup_svm();
+    let (svm, _payer, program_id) = setup_svm();
     let account = svm.get_account(&program_id).unwrap();
     assert!(account.executable);
 }
@@ -45,6 +32,7 @@ fn test_initialize_vault_basic() {
         &program_id,
     );
 
+    let deposit_mint = Keypair::new();
     let share_token_mint = Keypair::new();
 
     let ix = fbyt_clone_vault::instruction::InitializeVault {
@@ -52,16 +40,17 @@ fn test_initialize_vault_basic() {
         performance_fee_bps: 500,
         management_fee_bps: 200,
         lockup_period: 0,
+        allowed_output_mints: [Pubkey::default(); 4],
     };
 
     let accounts = vec![
         AccountMeta::new(manager.pubkey(), true),
         AccountMeta::new(vault_pda, false),
+        AccountMeta::new_readonly(deposit_mint.pubkey(), false),
         AccountMeta::new(share_token_mint.pubkey(), false),
         AccountMeta::new_readonly(vault_authority_pda, false),
         AccountMeta::new_readonly(solana_system_interface::program::ID, false),
         AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
-        AccountMeta::new_readonly(rent::ID, false),
     ];
 
     let tx = Transaction::new(

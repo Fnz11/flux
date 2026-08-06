@@ -13,7 +13,7 @@ const SelectTrigger = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
-    className={cn('flex h-10 w-full items-center justify-between rounded-lg border border-border-medium bg-bg-inset px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-coral disabled:cursor-not-allowed disabled:opacity-50', className)}
+    className={cn('flex h-10 w-full items-center justify-between rounded-xl border border-border-medium bg-bg-inset px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-coral disabled:cursor-not-allowed disabled:opacity-50', className)}
     {...props}
   >
     {children}
@@ -31,7 +31,7 @@ const SelectContent = React.forwardRef<
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
-      className={cn('relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-lg border border-border-medium bg-bg-elevated text-text-primary shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out', className)}
+      className={cn('relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-border-medium bg-bg-elevated text-text-primary shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out', className)}
       position={position}
       {...props}
     >
@@ -47,7 +47,7 @@ const SelectItem = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
-    className={cn('relative flex w-full cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-bg-inset focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50', className)}
+    className={cn('relative flex w-full cursor-default select-none items-center rounded-xl py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-bg-inset focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50', className)}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">

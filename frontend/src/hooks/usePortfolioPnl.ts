@@ -1,11 +1,21 @@
 import { useMemo } from 'react'
-import { usePortfolioStore } from '@/stores'
+import { usePortfolioQuery } from '@/services/hooks/useQuery/usePortfolioQuery'
+import type { PortfolioPosition } from '@/types'
 
-export function usePortfolioPnl() {
-  const positions = usePortfolioStore((s) => s.positions)
+export function usePortfolioPnl(walletAddressOrPositions?: string | PortfolioPosition[]) {
+  const isString = typeof walletAddressOrPositions === 'string'
+  const walletAddress = isString ? walletAddressOrPositions : ''
+  const { data: queriedPositions = [] } = usePortfolioQuery(walletAddress)
+
+  const positions = useMemo(() => {
+    if (Array.isArray(walletAddressOrPositions)) {
+      return walletAddressOrPositions
+    }
+    return queriedPositions
+  }, [walletAddressOrPositions, queriedPositions])
 
   return useMemo(() => {
-    if (!positions.length) {
+    if (!positions || !positions.length) {
       return {
         totalInvested: 0,
         totalValue: 0,

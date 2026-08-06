@@ -11,6 +11,7 @@ import (
 	"github.com/fbyt-clone/backend/internal/domain"
 	gdriver "github.com/glebarez/go-sqlite"
 	"github.com/glebarez/sqlite"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -126,15 +127,15 @@ func TestGetOHLCV(t *testing.T) {
 		}
 
 		want := []domain.OHLCVPoint{
-			{Bucket: time.Date(2026, 7, 31, 10, 0, 0, 0, time.UTC), Open: 100, High: 110, Low: 100, Close: 110, Volume: 30},
-			{Bucket: time.Date(2026, 7, 31, 11, 0, 0, 0, time.UTC), Open: 90, High: 105, Low: 90, Close: 105, Volume: 70},
+			{Bucket: time.Date(2026, 7, 31, 10, 0, 0, 0, time.UTC), Open: decimal.NewFromInt(100), High: decimal.NewFromInt(110), Low: decimal.NewFromInt(100), Close: decimal.NewFromInt(110), Volume: decimal.NewFromInt(30)},
+			{Bucket: time.Date(2026, 7, 31, 11, 0, 0, 0, time.UTC), Open: decimal.NewFromInt(90), High: decimal.NewFromInt(105), Low: decimal.NewFromInt(90), Close: decimal.NewFromInt(105), Volume: decimal.NewFromInt(70)},
 		}
 		for i, w := range want {
 			if !points[i].Bucket.Equal(w.Bucket) {
 				t.Errorf("points[%d].Bucket = %v, want %v", i, points[i].Bucket, w.Bucket)
 			}
-			if points[i].Open != w.Open || points[i].High != w.High ||
-				points[i].Low != w.Low || points[i].Close != w.Close || points[i].Volume != w.Volume {
+			if !points[i].Open.Equal(w.Open) || !points[i].High.Equal(w.High) ||
+				!points[i].Low.Equal(w.Low) || !points[i].Close.Equal(w.Close) || !points[i].Volume.Equal(w.Volume) {
 				t.Errorf("points[%d] = %+v, want %+v", i, points[i], w)
 			}
 		}
@@ -148,7 +149,7 @@ func TestGetOHLCV(t *testing.T) {
 		if len(points) != 4 {
 			t.Fatalf("got %d points, want 4: %+v", len(points), points)
 		}
-		if points[0].Open != 100 || points[1].Open != 110 || points[2].Open != 90 || points[3].Open != 105 {
+		if !points[0].Open.Equal(decimal.NewFromInt(100)) || !points[1].Open.Equal(decimal.NewFromInt(110)) || !points[2].Open.Equal(decimal.NewFromInt(90)) || !points[3].Open.Equal(decimal.NewFromInt(105)) {
 			t.Errorf("unexpected points: %+v", points)
 		}
 	})

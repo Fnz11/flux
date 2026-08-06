@@ -73,12 +73,21 @@ src/ (or app/)
   * `/services/apis/graphql/`: Contains GraphQL documents, operations, and clients.
 * **Rule:** Never mix raw API query execution directly inside UI presentation components. Always abstract them into service files.
 
-### C. Data Fetching Strategy (SSR-First & Query Hooks)
+### C. Data Fetching Strategy (TanStack Query Hooks & Store Integration)
 
-* **Primary Approach:** We strongly favor **Server-Side Rendering (SSR)** and server-side data fetching for initial page loads to optimize SEO, security, and initial load performance.
-* **Secondary Approach (`services/hooks/`):**
-  * The `/services/hooks/` directory contains global React Query wrappers (`useQuery` and `useMutation`).
-  * Use these hooks only when client-side data fetching, background refetching, optimistic updates, or interactive mutations are explicitly required.
+* **Data Fetching Layer (`services/hooks/`):**
+  * The `/services/hooks/` directory contains global TanStack Query wrappers (`useQuery` and `useMutation`).
+  * `useQuery` hooks consume protocol services (`/services/apis/rest-api/`) for caching, refetching, and background updates.
+  * `useMutation` hooks handle data mutations and automatically invalidate query keys.
+* **Global State Management:**
+  * Zustand stores (`useAppStore`, `useVaultStore`, `usePortfolioStore`, etc.) manage local UI state, user mode session, and real-time updates (WebSocket).
+
+### D. Route Protection & Mode-Aware Navigation
+
+* **Manager vs Investor Modes:**
+  * Application supports dual operating modes: `Manager` and `Invest`.
+  * Manager-only routes (e.g. `/trade`) are protected using route guards (`beforeLoad` in TanStack Router) and reactive component redirects.
+  * If an investor user attempts to navigate to `/trade`, they are automatically redirected to `/invest`.
 
 ---
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
+import { cn } from '@/lib/utils'
 
 export function PnLTicker() {
   const { totalPnl } = usePortfolioPnl()
@@ -26,9 +27,9 @@ export function PnLTicker() {
     : ''
 
   return (
-    <div className={`rounded-2xl border border-border-subtle bg-bg-elevated p-5 transition-colors duration-300 ${flashBg}`}>
+    <div className={cn('rounded-xl border border-border-subtle bg-bg-elevated p-5 transition-colors duration-300', flashBg)}>
       <p className="text-xs font-medium uppercase tracking-wider text-text-muted">Real-Time PnL</p>
-      <p className={`mt-1.5 text-3xl font-semibold tracking-tight ${totalPnl >= 0 ? 'text-status-success' : 'text-status-error'}`}>
+      <p className={cn('mt-1.5 text-3xl font-semibold tracking-tight', totalPnl >= 0 ? 'text-status-success' : 'text-status-error')}>
         {totalPnl >= 0 ? '+' : ''}${totalPnl.toLocaleString()}
       </p>
     </div>

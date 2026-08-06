@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import {
   AreaChart,
   Area,
@@ -12,10 +13,16 @@ interface PerformanceChartInnerProps {
   data: { date: string; value: number }[]
 }
 
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{ value: number }>
+  label?: string
+}
+
+function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
+  if (!active || !payload?.length || payload[0]?.value === undefined) return null
   return (
-    <div className="rounded-lg border border-border-subtle bg-bg-elevated p-3 shadow-xl">
+    <div className="rounded-xl border border-border-subtle bg-bg-elevated p-3 shadow-xl">
       <p className="text-xs text-text-muted">{label}</p>
       <p className="text-sm font-semibold text-text-primary font-mono">
         ${payload[0].value.toLocaleString()}
@@ -24,7 +31,7 @@ function CustomTooltip({ active, payload, label }: any) {
   )
 }
 
-export function PerformanceChartInner({ data }: PerformanceChartInnerProps) {
+export const PerformanceChartInner = memo(function PerformanceChartInner({ data }: PerformanceChartInnerProps) {
   return (
     <div className="h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -60,4 +67,4 @@ export function PerformanceChartInner({ data }: PerformanceChartInnerProps) {
       </ResponsiveContainer>
     </div>
   )
-}
+})

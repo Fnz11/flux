@@ -25,7 +25,7 @@ export function Tooltip({ children, content, side = 'top', align = 'center' }: T
         side={side}
         align={align}
         sideOffset={4}
-        className="z-[100] max-w-xs rounded-md border border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs text-text-secondary shadow-lg"
+        className="z-[100] max-w-xs rounded-xl border border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs text-text-secondary shadow-lg"
       >
         {content}
         <Arrow className="fill-bg-elevated" />

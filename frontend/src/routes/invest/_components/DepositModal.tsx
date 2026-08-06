@@ -1,10 +1,25 @@
-import { useVaultStore } from '@/stores'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useDepositModal, TOKENS } from '../_hooks/useDepositModal'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
+
+const depositSchema = z.object({
+  amount: z
+    .string()
+    .min(1, 'Amount is required')
+    .refine((val) => {
+      const num = Number(val)
+      return !isNaN(num) && num > 0
+    }, { message: 'Amount must be greater than 0' }),
+})
+
+type DepositFormValues = z.infer<typeof depositSchema>
 
 interface DepositModalProps {
   vaultId: string
@@ -13,64 +28,99 @@ interface DepositModalProps {
 }
 
 export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
-  const { step, selectedToken, amount, signature, loading, handleConfirm, handleClose, setStep, setSelectedToken, setAmount } = useDepositModal(vaultId)
-  const vaultStore = useVaultStore((s) => s.vaults.find((v) => v.id === vaultId))
+  const { step, selectedToken, signature, loading, handleConfirm, handleClose, setStep, setSelectedToken, setAmount } = useDepositModal(vaultId)
+  const { data: vaults = [] } = useVaultsQuery()
+  const vaultStore = vaults.find((v) => v.id === vaultId)
 
-  const estimatedShares = Number(amount) * (vaultStore?.tvl ? 1 + vaultStore.tvl / 1e6 : 1) || 0
+  const form = useForm<DepositFormValues>({
+    resolver: zodResolver(depositSchema),
+    defaultValues: {
+      amount: '',
+    },
+  })
+
+  const amountWatch = form.watch('amount')
+  const estimatedShares = Number(amountWatch) * (vaultStore?.tvl ? 1 + vaultStore.tvl / 1e6 : 1) || 0
+
+  const resetModalState = () => {
+    form.reset()
+    handleClose()
+    onClose()
+  }
+
+  const onNextStep = form.handleSubmit((data) => {
+    setAmount(data.amount)
+    setStep(1)
+  })
+
+  const onConfirm = () => {
+    handleConfirm()
+  }
 
   return (
     <Modal
       open={open}
-      onOpenChange={(o) => { if (!o) { handleClose(); onClose() }}}
+      onOpenChange={(o) => { if (!o) resetModalState() }}
       title={step === 0 ? 'Deposit' : step === 1 ? 'Confirm Deposit' : 'Deposit Complete'}
     >
       {step === 0 && (
-        <>
-          <p className="text-sm text-text-tertiary">Select token and amount</p>
+        <Form {...form}>
+          <form onSubmit={onNextStep}>
+            <p className="text-sm text-text-tertiary">Select token and amount</p>
 
-          <div className="mt-4 space-y-3">
-            <div>
-              <p className="mb-1.5 text-xs font-medium text-text-muted">Token</p>
-              <div className="flex gap-2">
-                {TOKENS.map((t) => (
-                  <Button
-                    key={t.mint}
-                    variant={selectedToken.mint === t.mint ? 'default' : 'outline'}
-                    onClick={() => setSelectedToken(t)}
-                  >
-                    {t.symbol}
-                  </Button>
-                ))}
+            <div className="mt-4 space-y-3">
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-text-muted">Token</p>
+                <div className="flex gap-2">
+                  {TOKENS.map((t) => (
+                    <Button
+                      key={t.mint}
+                      type="button"
+                      variant={selectedToken.mint === t.mint ? 'default' : 'outline'}
+                      onClick={() => setSelectedToken(t)}
+                    >
+                      {t.symbol}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="deposit-amount" className="mb-1.5 text-xs font-medium">Amount</Label>
-              <Input
-                id="deposit-amount"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="text-lg font-mono"
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="mb-1.5 text-xs font-medium">Amount</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="deposit-amount"
+                        type="number"
+                        step="any"
+                        placeholder="0.00"
+                        className="text-lg font-mono"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-          </div>
 
-          <div className="mt-6 flex gap-3">
-            <Button variant="outline" onClick={() => { handleClose(); onClose() }} className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => setStep(1)}
-              disabled={!amount || Number(amount) <= 0}
-              className="flex-1"
-            >
-              Next
-            </Button>
-          </div>
-        </>
+            <div className="mt-6 flex gap-3">
+              <Button type="button" variant="outline" onClick={resetModalState} className="flex-1">
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="default"
+                className="flex-1"
+              >
+                Next
+              </Button>
+            </div>
+          </form>
+        </Form>
       )}
 
       {step === 1 && (
@@ -82,7 +132,7 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
               {estimatedShares.toFixed(6)}
             </p>
             <p className="mt-1 text-center text-sm text-text-muted">
-              share tokens for {amount} {selectedToken.symbol}
+              share tokens for {amountWatch} {selectedToken.symbol}
             </p>
           </div>
 
@@ -92,7 +142,7 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
             </Button>
             <Button
               variant="default"
-              onClick={handleConfirm}
+              onClick={onConfirm}
               disabled={loading}
               className="flex-1"
             >
@@ -112,7 +162,7 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
 
           <Button
             variant="default"
-            onClick={() => { handleClose(); onClose() }}
+            onClick={resetModalState}
             className="mt-6 w-full"
           >
             Done

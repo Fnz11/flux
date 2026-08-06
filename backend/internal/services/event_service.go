@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fbyt-clone/backend/internal/ws"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -39,7 +40,7 @@ func (s *EventService) DispatchVaultUpdate(vaultID string) {
 	s.hub.BroadcastToChannel("vault:"+vaultID, msg)
 }
 
-func (s *EventService) DispatchPortfolioUpdate(walletAddress string, vaultID string, pnl float64) {
+func (s *EventService) DispatchPortfolioUpdate(walletAddress string, vaultID string, pnl decimal.Decimal) {
 	msg, _ := json.Marshal(map[string]interface{}{
 		"type": "portfolio_update",
 		"data": map[string]interface{}{

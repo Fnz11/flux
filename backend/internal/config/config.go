@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"github.com/shopspring/decimal"
 )
 
 type Config struct {
@@ -12,10 +13,11 @@ type Config struct {
 	ServerPort           int
 	JWTSecret            string
 	EnablePprof          bool
-	DustThreshold        float64
+	DustThreshold        decimal.Decimal
 	FocusAssetsWhitelist []string
 	SSLMode              string
 	SolanaRPCURL         string
+	SolanaProgramID      string
 }
 
 func Load() (*Config, error) {
@@ -39,9 +41,14 @@ func Load() (*Config, error) {
 		dsn += fmt.Sprintf(" sslmode=%s", sslMode)
 	}
 
-	dust := 0.001
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if len(jwtSecret) < 32 {
+		return nil, fmt.Errorf("JWT_SECRET environment variable must be at least 32 bytes long, got %d bytes", len(jwtSecret))
+	}
+
+	dust := decimal.NewFromFloat(0.001)
 	if d := os.Getenv("DUST_THRESHOLD"); d != "" {
-		if v, err := strconv.ParseFloat(d, 64); err == nil {
+		if v, err := decimal.NewFromString(d); err == nil {
 			dust = v
 		}
 	}
@@ -58,14 +65,17 @@ func Load() (*Config, error) {
 		solanaURL = "https://api.mainnet-beta.solana.com"
 	}
 
+	solanaProgramID := os.Getenv("SOLANA_PROGRAM_ID")
+
 	return &Config{
 		DatabaseURL:          dsn,
 		ServerPort:           port,
-		JWTSecret:            os.Getenv("JWT_SECRET"),
+		JWTSecret:            jwtSecret,
 		EnablePprof:          os.Getenv("ENABLE_PPROF") == "true",
 		DustThreshold:        dust,
 		FocusAssetsWhitelist: whitelist,
 		SSLMode:              sslMode,
 		SolanaRPCURL:         solanaURL,
+		SolanaProgramID:      solanaProgramID,
 	}, nil
 }

@@ -1,0 +1,119 @@
+# FBYT-Clone Full Stack Local Development
+#
+# Start everything:
+#   docker compose up -d
+#
+# Includes:
+# - Frontend (Vite)
+# - Contracts (Solana Localnet Validator)
+# - Backend Infrastructure (TimescaleDB, PgBouncer, Redis)
+
+services:
+  # ---------------------------------------------------------
+  # FRONTEND
+  # ---------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    container_name: fbyt-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Prevents local node_modules from overwriting container's
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+
+  # ---------------------------------------------------------
+  # CONTRACTS / BLOCKCHAIN
+  # ---------------------------------------------------------
+  contracts:
+    build:
+      context: ./contracts
+    container_name: fbyt-contracts
+    ports:
+      - "8899:8899" # Solana RPC port
+      - "8900:8900" # Solana PubSub port
+    restart: unless-stopped
+
+  # ---------------------------------------------------------
+  # BACKEND INFRASTRUCTURE
+  # ---------------------------------------------------------
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: fbyt-timescaledb
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-fbyt}
+      TIMESCALEDB_TELEMETRY: "off"
+    command:
+      - "postgres"
+      - "-c"
+      - "timescaledb.license=timescale"
+      - "-c"
+      - "max_connections=200"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./backend/deploy/timescaledb/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fbyt}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: fbyt-pgbouncer
+    restart: unless-stopped
+    ports:
+      - "6432:6432"
+    environment:
+      DB_HOST: timescaledb
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB:-fbyt}
+      LISTEN_PORT: "6432"
+      POOL_MODE: transaction
+      AUTH_TYPE: scram-sha-256
+      MAX_CLIENT_CONN: "1000"
+      DEFAULT_POOL_SIZE: "20"
+    volumes:
+      - ./backend/deploy/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./backend/deploy/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "6432", "-U", "${POSTGRES_USER:-postgres}", "-d", "${POSTGRES_DB:-fbyt}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: fbyt-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - ./backend/deploy/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  timescaledb_data:
+  redis_data:

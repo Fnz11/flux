@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Check, ChevronDown, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface TokenMeta {
   symbol: string
@@ -72,7 +73,7 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
           />
           <span className="font-medium">{selectedMeta.symbol}</span>
         </span>
-        <ChevronDown className={`size-4 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={cn('size-4 text-text-muted transition-transform', open && 'rotate-180')} />
       </Button>
 
       {open && (
@@ -114,7 +115,7 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
                     <Button
                       key={token}
                       variant="ghost"
-                      className={`w-full justify-start gap-2 ${isSelected ? 'bg-primary-coral/10 text-primary-coral' : ''}`}
+                      className={cn('w-full justify-start gap-2', isSelected && 'bg-primary-coral/10 text-primary-coral')}
                       onClick={() => {
                         onSelect(token)
                         handleClose()

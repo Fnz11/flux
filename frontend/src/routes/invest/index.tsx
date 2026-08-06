@@ -1,17 +1,21 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useVaultStore } from '@/stores'
+import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
 import { StatCard } from '@/components/ui/stat-card'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableEmpty } from '@/components/ui/table'
+import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { VaultInvestCard, VaultInvestCardSkeleton } from './_components/VaultInvestCard'
+import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 export const Route = createFileRoute('/invest/')({ component: InvestPage })
 
 function InvestPage() {
+  useRouteWsChannel(['vaults'])
   const wallet = useWallet()
-  const vaults = useVaultStore((s) => s.vaults)
-  const vaultsLoading = useVaultStore((s) => s.isLoading)
-  const { totalInvested, totalValue, totalPnl } = usePortfolioPnl()
+  const { data: vaults = [], isLoading: vaultsLoading } = useVaultsQuery()
+  const { totalInvested, totalValue, totalPnl } = usePortfolioPnl(wallet.publicKey?.toBase58())
 
   const topVaults = vaults.slice(0, 6)
   const pnlAccent = totalPnl >= 0 ? 'green' : 'red'
@@ -19,23 +23,21 @@ function InvestPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Invest</h1>
-          <p className="mt-2 text-text-secondary">Browse vaults and deposit funds.</p>
-        </div>
-
-        {!wallet.publicKey && (
-          <div className="rounded-lg bg-bg-inset px-4 py-2 text-sm text-text-muted">
-            Connect wallet to invest
-          </div>
-        )}
-        {wallet.publicKey && (
-          <div className="rounded-lg bg-bg-inset px-4 py-2 text-sm font-mono text-text-secondary">
-            {wallet.publicKey.toBase58().slice(0, 4)}...{wallet.publicKey.toBase58().slice(-4)}
-          </div>
-        )}
-      </div>
+      <PageHeader 
+        title="Invest"
+        subtitle="Browse vaults and deposit funds."
+        action={
+          wallet.publicKey ? (
+            <div className="rounded-lg bg-bg-inset px-4 py-2 text-sm font-mono text-text-secondary border border-border-subtle/50">
+              {wallet.publicKey.toBase58().slice(0, 4)}...{wallet.publicKey.toBase58().slice(-4)}
+            </div>
+          ) : (
+            <div className="rounded-lg bg-bg-inset px-4 py-2 text-sm text-text-muted border border-border-subtle/50">
+              Connect wallet to invest
+            </div>
+          )
+        }
+      />
 
       {wallet.publicKey && (
         <div className="grid grid-cols-3 gap-4">
@@ -45,7 +47,7 @@ function InvestPage() {
         </div>
       )}
 
-      <div>
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-text-primary">Top Vaults</h2>
           <Link
@@ -56,23 +58,46 @@ function InvestPage() {
           </Link>
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {vaultsLoading
-            ? Array.from({ length: 6 }).map((_, i) => <VaultInvestCardSkeleton key={i} />)
-            : topVaults.length > 0
-              ? topVaults.map((vault) => <VaultInvestCard key={vault.id} vault={vault} />)
-              : (
-                <div className="col-span-full rounded-2xl border border-border-subtle bg-bg-elevated p-12 text-center">
-                  <p className="text-text-tertiary">No vaults available for investment yet.</p>
-                </div>
-              )}
-        </div>
+        {vaultsLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => <VaultInvestCardSkeleton key={i} />)}
+          </div>
+        ) : topVaults.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {topVaults.map((vault) => <VaultInvestCard key={vault.id} vault={vault} />)}
+          </div>
+        ) : (
+          <EmptyVaultsTable
+            title="No vaults available for investment yet"
+            description="Vaults created by managers will appear here"
+            headers={['Vault', 'Focus Assets', 'TVL', 'Perf. Fee', 'Status']}
+          />
+        )}
       </div>
 
       {wallet.publicKey && (
-        <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-5">
-          <h2 className="text-base font-semibold text-text-primary">Recent Activity</h2>
-          <p className="mt-4 text-sm text-text-muted">No recent activity</p>
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-text-primary">Recent Activity</h2>
+          <div className="rounded-xl border border-border-subtle bg-bg-elevated/60 backdrop-blur-2xl p-0 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Timestamp</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Vault</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Tx</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableEmpty
+                  colSpan={5}
+                  title="No recent activity recorded"
+                  description="Deposits, withdrawals, and vault transactions will be logged here"
+                />
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </div>

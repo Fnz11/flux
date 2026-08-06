@@ -1,4 +1,34 @@
-import { type Connection, type Transaction, type TransactionSignature } from '@solana/web3.js'
+import {
+  ComputeBudgetProgram,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+  type Connection,
+  type TransactionSignature,
+} from '@solana/web3.js'
+import {
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddressSync,
+  createSyncNativeInstruction,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+} from '@solana/spl-token'
+
+export function buildTransactionWithComputeBudget(
+  instructions: TransactionInstruction[] = [],
+  microLamports: number = 1000,
+  units: number = 200000,
+): Transaction {
+  const tx = new Transaction()
+  tx.add(
+    ComputeBudgetProgram.setComputeUnitPrice({ microLamports }),
+    ComputeBudgetProgram.setComputeUnitLimit({ units }),
+  )
+  for (const ix of instructions) {
+    tx.add(ix)
+  }
+  return tx
+}
 
 export async function sendTransaction(
   connection: Connection,
@@ -11,3 +41,12 @@ export async function sendTransaction(
   const signed = await signer.signTransaction(tx)
   return connection.sendRawTransaction(signed.serialize())
 }
+
+export {
+  createAssociatedTokenAccountInstruction,
+  getAssociatedTokenAddressSync,
+  createSyncNativeInstruction,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+}
+

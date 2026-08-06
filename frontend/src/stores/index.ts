@@ -4,3 +4,5 @@ export { useConfigStore } from './config-store'
 export { useVaultStore } from './vault-store'
 export { usePortfolioStore } from './portfolio-store'
 export { useWebSocketStore } from './websocket-store'
+export { useToastStore } from './toast-store'
+

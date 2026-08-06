@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { PortfolioPosition } from '@/types'
 import { AddressPill } from '@/components/ui/AddressPill'
+import { cn } from '@/lib/utils'
 
 interface PositionCardProps {
   position: PortfolioPosition & { shareOfPortfolio?: number }
@@ -10,7 +11,7 @@ export function PositionCard({ position }: PositionCardProps) {
   const pnlColor = position.pnl >= 0 ? 'text-status-success' : 'text-status-error'
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-5 transition-colors hover:border-border-medium">
+    <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 transition-colors hover:border-border-medium">
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -31,7 +32,7 @@ export function PositionCard({ position }: PositionCardProps) {
         </div>
         <div>
           <p className="text-xs text-text-muted">PnL</p>
-          <p className={`text-sm font-semibold ${pnlColor}`}>
+          <p className={cn('text-sm font-semibold', pnlColor)}>
             ${position.pnl.toLocaleString()} ({position.pnlPercent.toFixed(2)}%)
           </p>
         </div>
@@ -53,7 +54,7 @@ export function PositionCard({ position }: PositionCardProps) {
       <Link
         to="/invest/vaults/$id"
         params={{ id: position.vaultId }}
-        className="mt-4 block rounded-lg border border-border-medium px-3 py-2 text-center text-xs font-medium text-text-tertiary transition-colors hover:border-primary-coral hover:text-primary-coral"
+        className="mt-4 block rounded-xl border border-border-medium px-3 py-2 text-center text-xs font-medium text-text-tertiary transition-colors hover:border-primary-coral hover:text-primary-coral"
       >
         View Details →
       </Link>

@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	gorillawebsocket "github.com/gorilla/websocket"
@@ -16,10 +17,11 @@ const (
 )
 
 type Client struct {
-	hub  *Hub
-	conn *gorillawebsocket.Conn
-	send chan []byte
-	user string
+	hub           *Hub
+	conn          *gorillawebsocket.Conn
+	send          chan []byte
+	user          string
+	walletAddress string
 }
 
 type inboundMessage struct {
@@ -33,12 +35,32 @@ type outboundMessage struct {
 	Timestamp int64       `json:"timestamp"`
 }
 
-func NewClient(hub *Hub, conn *gorillawebsocket.Conn) *Client {
-	return &Client{
-		hub:  hub,
-		conn: conn,
-		send: make(chan []byte, 256),
+func NewClient(hub *Hub, conn *gorillawebsocket.Conn, walletAddress ...string) *Client {
+	addr := ""
+	if len(walletAddress) > 0 {
+		addr = walletAddress[0]
 	}
+	return &Client{
+		hub:           hub,
+		conn:          conn,
+		send:          make(chan []byte, 256),
+		user:          addr,
+		walletAddress: addr,
+	}
+}
+
+func (c *Client) WalletAddress() string {
+	return c.walletAddress
+}
+
+func (c *Client) canSubscribe(channel string) bool {
+	for _, prefix := range []string{"portfolio:", "user:", "wallet:"} {
+		if strings.HasPrefix(channel, prefix) {
+			target := strings.TrimPrefix(channel, prefix)
+			return c.walletAddress != "" && strings.EqualFold(target, c.walletAddress)
+		}
+	}
+	return true
 }
 
 func (c *Client) ReadPump() {
@@ -71,7 +93,19 @@ func (c *Client) ReadPump() {
 		switch msg.Type {
 		case "subscribe":
 			if msg.Channel != "" {
-				c.hub.Subscribe(c, msg.Channel)
+				if c.canSubscribe(msg.Channel) {
+					c.hub.Subscribe(c, msg.Channel)
+				} else {
+					errResp, _ := json.Marshal(outboundMessage{
+						Type:      "error",
+						Data:      "unauthorized subscription channel",
+						Timestamp: time.Now().Unix(),
+					})
+					select {
+					case c.send <- errResp:
+					default:
+					}
+				}
 			}
 		case "unsubscribe":
 			if msg.Channel != "" {

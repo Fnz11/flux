@@ -22,9 +22,10 @@ anchor-spl = { version = "1.0.2", features = ["idl-build"] }
 # and 0.6.1 caps bytemuck_derive at <=1.8.1, which anchor-spl 1.0.2's bytemuck 1.23+ cannot satisfy.
 # 2.0.0 keeps the same price_update API and targets anchor-lang 1.0.2.
 pyth-solana-receiver-sdk = "2.0.0"
+solana-security-txt = "1.1.1"
 
 [dev-dependencies]
-litesvm = { version = "0.15" }
+litesvm = "=0.15.2"
 borsh = "1.6.1"
 spl-token = "7"
 spl-associated-token-account = "6"
@@ -38,6 +39,7 @@ solana-message = "4.2.4"
 solana-transaction = "4.1.5"
 solana-instruction = "3.4.0"
 solana-system-interface = "3.2.0"
+wincode = "=0.5.5"
 
 [profile.release]
 opt-level = 3

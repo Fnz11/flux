@@ -1,28 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useVaultStore, usePortfolioStore, useTransactionStore } from '@/stores'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useTransactionStore } from '@/stores'
+import { useVaultDetailQuery, usePortfolioQuery } from '@/services/hooks'
 import { Button } from '@/components/ui/button'
 import { VaultStats, VaultStatsSkeleton } from '../../_components/VaultStats'
 import { DepositModal } from '../../_components/DepositModal'
 import { WithdrawModal } from '../../_components/WithdrawModal'
 import { AddressPill } from '@/components/ui/AddressPill'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/invest/vaults/$id/')({ component: VaultInvestDetailPage })
 
 function VaultInvestDetailPage() {
   const { id } = Route.useParams()
-  const vault = useVaultStore((s) => s.vaults.find((v) => v.id === id))
-  const isLoading = useVaultStore((s) => s.isLoading)
-  const fetchVaultById = useVaultStore((s) => s.fetchVaultById)
-  const position = usePortfolioStore((s) => s.positions.find((p) => p.vaultId === id))
+  const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
+
+  const { data: vault, isLoading } = useVaultDetailQuery(id)
+  const { data: positions = [] } = usePortfolioQuery(walletAddress)
+  const position = positions.find((p) => p.vaultId === id)
   const trades = useTransactionStore((s) => s.history.filter((t) => t.vaultId === id))
 
   const [depositOpen, setDepositOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
-
-  useEffect(() => {
-    fetchVaultById(id)
-  }, [id, fetchVaultById])
 
   if (isLoading || !vault) {
     return (
@@ -64,7 +65,7 @@ function VaultInvestDetailPage() {
       <VaultStats vault={vault} />
 
       {position && (
-        <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-5">
+        <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5">
           <h2 className="text-base font-semibold text-text-primary">Your Position</h2>
           <div className="mt-3 grid grid-cols-3 gap-4">
             <div>
@@ -77,7 +78,7 @@ function VaultInvestDetailPage() {
             </div>
             <div>
               <p className="text-xs text-text-muted">Value</p>
-              <p className={`text-lg font-semibold ${position.pnl >= 0 ? 'text-status-success' : 'text-status-error'}`}>
+              <p className={cn('text-lg font-semibold', position.currentValue >= position.totalInvested ? 'text-status-success' : 'text-status-error')}>
                 ${position.currentValue.toLocaleString()}
               </p>
             </div>
@@ -85,7 +86,7 @@ function VaultInvestDetailPage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-5">
+      <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5">
         <h2 className="text-base font-semibold text-text-primary">Focus Assets</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {vault.metadata.focusAssets?.length ? (
@@ -100,14 +101,14 @@ function VaultInvestDetailPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-5">
+      <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5">
         <h2 className="text-base font-semibold text-text-primary">Recent Activity</h2>
         {trades.length === 0 ? (
           <p className="mt-4 text-sm text-text-muted">No recent activity</p>
         ) : (
           <div className="mt-3 space-y-2">
             {trades.slice(0, 10).map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between rounded-lg bg-bg-inset px-4 py-2">
+              <div key={tx.id} className="flex items-center justify-between rounded-xl bg-bg-inset px-4 py-2">
                 <span className="text-xs text-text-tertiary font-mono">{tx.timestamp}</span>
                 <span className="text-sm text-text-primary">{tx.type}</span>
               </div>

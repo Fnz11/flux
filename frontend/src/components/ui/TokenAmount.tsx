@@ -1,6 +1,5 @@
-'use client'
-
 import { useConfigStore } from '@/stores/config-store'
+import { cn } from '@/lib/utils'
 
 interface TokenAmountProps {
   amount: number | string
@@ -33,7 +32,7 @@ export function TokenAmount({
   showIcon,
   decimals = 6,
   compact,
-  className = '',
+  className,
 }: TokenAmountProps) {
   const config = useConfigStore((s) => s.config)
   const threshold = config?.dustThreshold ?? 0.001
@@ -41,12 +40,12 @@ export function TokenAmount({
   const numAmount = typeof amount === 'string' ? Number.parseFloat(amount) : amount
 
   if (Number.isNaN(numAmount)) {
-    return <span className={`font-mono text-text-muted ${className}`}>—</span>
+    return <span className={cn('font-mono text-text-muted', className)}>—</span>
   }
 
   if (numAmount > 0 && numAmount < threshold) {
     return (
-      <span className={`font-mono text-text-muted ${className}`}>
+      <span className={cn('font-mono text-text-muted', className)}>
         {'< '}Dust
         {symbol && showIcon && (
           <span className="ml-1 text-xs text-text-tertiary">{symbol}</span>
@@ -56,7 +55,7 @@ export function TokenAmount({
   }
 
   return (
-    <span className={`font-mono text-text-primary ${className}`}>
+    <span className={cn('font-mono text-text-primary', className)}>
       {showIcon && symbol && (
         <span className="mr-1 inline-block size-3 rounded-full bg-primary-gold/30" />
       )}

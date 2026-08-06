@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/fbyt-clone/backend/internal/cache"
+	"github.com/fbyt-clone/backend/internal/repository"
 	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -95,10 +96,31 @@ func TestInvalidateLeaderboardCache(t *testing.T) {
 	}
 }
 
+func TestInvalidateVaultSummaryCache(t *testing.T) {
+	stub := &stubCache{}
+	vaultAddress := "VaultSummaryAddr11111111111111111111111"
+
+	invalidateVaultSummaryCache(stub, context.Background(), vaultAddress)
+
+	got := stub.deletedKeys()
+	wantKey := cache.VaultSummaryKey(vaultAddress)
+	if len(got) != 1 || got[0] != wantKey {
+		t.Errorf("deleted keys = %v, want [%s]", got, wantKey)
+	}
+}
+
 func TestInvalidateNilCache(t *testing.T) {
 	invalidateUserCache(nil, context.Background(), uuid.New())
 	invalidateLeaderboardCache(nil, context.Background())
-	invalidateVaultPortfolioCaches(nil, nil, context.Background(), uuid.New())
+	invalidateVaultSummaryCache(nil, context.Background(), "some_addr")
+	invalidateVaultPortfolioCaches(nil, nil, context.Background(), uuid.New().String())
+
+	// Also verify non-nil cache with nil repo does not panic
+	stub := &stubCache{}
+	invalidateVaultPortfolioCaches(stub, nil, context.Background(), uuid.New().String())
+	if len(stub.deletedKeys()) != 0 {
+		t.Errorf("expected no deleted keys when repo is nil")
+	}
 }
 
 func TestInvalidateCacheError(t *testing.T) {
@@ -106,6 +128,7 @@ func TestInvalidateCacheError(t *testing.T) {
 
 	invalidateUserCache(stub, context.Background(), uuid.New())
 	invalidateLeaderboardCache(stub, context.Background())
+	invalidateVaultSummaryCache(stub, context.Background(), "some_addr")
 
 	if got := stub.deletedKeys(); len(got) != 0 {
 		t.Errorf("deleted keys = %v, want none", got)
@@ -136,6 +159,7 @@ func setupCacheTestDB(t *testing.T) *gorm.DB {
 func TestInvalidateVaultPortfolioCaches(t *testing.T) {
 	db := setupCacheTestDB(t)
 	stub := &stubCache{}
+	repo := repository.NewPortfolioRepository(db)
 
 	vaultID := uuid.New()
 	otherVaultID := uuid.New()
@@ -158,7 +182,7 @@ func TestInvalidateVaultPortfolioCaches(t *testing.T) {
 		}
 	}
 
-	invalidateVaultPortfolioCaches(stub, db, context.Background(), vaultID)
+	invalidateVaultPortfolioCaches(stub, repo, context.Background(), vaultID.String())
 
 	got := stub.deletedKeys()
 	want := []uuid.UUID{holderA, holderB, mixed}
@@ -181,8 +205,9 @@ func TestInvalidateVaultPortfolioCaches(t *testing.T) {
 func TestInvalidateVaultPortfolioCachesEmpty(t *testing.T) {
 	db := setupCacheTestDB(t)
 	stub := &stubCache{}
+	repo := repository.NewPortfolioRepository(db)
 
-	invalidateVaultPortfolioCaches(stub, db, context.Background(), uuid.New())
+	invalidateVaultPortfolioCaches(stub, repo, context.Background(), uuid.New().String())
 
 	if got := stub.deletedKeys(); len(got) != 0 {
 		t.Errorf("deleted keys = %v, want none", got)
@@ -195,10 +220,25 @@ func TestInvalidateVaultPortfolioCachesDBError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open test db: %v", err)
 	}
+	repo := repository.NewPortfolioRepository(db)
 
-	invalidateVaultPortfolioCaches(stub, db, context.Background(), uuid.New())
+	invalidateVaultPortfolioCaches(stub, repo, context.Background(), uuid.New().String())
 
 	if got := stub.deletedKeys(); len(got) != 0 {
 		t.Errorf("deleted keys = %v, want none", got)
+	}
+}
+
+func TestCacheKeyUniqueness(t *testing.T) {
+	k1 := cache.VaultSummaryKey("vault_a")
+	k2 := cache.VaultSummaryKey("vault_b")
+	if k1 == k2 {
+		t.Errorf("expected different keys for different vault addresses, got %s", k1)
+	}
+
+	u1 := cache.UserPortfolioKey("user_1")
+	u2 := cache.UserPortfolioKey("user_2")
+	if u1 == u2 {
+		t.Errorf("expected different portfolio keys for different user IDs, got %s", u1)
 	}
 }

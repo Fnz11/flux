@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 interface DataItem { name: string; value: number; color: string }
@@ -6,14 +7,23 @@ interface AllocationChartInnerProps {
   data: DataItem[]
 }
 
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: Array<{
+    name: string
+    value: number
+    payload: DataItem & { _total: number }
+  }>
+}
+
 const DEFAULT_COLORS = ['#FA9A63', '#CDA63C', '#F6B253', '#FFD99F', '#3086ff', '#28C840', '#FF5F57', '#FFBD2E']
 
-function CustomTooltip({ active, payload }: any) {
-  if (!active || !payload?.length) return null
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
+  if (!active || !payload?.length || !payload[0]) return null
   const entry = payload[0]
-  const total = entry.payload._total
+  const total = entry.payload._total || 1
   return (
-    <div className="rounded-lg border border-border-subtle bg-bg-elevated p-3 shadow-xl">
+    <div className="rounded-xl border border-border-subtle bg-bg-elevated p-3 shadow-xl">
       <p className="text-sm font-medium text-text-primary">{entry.name}</p>
       <p className="text-sm text-text-muted font-mono">
         ${entry.value.toLocaleString()} ({((entry.value / total) * 100).toFixed(1)}%)
@@ -22,8 +32,8 @@ function CustomTooltip({ active, payload }: any) {
   )
 }
 
-export function AllocationChartInner({ data }: AllocationChartInnerProps) {
-  const total = data.reduce((s, d) => s + d.value, 0)
+export const AllocationChartInner = memo(function AllocationChartInner({ data }: AllocationChartInnerProps) {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1
   const colored = data.map((d, i) => ({
     ...d,
     color: d.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length],
@@ -69,4 +79,4 @@ export function AllocationChartInner({ data }: AllocationChartInnerProps) {
       </div>
     </>
   )
-}
+})

@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/fbyt-clone/backend/internal/models"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -17,71 +19,96 @@ func NewPortfolioRepository(db *gorm.DB) domain.PortfolioRepository {
 	return &portfolioRepo{db: db}
 }
 
-func (r *portfolioRepo) UpsertPosition(ctx context.Context, userID, vaultID string, shares, invested, entryPrice float64) error {
-	uid := uuid.MustParse(userID)
-	vid := uuid.MustParse(vaultID)
+func (r *portfolioRepo) UpsertPosition(ctx context.Context, userID, vaultID string, shares, invested, entryPrice decimal.Decimal) error {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	vid, err := uuid.Parse(vaultID)
+	if err != nil {
+		return err
+	}
 
+	db := getDB(ctx, r.db)
 	var existing models.Portfolio
-	err := r.db.WithContext(ctx).Where("user_id = ? AND vault_id = ?", uid, vid).First(&existing).Error
-	if err == gorm.ErrRecordNotFound {
+	err = db.Where("user_id = ? AND vault_id = ?", uid, vid).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		p := models.Portfolio{
+			ID:                 uuid.New(),
 			UserID:             uid,
 			VaultID:            vid,
 			SharesOwned:        shares,
 			TotalInvestedValue: invested,
 			AverageEntryPrice:  entryPrice,
 		}
-		return r.db.WithContext(ctx).Create(&p).Error
+		return db.Create(&p).Error
 	}
 	if err != nil {
 		return err
 	}
 
-	newShares := existing.SharesOwned + shares
-	newInvested := existing.TotalInvestedValue + invested
-	var avgPrice float64
-	if newShares > 0 {
-		avgPrice = newInvested / newShares
+	newShares := existing.SharesOwned.Add(shares)
+	newInvested := existing.TotalInvestedValue.Add(invested)
+	var avgPrice decimal.Decimal
+	if newShares.IsPositive() {
+		avgPrice = newInvested.Div(newShares)
 	}
 
-	return r.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
+	return db.Model(&existing).Updates(map[string]interface{}{
 		"shares_owned":         newShares,
 		"total_invested_value": newInvested,
 		"average_entry_price":  avgPrice,
 	}).Error
 }
 
-func (r *portfolioRepo) ReducePosition(ctx context.Context, userID, vaultID string, sharesSold float64) error {
-	uid := uuid.MustParse(userID)
-	vid := uuid.MustParse(vaultID)
-
-	var existing models.Portfolio
-	err := r.db.WithContext(ctx).Where("user_id = ? AND vault_id = ?", uid, vid).First(&existing).Error
+func (r *portfolioRepo) ReducePosition(ctx context.Context, userID, vaultID string, sharesSold decimal.Decimal) error {
+	uid, err := uuid.Parse(userID)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		return err
+	}
+	vid, err := uuid.Parse(vaultID)
+	if err != nil {
+		return err
+	}
+
+	db := getDB(ctx, r.db)
+	var existing models.Portfolio
+	err = db.Where("user_id = ? AND vault_id = ?", uid, vid).First(&existing).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return domain.ErrNotFound
 		}
 		return err
 	}
 
-	newShares := existing.SharesOwned - sharesSold
-	if newShares < 0 {
-		newShares = 0
+	if sharesSold.GreaterThan(existing.SharesOwned) {
+		return errors.New("insufficient shares")
 	}
-	reductionRatio := sharesSold / existing.SharesOwned
-	newInvested := existing.TotalInvestedValue - (existing.TotalInvestedValue * reductionRatio)
 
-	return r.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
+	newShares := existing.SharesOwned.Sub(sharesSold)
+	if newShares.IsNegative() {
+		newShares = decimal.Zero
+	}
+	var reductionRatio decimal.Decimal
+	if existing.SharesOwned.IsPositive() {
+		reductionRatio = sharesSold.Div(existing.SharesOwned)
+	}
+	newInvested := existing.TotalInvestedValue.Sub(existing.TotalInvestedValue.Mul(reductionRatio))
+
+	return db.Model(&existing).Updates(map[string]interface{}{
 		"shares_owned":         newShares,
 		"total_invested_value": newInvested,
 	}).Error
 }
 
 func (r *portfolioRepo) GetByUser(ctx context.Context, userID string) ([]domain.PortfolioDetail, error) {
-	uid := uuid.MustParse(userID)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
 
 	var portfolios []models.Portfolio
-	err := r.db.WithContext(ctx).Preload("Vault").Where("user_id = ?", uid).Find(&portfolios).Error
+	err = getDB(ctx, r.db).Preload("Vault").Where("user_id = ?", uid).Find(&portfolios).Error
 	if err != nil {
 		return nil, err
 	}
@@ -100,11 +127,14 @@ func (r *portfolioRepo) GetByUser(ctx context.Context, userID string) ([]domain.
 	return details, nil
 }
 
-func (r *portfolioRepo) GetTotalSharesByVault(ctx context.Context, vaultID string) (float64, error) {
-	vid := uuid.MustParse(vaultID)
+func (r *portfolioRepo) GetTotalSharesByVault(ctx context.Context, vaultID string) (decimal.Decimal, error) {
+	vid, err := uuid.Parse(vaultID)
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-	var result float64
-	err := r.db.WithContext(ctx).Model(&models.Portfolio{}).
+	var result decimal.Decimal
+	err = getDB(ctx, r.db).Model(&models.Portfolio{}).
 		Where("vault_id = ?", vid).
 		Select("COALESCE(SUM(shares_owned), 0)").
 		Scan(&result).Error
@@ -112,10 +142,13 @@ func (r *portfolioRepo) GetTotalSharesByVault(ctx context.Context, vaultID strin
 }
 
 func (r *portfolioRepo) GetPortfolioSummary(ctx context.Context, userID string) (*domain.PortfolioSummary, error) {
-	uid := uuid.MustParse(userID)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
 
 	var s domain.PortfolioSummary
-	err := r.db.WithContext(ctx).Table("user_pnl_summary").
+	err = getDB(ctx, r.db).Table("user_pnl_summary").
 		Select("user_id, COUNT(vault_id) AS vault_count, "+
 			"COALESCE(SUM(total_invested), 0) AS total_invested, "+
 			"COALESCE(SUM(current_value), 0) AS current_value, "+
@@ -126,7 +159,7 @@ func (r *portfolioRepo) GetPortfolioSummary(ctx context.Context, userID string) 
 		Group("user_id").
 		Take(&s).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, err
@@ -135,10 +168,13 @@ func (r *portfolioRepo) GetPortfolioSummary(ctx context.Context, userID string) 
 }
 
 func (r *portfolioRepo) GetUserPnLSummary(ctx context.Context, userID string) (*domain.UserPnLSummary, error) {
-	uid := uuid.MustParse(userID)
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
 
 	var s domain.UserPnLSummary
-	err := r.db.WithContext(ctx).Table("user_pnl_summary").
+	err = getDB(ctx, r.db).Table("user_pnl_summary").
 		Select("user_id, COALESCE(SUM(total_invested), 0) AS total_invested, "+
 			"COALESCE(SUM(realized_pnl), 0) AS realized_pnl, "+
 			"COALESCE(SUM(unrealized_pnl), 0) AS unrealized_pnl, "+
@@ -149,10 +185,21 @@ func (r *portfolioRepo) GetUserPnLSummary(ctx context.Context, userID string) (*
 		Group("user_id").
 		Take(&s).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, err
 	}
 	return &s, nil
+}
+
+func (r *portfolioRepo) GetHolderUserIDs(ctx context.Context, vaultID string) ([]string, error) {
+	vid, err := uuid.Parse(vaultID)
+	if err != nil {
+		return nil, err
+	}
+	var userIDs []string
+	err = getDB(ctx, r.db).Model(&models.Portfolio{}).
+		Where("vault_id = ?", vid).Distinct().Pluck("user_id", &userIDs).Error
+	return userIDs, err
 }

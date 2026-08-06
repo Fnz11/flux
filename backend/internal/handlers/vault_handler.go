@@ -2,27 +2,38 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/fbyt-clone/backend/internal/cache"
+	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/fbyt-clone/backend/internal/middleware"
 	"github.com/fbyt-clone/backend/internal/models"
 	"github.com/fbyt-clone/backend/internal/services"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/shopspring/decimal"
+	"gorm.io/datatypes"
 )
 
 type VaultHandler struct {
-	db        *gorm.DB
-	svc       *services.VaultService
-	whitelist []string
-	cache     cache.Cache
+	vaultRepo     domain.VaultRepository
+	portfolioRepo domain.PortfolioRepository
+	userRepo      domain.UserRepository
+	svc           *services.VaultService
+	whitelist     []string
+	cache         cache.Cache
 }
 
-func NewVaultHandler(db *gorm.DB, svc *services.VaultService, whitelist []string) *VaultHandler {
-	return &VaultHandler{db: db, svc: svc, whitelist: whitelist}
+func NewVaultHandler(vaultRepo domain.VaultRepository, portfolioRepo domain.PortfolioRepository, userRepo domain.UserRepository, svc *services.VaultService, whitelist []string) *VaultHandler {
+	return &VaultHandler{
+		vaultRepo:     vaultRepo,
+		portfolioRepo: portfolioRepo,
+		userRepo:      userRepo,
+		svc:           svc,
+		whitelist:     whitelist,
+	}
 }
 
 func (h *VaultHandler) SetCache(c cache.Cache) {
@@ -31,6 +42,9 @@ func (h *VaultHandler) SetCache(c cache.Cache) {
 
 func (h *VaultHandler) ListVaults(c *gin.Context) {
 	status := c.Query("status")
+	managerAddress := c.Query("manager_address")
+	sortBy := c.Query("sort_by")
+	sortOrder := c.Query("sort_order")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 
@@ -44,33 +58,88 @@ func (h *VaultHandler) ListVaults(c *gin.Context) {
 		limit = 20
 	}
 
-	query := h.db.Model(&models.Vault{}).Preload("Manager")
-	countQuery := h.db.Model(&models.Vault{})
-
-	if status != "" {
-		query = query.Where("status = ?", status)
-		countQuery = countQuery.Where("status = ?", status)
+	filter := domain.VaultListFilter{
+		Status:         status,
+		ManagerAddress: managerAddress,
+		SortBy:         sortBy,
+		SortOrder:      sortOrder,
+		Page:           page,
+		Limit:          limit,
 	}
 
-	var total int64
-	if err := countQuery.WithContext(c.Request.Context()).Count(&total).Error; err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, "Failed to count vaults")
-		return
-	}
-
-	var vaults []models.Vault
-	offset := (page - 1) * limit
-	if err := query.WithContext(c.Request.Context()).Offset(offset).Limit(limit).Order("id ASC").Find(&vaults).Error; err != nil {
+	details, total, err := h.vaultRepo.List(c.Request.Context(), filter)
+	if err != nil {
 		ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch vaults")
 		return
 	}
 
-	resp := make([]models.VaultResponse, len(vaults))
-	for i, v := range vaults {
-		resp[i] = models.ToVaultResponse(&v)
+	resp := make([]models.VaultResponse, len(details))
+	for i, d := range details {
+		resp[i] = vaultDetailToResponse(&d)
 	}
 
 	PaginatedResponse(c, resp, int(total), page, limit)
+}
+
+type CreateVaultRequest struct {
+	Address           string          `json:"address" binding:"required"`
+	ManagerAddress    string          `json:"manager_address" binding:"required"`
+	Status            string          `json:"status"`
+	PerformanceFeeBps int             `json:"performance_fee_bps"`
+	ManagementFeeBps  int             `json:"management_fee_bps"`
+	MinRaiseAmount    decimal.Decimal `json:"min_raise_amount"`
+	LockupPeriod      int64           `json:"lockup_period"`
+	VaultType         string          `json:"vault_type"`
+	Metadata          datatypes.JSON  `json:"metadata"`
+}
+
+func (h *VaultHandler) CreateVault(c *gin.Context) {
+	var req CreateVaultRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ErrorResponse(c, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	var managerID string
+	if h.userRepo != nil {
+		user, err := h.userRepo.FindOrCreateByWallet(c.Request.Context(), req.ManagerAddress)
+		if err != nil {
+			ErrorResponse(c, http.StatusInternalServerError, "Failed to find or create user")
+			return
+		}
+		managerID = user.ID
+	}
+
+	status := req.Status
+	if status == "" {
+		status = "Fundraising"
+	}
+	vaultType := req.VaultType
+	if vaultType == "" {
+		vaultType = "open"
+	}
+
+	vaultDetail := domain.VaultDetail{
+		Address:           req.Address,
+		ManagerID:         managerID,
+		ManagerAddress:    req.ManagerAddress,
+		Status:            status,
+		Metadata:          req.Metadata,
+		PerformanceFeeBps: req.PerformanceFeeBps,
+		ManagementFeeBps:  req.ManagementFeeBps,
+		MinRaiseAmount:    req.MinRaiseAmount,
+		LockupPeriod:      req.LockupPeriod,
+		VaultType:         vaultType,
+	}
+
+	if err := h.vaultRepo.Create(c.Request.Context(), &vaultDetail); err != nil {
+		ErrorResponse(c, http.StatusInternalServerError, "Failed to create vault")
+		return
+	}
+
+	invalidateLeaderboardCache(h.cache, c.Request.Context())
+
+	SuccessResponse(c, vaultDetailToResponse(&vaultDetail))
 }
 
 func (h *VaultHandler) GetVault(c *gin.Context) {
@@ -80,9 +149,9 @@ func (h *VaultHandler) GetVault(c *gin.Context) {
 		return
 	}
 
-	vault, err := h.svc.GetByAddress(address)
+	vault, err := h.vaultRepo.GetByAddress(c.Request.Context(), address)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			ErrorResponse(c, http.StatusNotFound, "Vault not found")
 			return
 		}
@@ -90,24 +159,34 @@ func (h *VaultHandler) GetVault(c *gin.Context) {
 		return
 	}
 
-	var tradeCount int64
-	if err := h.db.WithContext(c.Request.Context()).Model(&models.TradeHistory{}).Where("vault_id = ?", vault.ID).Count(&tradeCount).Error; err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, "Failed to count trades")
-		return
-	}
-
-	var portfolioCount int64
-	if err := h.db.WithContext(c.Request.Context()).Model(&models.Portfolio{}).Where("vault_id = ?", vault.ID).Count(&portfolioCount).Error; err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, "Failed to count portfolios")
-		return
-	}
-
-	resp := models.ToVaultResponse(vault)
+	resp := vaultDetailToResponse(vault)
 
 	SuccessResponse(c, gin.H{
 		"vault":           resp,
-		"trade_count":     tradeCount,
-		"portfolio_count": portfolioCount,
+		"trade_count":     vault.TradeCount,
+		"portfolio_count": vault.PortfolioCount,
+	})
+}
+
+func (h *VaultHandler) GetVaultBalances(c *gin.Context) {
+	address := c.Param("address")
+	if address == "" {
+		ErrorResponse(c, http.StatusBadRequest, "Address is required")
+		return
+	}
+
+	balances, err := h.vaultRepo.GetVaultBalances(c.Request.Context(), address)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			ErrorResponse(c, http.StatusNotFound, "Vault not found")
+			return
+		}
+		ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch balances")
+		return
+	}
+
+	SuccessResponse(c, gin.H{
+		"balances": balances,
 	})
 }
 
@@ -150,9 +229,9 @@ func (h *VaultHandler) UpdateVaultMetadata(c *gin.Context) {
 		return
 	}
 
-	vault, err := h.svc.GetByAddress(address)
+	vault, err := h.vaultRepo.GetByAddress(c.Request.Context(), address)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			ErrorResponse(c, http.StatusNotFound, "Vault not found")
 			return
 		}
@@ -160,17 +239,16 @@ func (h *VaultHandler) UpdateVaultMetadata(c *gin.Context) {
 		return
 	}
 
-	if vault.Manager.WalletAddress != requesterAddr {
+	if vault.ManagerAddress != requesterAddr {
 		ErrorResponse(c, http.StatusForbidden, "Only the vault manager can update metadata")
 		return
 	}
 
 	var metadata map[string]interface{}
-	if vault.Metadata != nil {
-		if err := json.Unmarshal(vault.Metadata, &metadata); err != nil {
-			metadata = make(map[string]interface{})
-		}
-	} else {
+	if len(vault.Metadata) > 0 {
+		_ = json.Unmarshal(vault.Metadata, &metadata)
+	}
+	if metadata == nil {
 		metadata = make(map[string]interface{})
 	}
 
@@ -190,29 +268,25 @@ func (h *VaultHandler) UpdateVaultMetadata(c *gin.Context) {
 		metadata["focusAssets"] = *req.FocusAssets
 	}
 
-	metaBytes, err := json.Marshal(metadata)
-	if err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, "Failed to serialize metadata")
-		return
-	}
-
-	if err := h.db.WithContext(c.Request.Context()).Model(&models.Vault{}).Where("address = ?", address).Update("metadata", metaBytes).Error; err != nil {
+	if err := h.vaultRepo.UpdateMetadata(c.Request.Context(), address, metadata); err != nil {
 		ErrorResponse(c, http.StatusInternalServerError, "Failed to update metadata")
 		return
 	}
 
-	h.svc.Invalidate(address)
+	if h.svc != nil {
+		h.svc.Invalidate(address)
+	}
 	invalidateLeaderboardCache(h.cache, c.Request.Context())
 	invalidateVaultSummaryCache(h.cache, c.Request.Context(), vault.Address)
-	invalidateVaultPortfolioCaches(h.cache, h.db, c.Request.Context(), vault.ID)
+	invalidateVaultPortfolioCaches(h.cache, h.portfolioRepo, c.Request.Context(), vault.ID)
 
-	updated, err := h.svc.GetByAddress(address)
+	updated, err := h.vaultRepo.GetByAddress(c.Request.Context(), address)
 	if err != nil {
 		ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch updated vault")
 		return
 	}
 
-	SuccessResponse(c, gin.H{"vault": models.ToVaultResponse(updated)})
+	SuccessResponse(c, gin.H{"vault": vaultDetailToResponse(updated)})
 }
 
 func (h *VaultHandler) isValidAsset(asset string) bool {
@@ -225,4 +299,23 @@ func (h *VaultHandler) isValidAsset(asset string) bool {
 		}
 	}
 	return false
+}
+
+func vaultDetailToResponse(d *domain.VaultDetail) models.VaultResponse {
+	return models.VaultResponse{
+		ID:                d.ID,
+		Address:           d.Address,
+		ManagerAddress:    d.ManagerAddress,
+		Status:            d.Status,
+		Metadata:          d.Metadata,
+		PerformanceFeeBps: d.PerformanceFeeBps,
+		ManagementFeeBps:  d.ManagementFeeBps,
+		MinRaiseAmount:    d.MinRaiseAmount,
+		LockupPeriod:      d.LockupPeriod,
+		VaultType:         d.VaultType,
+		InvestorCount:     d.InvestorCount,
+		TVL:               d.TVL,
+		CreatedAt:         d.CreatedAt,
+		UpdatedAt:         d.UpdatedAt,
+	}
 }

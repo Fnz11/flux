@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/fbyt-clone/backend/internal/models"
@@ -18,7 +19,7 @@ func NewUserRepository(db *gorm.DB) domain.UserRepository {
 
 func (r *userRepo) FindOrCreateByWallet(ctx context.Context, walletAddress string) (*domain.UserDetail, error) {
 	user := models.User{WalletAddress: walletAddress}
-	err := r.db.WithContext(ctx).Where("wallet_address = ?", walletAddress).FirstOrCreate(&user).Error
+	err := getDB(ctx, r.db).Where("wallet_address = ?", walletAddress).FirstOrCreate(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -27,9 +28,9 @@ func (r *userRepo) FindOrCreateByWallet(ctx context.Context, walletAddress strin
 
 func (r *userRepo) FindByWallet(ctx context.Context, walletAddress string) (*domain.UserDetail, error) {
 	var user models.User
-	err := r.db.WithContext(ctx).Where("wallet_address = ?", walletAddress).First(&user).Error
+	err := getDB(ctx, r.db).Where("wallet_address = ?", walletAddress).First(&user).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, err
@@ -38,5 +39,5 @@ func (r *userRepo) FindByWallet(ctx context.Context, walletAddress string) (*dom
 }
 
 func (r *userRepo) UpdateNonce(ctx context.Context, walletAddress, nonce string) error {
-	return r.db.WithContext(ctx).Model(&models.User{}).Where("wallet_address = ?", walletAddress).Update("nonce", nonce).Error
+	return getDB(ctx, r.db).Model(&models.User{}).Where("wallet_address = ?", walletAddress).Update("nonce", nonce).Error
 }

@@ -2,27 +2,29 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/fbyt-clone/backend/internal/cache"
-	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 type tradeResponse struct {
-	ID                   string  `json:"id"`
-	TransactionSignature string  `json:"transaction_signature"`
-	TradeType            string  `json:"trade_type"`
-	InputToken           string  `json:"input_token"`
-	OutputToken          string  `json:"output_token"`
-	AmountIn             float64 `json:"amount_in"`
-	AmountOut            float64 `json:"amount_out"`
-	PriceAtExecution     float64 `json:"price_at_execution"`
-	ExecutedAt           string  `json:"executed_at"`
+	ID                   string          `json:"id"`
+	TransactionSignature string          `json:"transaction_signature"`
+	TradeType            string          `json:"trade_type"`
+	InputToken           string          `json:"input_token"`
+	OutputToken          string          `json:"output_token"`
+	AmountIn             decimal.Decimal `json:"amount_in"`
+	AmountOut            decimal.Decimal `json:"amount_out"`
+	PriceAtExecution     decimal.Decimal `json:"price_at_execution"`
+	ExecutedAt           string          `json:"executed_at"`
 }
 
 type tradesData struct {
@@ -32,8 +34,16 @@ type tradesData struct {
 }
 
 type TradeHandler struct {
-	DB    *gorm.DB
-	cache cache.Cache
+	tradeRepo domain.TradeRepository
+	vaultRepo domain.VaultRepository
+	cache     cache.Cache
+}
+
+func NewTradeHandler(tradeRepo domain.TradeRepository, vaultRepo domain.VaultRepository) *TradeHandler {
+	return &TradeHandler{
+		tradeRepo: tradeRepo,
+		vaultRepo: vaultRepo,
+	}
 }
 
 func (h *TradeHandler) SetCache(c cache.Cache) {
@@ -47,9 +57,13 @@ func (h *TradeHandler) GetTrades(c *gin.Context) {
 		return
 	}
 
-	var vault models.Vault
-	if err := h.DB.WithContext(c.Request.Context()).Where("address = ?", address).First(&vault).Error; err != nil {
-		ErrorResponse(c, http.StatusNotFound, "vault not found")
+	vault, err := h.vaultRepo.GetByAddress(c.Request.Context(), address)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			ErrorResponse(c, http.StatusNotFound, "vault not found")
+			return
+		}
+		ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch vault")
 		return
 	}
 
@@ -66,24 +80,9 @@ func (h *TradeHandler) GetTrades(c *gin.Context) {
 	if limit < 1 || limit > 100 {
 		limit = 20
 	}
-	offset := (page - 1) * limit
 
-	query := h.DB.Model(&models.TradeHistory{}).Where("vault_id = ?", vault.ID)
-	if tradeType != "" {
-		query = query.Where("trade_type = ?", tradeType)
-	}
-
-	var total int64
-	if err := query.WithContext(c.Request.Context()).Count(&total).Error; err != nil {
-		ErrorResponse(c, http.StatusInternalServerError, "Failed to count trades")
-		return
-	}
-
-	var trades []models.TradeHistory
-	if err := query.WithContext(c.Request.Context()).Order("executed_at DESC").
-		Offset(offset).
-		Limit(limit).
-		Find(&trades).Error; err != nil {
+	trades, total, err := h.tradeRepo.ListByVault(c.Request.Context(), vault.ID, tradeType, page, limit)
+	if err != nil {
 		ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch trades")
 		return
 	}
@@ -91,7 +90,7 @@ func (h *TradeHandler) GetTrades(c *gin.Context) {
 	result := make([]tradeResponse, len(trades))
 	for i, t := range trades {
 		result[i] = tradeResponse{
-			ID:                   t.ID.String(),
+			ID:                   t.ID,
 			TransactionSignature: t.TransactionSignature,
 			TradeType:            t.TradeType,
 			InputToken:           t.InputToken,
@@ -105,8 +104,92 @@ func (h *TradeHandler) GetTrades(c *gin.Context) {
 
 	SuccessResponse(c, tradesData{
 		Trades:  result,
-		VaultID: vault.ID.String(),
+		VaultID: vault.ID,
 		Total:   total,
+	})
+}
+
+type batchTradesData struct {
+	Trades []batchTradeResponse `json:"trades"`
+	Total  int64                `json:"total"`
+}
+
+type batchTradeResponse struct {
+	ID                   string          `json:"id"`
+	VaultID              string          `json:"vault_id"`
+	TransactionSignature string          `json:"transaction_signature"`
+	TradeType            string          `json:"trade_type"`
+	InputToken           string          `json:"input_token"`
+	OutputToken          string          `json:"output_token"`
+	AmountIn             decimal.Decimal `json:"amount_in"`
+	AmountOut            decimal.Decimal `json:"amount_out"`
+	PriceAtExecution     decimal.Decimal `json:"price_at_execution"`
+	ExecutedAt           string          `json:"executed_at"`
+}
+
+func (h *TradeHandler) GetBatchTrades(c *gin.Context) {
+	rawVaultIDs := c.QueryArray("vaultIds[]")
+	if len(rawVaultIDs) == 0 {
+		rawVaultIDs = c.QueryArray("vaultIds")
+	}
+
+	var vaultIDs []string
+	seen := make(map[string]bool)
+	for _, raw := range rawVaultIDs {
+		parts := strings.Split(raw, ",")
+		for _, p := range parts {
+			trimmed := strings.TrimSpace(p)
+			if trimmed != "" && !seen[trimmed] {
+				seen[trimmed] = true
+				vaultIDs = append(vaultIDs, trimmed)
+			}
+		}
+	}
+
+	if len(vaultIDs) > 50 {
+		ErrorResponse(c, http.StatusBadRequest, "Too many vault IDs, maximum allowed is 50")
+		return
+	}
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	tradeType := c.Query("type")
+
+	if page < 1 {
+		page = 1
+	}
+	if page > 10000 {
+		page = 10000
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	trades, total, err := h.tradeRepo.ListByVaultIDs(c.Request.Context(), vaultIDs, tradeType, page, limit)
+	if err != nil {
+		ErrorResponse(c, http.StatusInternalServerError, "Failed to fetch trades")
+		return
+	}
+
+	result := make([]batchTradeResponse, len(trades))
+	for i, t := range trades {
+		result[i] = batchTradeResponse{
+			ID:                   t.ID,
+			VaultID:              t.VaultID,
+			TransactionSignature: t.TransactionSignature,
+			TradeType:            t.TradeType,
+			InputToken:           t.InputToken,
+			OutputToken:          t.OutputToken,
+			AmountIn:             t.AmountIn,
+			AmountOut:            t.AmountOut,
+			PriceAtExecution:     t.PriceAtExecution,
+			ExecutedAt:           t.ExecutedAt.Format("2006-01-02T15:04:05Z"),
+		}
+	}
+
+	SuccessResponse(c, batchTradesData{
+		Trades: result,
+		Total:  total,
 	})
 }
 
@@ -140,14 +223,13 @@ func invalidateVaultSummaryCache(c cache.Cache, ctx context.Context, vaultAddres
 	}
 }
 
-func invalidateVaultPortfolioCaches(c cache.Cache, db *gorm.DB, ctx context.Context, vaultID uuid.UUID) {
-	if c == nil {
+func invalidateVaultPortfolioCaches(c cache.Cache, repo domain.PortfolioRepository, ctx context.Context, vaultID string) {
+	if c == nil || repo == nil {
 		return
 	}
-	var userIDs []string
-	if err := db.WithContext(ctx).Model(&models.Portfolio{}).
-		Where("vault_id = ?", vaultID).Distinct().Pluck("user_id", &userIDs).Error; err != nil {
-		logrus.WithError(err).WithField("vault_id", vaultID.String()).Warn("failed to load portfolio holders for cache invalidation")
+	userIDs, err := repo.GetHolderUserIDs(ctx, vaultID)
+	if err != nil {
+		logrus.WithError(err).WithField("vault_id", vaultID).Warn("failed to load portfolio holders for cache invalidation")
 		return
 	}
 	for _, id := range userIDs {

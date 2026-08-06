@@ -1,6 +1,8 @@
 import { api } from '@/lib/api'
+import { mapApiConfigToConfig } from '@/lib/mappers'
 import type { AppConfig } from '@/types'
 
-export function getConfig(): Promise<AppConfig> {
-  return api.get('/config')
+export async function getConfig(): Promise<AppConfig> {
+  const raw = await api.get('/config')
+  return mapApiConfigToConfig(raw)
 }

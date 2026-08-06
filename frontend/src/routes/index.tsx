@@ -1,39 +1,119 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useAppStore } from '../stores/app-store'
+import { useEffect } from 'react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useQuery } from '@tanstack/react-query'
+import { useAppStore, usePortfolioStore } from '@/stores'
+import { useVaultsQuery, usePortfolioQuery } from '@/services/hooks'
+import { PortfolioSummary } from './portfolio/_components/PortfolioSummary'
+import { ProgressMetricCard } from '@/components/ui/progress-metric-card'
+import { SweepButton } from '@/components/ui/SweepButton'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { getMetrics } from '@/services/apis/rest-api/metrics.service'
+import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { ManagerVaultsList } from './_components/ManagerVaultsList'
+import { InvestorVaultsList } from './_components/InvestorVaultsList'
 
 export const Route = createFileRoute('/')({ component: DashboardPage })
 
 function DashboardPage() {
+  useRouteWsChannel(['dashboard'])
+
   const isManager = useAppStore((s) => s.isManager)
+  const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
+
+  const { data: vaults = [], isLoading: vaultsLoading } = useVaultsQuery()
+  const { data: portfolioPositions } = usePortfolioQuery(walletAddress)
+
+  useEffect(() => {
+    if (portfolioPositions) {
+      usePortfolioStore.setState({ positions: portfolioPositions })
+    }
+  }, [portfolioPositions])
+
+  const { data: metricsData = { tvl: [], invested: [], fees: [] }, isLoading: metricsLoading } = useQuery({
+    queryKey: ['metrics', 'dashboard'],
+    queryFn: async () => {
+      const [tvl, invested, fees] = await Promise.all([
+        getMetrics('tvl'),
+        getMetrics('invested'),
+        getMetrics('fees'),
+      ])
+      return { tvl, invested, fees }
+    },
+  })
+
+  // Real aggregate calculations from domain model
+  const totalTVL = vaults.reduce((sum, v) => sum + (v.tvl || 0), 0)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-          {isManager ? 'Manager Dashboard' : 'Investor Dashboard'}
-        </h1>
-        <p className="mt-2 text-text-secondary">
-          {isManager
-            ? 'Manage vaults, execute trades, and monitor performance.'
-            : 'Track your investments, deposits, and portfolio performance.'}
-        </p>
+    <div className="space-y-8">
+      <PageHeader
+        title={isManager ? 'Manager Dashboard' : 'Dashboard'}
+        subtitle={isManager ? 'Hey Manager, Welcome back!' : 'Hey Investor, Welcome back!'}
+        action={
+          isManager ? (
+            <Link to="/vaults/create">
+              <SweepButton>Create Vault</SweepButton>
+            </Link>
+          ) : undefined
+        }
+      />
+
+      {/* Platform Aggregates */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ProgressMetricCard
+          title="Total Value Locked"
+          total={
+            vaultsLoading
+              ? '...'
+              : `$${totalTVL.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          }
+          deltaLabel="across all vaults"
+          accent="amber"
+          data={metricsData.tvl}
+          loading={vaultsLoading || metricsLoading}
+          size="sm"
+        />
+        <ProgressMetricCard
+          title="Total Invested"
+          total={vaultsLoading ? '...' : undefined}
+          deltaLabel="historical inflow"
+          accent="gold"
+          data={metricsData.invested}
+          loading={vaultsLoading || metricsLoading}
+          size="sm"
+        />
+        <ProgressMetricCard
+          title="Platform Fees"
+          total={vaultsLoading ? '...' : undefined}
+          deltaLabel="accrued fees"
+          accent="emerald"
+          data={metricsData.fees}
+          loading={vaultsLoading || metricsLoading}
+          size="sm"
+        />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total Value Locked" value="$0.00" change="+0%" />
-        <StatCard title="Active Vaults" value="0" change="--" />
-        <StatCard title="Total Yield" value="0.00%" change="--" />
-      </div>
-    </div>
-  )
-}
+      {/* Mode-Aware Vault Lists */}
+      {isManager ? (
+        <ManagerVaultsList walletAddress={walletAddress} />
+      ) : (
+        <InvestorVaultsList walletAddress={walletAddress} />
+      )}
 
-function StatCard({ title, value, change }: { title: string; value: string; change: string }) {
-  return (
-    <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-6">
-      <p className="text-sm text-text-tertiary">{title}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-text-primary">{value}</p>
-      <p className="mt-1 text-xs text-status-success">{change}</p>
+      {/* Portfolio Aggregates if Wallet Connected (Investor Mode) */}
+      {!isManager && wallet.publicKey && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-text-primary">Connected Portfolio Summary</h2>
+            <Link to="/portfolio" className="text-[13px] text-primary-coral hover:underline font-medium">
+              View full portfolio →
+            </Link>
+          </div>
+          <PortfolioSummary />
+        </div>
+      )}
     </div>
   )
 }

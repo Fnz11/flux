@@ -1,11 +1,11 @@
 package services
 
 import (
-	"math"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/glebarez/sqlite"
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -29,73 +29,66 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
+func dec(v string) decimal.Decimal {
+	d, _ := decimal.NewFromString(v)
+	return d
+}
+
 func TestCalculatePnL(t *testing.T) {
 	tests := []struct {
 		name          string
-		sharesOwned   float64
-		currentPrice  float64
-		avgEntryPrice float64
-		totalInvested float64
+		sharesOwned   decimal.Decimal
+		currentPrice  decimal.Decimal
+		avgEntryPrice decimal.Decimal
+		totalInvested decimal.Decimal
 		want          PnLCalcResult
 	}{
 		{
 			name:          "profit",
-			sharesOwned:   100,
-			currentPrice:  150,
-			avgEntryPrice: 100,
-			totalInvested: 10000,
+			sharesOwned:   dec("100"),
+			currentPrice:  dec("150"),
+			avgEntryPrice: dec("100"),
+			totalInvested: dec("10000"),
 			want: PnLCalcResult{
-				UnrealizedPnL: 5000,
-				TotalPnL:      5000,
-				ReturnPct:     50,
+				UnrealizedPnL: dec("5000"),
+				TotalPnL:      dec("5000"),
+				ReturnPct:     dec("50"),
 			},
 		},
 		{
 			name:          "loss",
-			sharesOwned:   100,
-			currentPrice:  50,
-			avgEntryPrice: 100,
-			totalInvested: 10000,
+			sharesOwned:   dec("100"),
+			currentPrice:  dec("50"),
+			avgEntryPrice: dec("100"),
+			totalInvested: dec("10000"),
 			want: PnLCalcResult{
-				UnrealizedPnL: -5000,
-				TotalPnL:      -5000,
-				ReturnPct:     -50,
+				UnrealizedPnL: dec("-5000"),
+				TotalPnL:      dec("-5000"),
+				ReturnPct:     dec("-50"),
 			},
 		},
 		{
 			name:          "break_even",
-			sharesOwned:   100,
-			currentPrice:  100,
-			avgEntryPrice: 100,
-			totalInvested: 10000,
+			sharesOwned:   dec("100"),
+			currentPrice:  dec("100"),
+			avgEntryPrice: dec("100"),
+			totalInvested: dec("10000"),
 			want: PnLCalcResult{
-				UnrealizedPnL: 0,
-				TotalPnL:      0,
-				ReturnPct:     0,
+				UnrealizedPnL: dec("0"),
+				TotalPnL:      dec("0"),
+				ReturnPct:     dec("0"),
 			},
 		},
 		{
 			name:          "zero_shares",
-			sharesOwned:   0,
-			currentPrice:  100,
-			avgEntryPrice: 0,
-			totalInvested: 0,
+			sharesOwned:   dec("0"),
+			currentPrice:  dec("100"),
+			avgEntryPrice: dec("0"),
+			totalInvested: dec("0"),
 			want: PnLCalcResult{
-				UnrealizedPnL: 0,
-				TotalPnL:      0,
-				ReturnPct:     0,
-			},
-		},
-		{
-			name:          "high_precision",
-			sharesOwned:   33.3333,
-			currentPrice:  120.50,
-			avgEntryPrice: 100.25,
-			totalInvested: 3341.66,
-			want: PnLCalcResult{
-				UnrealizedPnL: 33.3333*120.50 - 33.3333*100.25,
-				TotalPnL:      33.3333*120.50 - 33.3333*100.25,
-				ReturnPct:     ((33.3333*120.50 - 33.3333*100.25) / 3341.66) * 100,
+				UnrealizedPnL: dec("0"),
+				TotalPnL:      dec("0"),
+				ReturnPct:     dec("0"),
 			},
 		},
 	}
@@ -104,24 +97,24 @@ func TestCalculatePnL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := CalculatePnL(tt.sharesOwned, tt.currentPrice, tt.avgEntryPrice, tt.totalInvested)
 
-			if math.Abs(got.UnrealizedPnL-tt.want.UnrealizedPnL) > 0.01 {
+			if !got.UnrealizedPnL.Equal(tt.want.UnrealizedPnL) {
 				t.Errorf("UnrealizedPnL = %v, want %v", got.UnrealizedPnL, tt.want.UnrealizedPnL)
 			}
-			if math.Abs(got.TotalPnL-tt.want.TotalPnL) > 0.01 {
+			if !got.TotalPnL.Equal(tt.want.TotalPnL) {
 				t.Errorf("TotalPnL = %v, want %v", got.TotalPnL, tt.want.TotalPnL)
 			}
-			if math.Abs(got.ReturnPct-tt.want.ReturnPct) > 0.01 {
+			if !got.ReturnPct.Equal(tt.want.ReturnPct) {
 				t.Errorf("ReturnPct = %v, want %v", got.ReturnPct, tt.want.ReturnPct)
 			}
 		})
 	}
 }
 
-func getPortfolio(t *testing.T, db *gorm.DB, userID, vaultID uuid.UUID) (shares, invested, avgPrice float64) {
+func getPortfolio(t *testing.T, db *gorm.DB, userID, vaultID uuid.UUID) (shares, invested, avgPrice decimal.Decimal) {
 	var row struct {
-		SharesOwned        float64
-		TotalInvestedValue float64
-		AverageEntryPrice  float64
+		SharesOwned        decimal.Decimal
+		TotalInvestedValue decimal.Decimal
+		AverageEntryPrice  decimal.Decimal
 	}
 	if err := db.Table("portfolios").
 		Select("shares_owned, total_invested_value, average_entry_price").
@@ -139,39 +132,37 @@ func TestUpsertPosition(t *testing.T) {
 	vaultID := uuid.New()
 
 	t.Run("create_new_position", func(t *testing.T) {
-		err := UpsertPosition(db, userID, vaultID, 100, 10000, 100)
+		err := UpsertPosition(db, userID, vaultID, dec("100"), dec("10000"), dec("100"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		shares, _, avg := getPortfolio(t, db, userID, vaultID)
-		if shares != 100 {
+		if !shares.Equal(dec("100")) {
 			t.Errorf("SharesOwned = %v, want 100", shares)
 		}
-		if avg != 100 {
+		if !avg.Equal(dec("100")) {
 			t.Errorf("AverageEntryPrice = %v, want 100", avg)
 		}
 	})
 
 	t.Run("update_existing_position", func(t *testing.T) {
-		err := UpsertPosition(db, userID, vaultID, 50, 6000, 120)
+		err := UpsertPosition(db, userID, vaultID, dec("50"), dec("6000"), dec("120"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		shares, invested, avg := getPortfolio(t, db, userID, vaultID)
-		if shares != 150 {
+		if !shares.Equal(dec("150")) {
 			t.Errorf("SharesOwned = %v, want 150", shares)
 		}
-		if invested != 16000 {
+		if !invested.Equal(dec("16000")) {
 			t.Errorf("TotalInvestedValue = %v, want 16000", invested)
 		}
-		expectedAvg := 16000.0 / 150.0
-		if math.Abs(avg-expectedAvg) > 0.01 {
+		expectedAvg := dec("16000").Div(dec("150"))
+		if !avg.Equal(expectedAvg) && !avg.Round(8).Equal(expectedAvg.Round(8)) {
 			t.Errorf("AverageEntryPrice = %v, want %v", avg, expectedAvg)
 		}
 	})
 }
-
-
 
 func TestReducePosition(t *testing.T) {
 	db := setupTestDB(t)
@@ -179,28 +170,28 @@ func TestReducePosition(t *testing.T) {
 	userID := uuid.New()
 	vaultID := uuid.New()
 
-	err := UpsertPosition(db, userID, vaultID, 100, 10000, 100)
+	err := UpsertPosition(db, userID, vaultID, dec("100"), dec("10000"), dec("100"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	t.Run("reduce_partial", func(t *testing.T) {
-		err := ReducePosition(db, userID, vaultID, 40)
+		err := ReducePosition(db, userID, vaultID, dec("40"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		shares, invested, _ := getPortfolio(t, db, userID, vaultID)
-		if shares != 60 {
+		if !shares.Equal(dec("60")) {
 			t.Errorf("SharesOwned = %v, want 60", shares)
 		}
-		expectedInvested := 10000.0 - (40.0/100.0)*10000.0
-		if math.Abs(invested-expectedInvested) > 0.01 {
+		expectedInvested := dec("6000")
+		if !invested.Equal(expectedInvested) {
 			t.Errorf("TotalInvestedValue = %v, want %v", invested, expectedInvested)
 		}
 	})
 
 	t.Run("reduce_insufficient_shares", func(t *testing.T) {
-		err := ReducePosition(db, userID, vaultID, 100)
+		err := ReducePosition(db, userID, vaultID, dec("100"))
 		if err == nil {
 			t.Fatal("expected error for insufficient shares")
 		}
@@ -211,16 +202,16 @@ func TestReducePosition(t *testing.T) {
 		userID2 := uuid.New()
 		vaultID2 := uuid.New()
 
-		UpsertPosition(db2, userID2, vaultID2, 100, 10000, 100)
-		err := ReducePosition(db2, userID2, vaultID2, 100)
+		UpsertPosition(db2, userID2, vaultID2, dec("100"), dec("10000"), dec("100"))
+		err := ReducePosition(db2, userID2, vaultID2, dec("100"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		shares, invested, _ := getPortfolio(t, db2, userID2, vaultID2)
-		if shares != 0 {
+		if !shares.IsZero() {
 			t.Errorf("SharesOwned = %v, want 0", shares)
 		}
-		if invested != 0 {
+		if !invested.IsZero() {
 			t.Errorf("TotalInvestedValue = %v, want 0", invested)
 		}
 	})

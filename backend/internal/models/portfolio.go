@@ -4,15 +4,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type Portfolio struct {
-	ID                 uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	UserID             uuid.UUID `gorm:"type:uuid;not null;index"`
-	VaultID            uuid.UUID `gorm:"type:uuid;not null;index"`
-	SharesOwned        float64   `gorm:"type:numeric(36,18);default:0.0"`
-	TotalInvestedValue float64   `gorm:"type:numeric(36,18);default:0.0"`
-	AverageEntryPrice  float64   `gorm:"type:numeric(36,18);default:0.0"`
+	ID                 uuid.UUID       `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	UserID             uuid.UUID       `gorm:"type:uuid;not null;index"`
+	VaultID            uuid.UUID       `gorm:"type:uuid;not null;index"`
+	SharesOwned        decimal.Decimal `gorm:"type:numeric(36,18);default:0.0"`
+	TotalInvestedValue decimal.Decimal `gorm:"type:numeric(36,18);default:0.0"`
+	AverageEntryPrice  decimal.Decimal `gorm:"type:numeric(36,18);default:0.0"`
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 	User               User  `gorm:"foreignKey:UserID"`

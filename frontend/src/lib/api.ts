@@ -4,6 +4,14 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api
 
 let authToken: string | null = null
 
+export function setAuthToken(token: string | null) {
+  authToken = token
+}
+
+export function getAuthToken(): string | null {
+  return authToken
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -40,32 +48,17 @@ client.interceptors.response.use(
   },
 )
 
-// Backward-compatible `api` object for existing stores
-function buildHeaders(): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (authToken) headers['Authorization'] = `Bearer ${authToken}`
-  return headers
-}
-
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { ...buildHeaders(), ...(options?.headers as Record<string, string>) },
-    ...options,
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new ApiError(res.status, body?.error ?? res.statusText)
-  }
-  return res.json()
-}
-
 export const api = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  patch: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  get: <T>(url: string, params?: Record<string, any>): Promise<T> =>
+    client.get<T>(url, { params }).then((res) => res.data),
+  post: <T>(url: string, data?: unknown): Promise<T> =>
+    client.post<T>(url, data).then((res) => res.data),
+  put: <T>(url: string, data?: unknown): Promise<T> =>
+    client.put<T>(url, data).then((res) => res.data),
+  patch: <T>(url: string, data?: unknown): Promise<T> =>
+    client.patch<T>(url, data).then((res) => res.data),
+  delete: <T>(url: string): Promise<T> =>
+    client.delete<T>(url).then((res) => res.data),
 }
 
 export default client

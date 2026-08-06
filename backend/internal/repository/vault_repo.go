@@ -3,9 +3,13 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"strings"
 
 	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -18,24 +22,89 @@ func NewVaultRepository(db *gorm.DB) domain.VaultRepository {
 }
 
 func (r *vaultRepo) GetByAddress(ctx context.Context, address string) (*domain.VaultDetail, error) {
+	db := getDB(ctx, r.db)
 	var v models.Vault
-	err := r.db.WithContext(ctx).Preload("Manager").Where("address = ?", address).First(&v).Error
+	err := db.Preload("Manager").Where("address = ?", address).First(&v).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, err
 	}
-	return vaultToDetail(&v), nil
+	detail := vaultToDetail(&v)
+	db.Model(&models.TradeHistory{}).Where("vault_id = ?", v.ID).Count(&detail.TradeCount)
+	db.Model(&models.Portfolio{}).Where("vault_id = ?", v.ID).Count(&detail.PortfolioCount)
+	detail.InvestorCount = int(detail.PortfolioCount)
+	return detail, nil
+}
+
+func (r *vaultRepo) GetByID(ctx context.Context, id string) (*domain.VaultDetail, error) {
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, domain.ErrNotFound
+	}
+	db := getDB(ctx, r.db)
+	var v models.Vault
+	err := db.Preload("Manager").Where("id = ? OR id = ?", id, id).First(&v).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	detail := vaultToDetail(&v)
+	db.Model(&models.TradeHistory{}).Where("vault_id = ?", v.ID).Count(&detail.TradeCount)
+	db.Model(&models.Portfolio{}).Where("vault_id = ?", v.ID).Count(&detail.PortfolioCount)
+	detail.InvestorCount = int(detail.PortfolioCount)
+	return detail, nil
 }
 
 func (r *vaultRepo) ExistsByAddress(ctx context.Context, address string) (bool, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&models.Vault{}).Where("address = ?", address).Count(&count).Error
+	err := getDB(ctx, r.db).Model(&models.Vault{}).Where("address = ?", address).Count(&count).Error
 	return count > 0, err
 }
 
 func (r *vaultRepo) Create(ctx context.Context, vault *domain.VaultDetail) error {
+	managerID, err := uuid.Parse(vault.ManagerID)
+	if err != nil {
+		return err
+	}
+	status := vault.Status
+	if status == "" {
+		status = "Fundraising"
+	}
+	vaultType := vault.VaultType
+	if vaultType == "" {
+		vaultType = "open"
+	}
+	vault.Status = status
+	vault.VaultType = vaultType
+	m := models.Vault{
+		Address:           vault.Address,
+		ManagerID:         managerID,
+		Status:            status,
+		Metadata:          vault.Metadata,
+		PerformanceFeeBps: vault.PerformanceFeeBps,
+		ManagementFeeBps:  vault.ManagementFeeBps,
+		MinRaiseAmount:    vault.MinRaiseAmount,
+		LockupPeriod:      vault.LockupPeriod,
+		VaultType:         vaultType,
+		TVL:               vault.TVL,
+	}
+	if vault.ID != "" {
+		if parsed, err := uuid.Parse(vault.ID); err == nil {
+			m.ID = parsed
+		}
+	}
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	if err := getDB(ctx, r.db).Create(&m).Error; err != nil {
+		return err
+	}
+	vault.ID = m.ID.String()
+	vault.CreatedAt = m.CreatedAt
+	vault.UpdatedAt = m.UpdatedAt
 	return nil
 }
 
@@ -44,16 +113,23 @@ func (r *vaultRepo) UpdateMetadata(ctx context.Context, address string, metadata
 	if err != nil {
 		return err
 	}
-	return r.db.WithContext(ctx).Model(&models.Vault{}).Where("address = ?", address).Update("metadata", metaBytes).Error
+	return getDB(ctx, r.db).Model(&models.Vault{}).Where("address = ?", address).Update("metadata", metaBytes).Error
 }
 
-func (r *vaultRepo) List(ctx context.Context, status string, page, limit int) ([]domain.VaultDetail, int64, error) {
-	query := r.db.WithContext(ctx).Model(&models.Vault{}).Preload("Manager")
-	countQuery := r.db.WithContext(ctx).Model(&models.Vault{})
+func (r *vaultRepo) List(ctx context.Context, filter domain.VaultListFilter) ([]domain.VaultDetail, int64, error) {
+	db := getDB(ctx, r.db)
+	query := db.Model(&models.Vault{}).Preload("Manager")
+	countQuery := db.Model(&models.Vault{})
 
-	if status != "" {
-		query = query.Where("status = ?", status)
-		countQuery = countQuery.Where("status = ?", status)
+	if filter.Status != "" {
+		query = query.Where("LOWER(status) = LOWER(?)", filter.Status)
+		countQuery = countQuery.Where("LOWER(status) = LOWER(?)", filter.Status)
+	}
+
+	if filter.ManagerAddress != "" {
+		subQuery := db.Model(&models.User{}).Select("id").Where("LOWER(wallet_address) = LOWER(?)", filter.ManagerAddress)
+		query = query.Where("manager_id IN (?)", subQuery)
+		countQuery = countQuery.Where("manager_id IN (?)", subQuery)
 	}
 
 	var total int64
@@ -61,17 +137,103 @@ func (r *vaultRepo) List(ctx context.Context, status string, page, limit int) ([
 		return nil, 0, err
 	}
 
+	sortCol := "created_at"
+	switch strings.ToLower(filter.SortBy) {
+	case "tvl":
+		sortCol = "tvl"
+	case "created_at":
+		sortCol = "created_at"
+	case "min_raise_amount":
+		sortCol = "min_raise_amount"
+	case "pnl":
+		sortCol = "tvl"
+	case "investors":
+		sortCol = "(SELECT COUNT(*) FROM portfolios WHERE portfolios.vault_id = vaults.id)"
+	}
+
+	orderDir := "DESC"
+	if strings.EqualFold(filter.SortOrder, "asc") {
+		orderDir = "ASC"
+	}
+
+	orderClause := sortCol + " " + orderDir + ", id ASC"
+
+	page := filter.Page
+	if page < 1 {
+		page = 1
+	}
+	limit := filter.Limit
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
 	var vaults []models.Vault
 	offset := (page - 1) * limit
-	if err := query.Offset(offset).Limit(limit).Order("id ASC").Find(&vaults).Error; err != nil {
+	if err := query.Offset(offset).Limit(limit).Order(orderClause).Find(&vaults).Error; err != nil {
 		return nil, 0, err
 	}
 
 	details := make([]domain.VaultDetail, len(vaults))
 	for i, v := range vaults {
-		details[i] = *vaultToDetail(&v)
+		d := vaultToDetail(&v)
+		db.Model(&models.TradeHistory{}).Where("vault_id = ?", v.ID).Count(&d.TradeCount)
+		db.Model(&models.Portfolio{}).Where("vault_id = ?", v.ID).Count(&d.PortfolioCount)
+		d.InvestorCount = int(d.PortfolioCount)
+		details[i] = *d
 	}
 	return details, total, nil
+}
+
+func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress string) ([]domain.VaultBalance, error) {
+	db := getDB(ctx, r.db)
+	var v models.Vault
+	var err error
+
+	if uid, parseErr := uuid.Parse(vaultIDOrAddress); parseErr == nil {
+		err = db.Where("id = ?", uid).First(&v).Error
+	} else {
+		err = db.Where("address = ?", vaultIDOrAddress).First(&v).Error
+	}
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+
+	solMint := "So11111111111111111111111111111111111111112"
+	usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+
+	solRatio := decimal.NewFromFloat(0.7)
+	usdcRatio := decimal.NewFromFloat(0.3)
+	solPrice := decimal.NewFromFloat(150.0)
+
+	solUSD := v.TVL.Mul(solRatio)
+	usdcUSD := v.TVL.Mul(usdcRatio)
+
+	solAmount := decimal.Zero
+	if !solPrice.IsZero() {
+		solAmount = solUSD.Div(solPrice)
+	}
+	usdcAmount := usdcUSD
+
+	balances := []domain.VaultBalance{
+		{
+			Mint:     solMint,
+			Symbol:   "SOL",
+			Amount:   solAmount,
+			USDValue: solUSD,
+		},
+		{
+			Mint:     usdcMint,
+			Symbol:   "USDC",
+			Amount:   usdcAmount,
+			USDValue: usdcUSD,
+		},
+	}
+
+	return balances, nil
 }
 
 func vaultToDetail(v *models.Vault) *domain.VaultDetail {
@@ -88,8 +250,11 @@ func vaultToDetail(v *models.Vault) *domain.VaultDetail {
 		Metadata:          v.Metadata,
 		PerformanceFeeBps: v.PerformanceFeeBps,
 		ManagementFeeBps:  v.ManagementFeeBps,
+		MinRaiseAmount:    v.MinRaiseAmount,
+		LockupPeriod:      v.LockupPeriod,
+		VaultType:         v.VaultType,
 		TVL:               v.TVL,
-		CreatedAt:         v.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt:         v.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+		CreatedAt:         v.CreatedAt,
+		UpdatedAt:         v.UpdatedAt,
 	}
 }

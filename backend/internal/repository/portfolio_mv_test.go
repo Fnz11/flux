@@ -75,8 +75,8 @@ func TestGetPortfolioSummary(t *testing.T) {
 		if got.UserID != userID {
 			t.Errorf("UserID = %q, want %q", got.UserID, userID)
 		}
-		if got.VaultCount != 3 || got.TotalInvested != 15000 || got.CurrentValue != 21000 ||
-			got.UnrealizedPnL != 3000 || got.ReturnPct != 40.0 {
+		if got.VaultCount != 3 || !got.TotalInvested.Equal(dec("15000")) || !got.CurrentValue.Equal(dec("21000")) ||
+			!got.UnrealizedPnL.Equal(dec("3000")) || !got.ReturnPct.Equal(dec("40")) {
 			t.Errorf("unexpected summary: %+v", got)
 		}
 		if got.UpdatedAt == "" {
@@ -125,8 +125,8 @@ func TestGetUserPnLSummary(t *testing.T) {
 		if got.UserID != userID {
 			t.Errorf("UserID = %q, want %q", got.UserID, userID)
 		}
-		if got.TotalInvested != 15000 || got.RealizedPnL != 3000 ||
-			got.UnrealizedPnL != 3000 || got.TotalPnL != 6000 || got.ReturnPct != 40.0 {
+		if !got.TotalInvested.Equal(dec("15000")) || !got.RealizedPnL.Equal(dec("3000")) ||
+			!got.UnrealizedPnL.Equal(dec("3000")) || !got.TotalPnL.Equal(dec("6000")) || !got.ReturnPct.Equal(dec("40")) {
 			t.Errorf("unexpected summary: %+v", got)
 		}
 		if got.UpdatedAt == "" {

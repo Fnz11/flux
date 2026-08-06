@@ -15,7 +15,7 @@ function bpsToPercent(bps: number): string {
 export function VaultOverview({ vault }: VaultOverviewProps) {
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-6">
+      <div className="rounded-xl border border-border-subtle bg-bg-elevated p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -29,7 +29,7 @@ export function VaultOverview({ vault }: VaultOverviewProps) {
           <Link
             to="/vaults/$id/edit"
             params={{ id: vault.id }}
-            className="rounded-lg border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
+            className="rounded-xl border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
           >
             Edit
           </Link>
@@ -43,7 +43,7 @@ export function VaultOverview({ vault }: VaultOverviewProps) {
         <MetricCard label="Lockup Period" value="N/A" />
       </div>
 
-      <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-6">
+      <div className="rounded-xl border border-border-subtle bg-bg-elevated p-6">
         <h3 className="mb-4 text-sm font-medium text-text-secondary">Focus Assets</h3>
         {vault.metadata.focusAssets.length > 0 ? (
           <div className="flex flex-wrap gap-2">
@@ -62,7 +62,7 @@ export function VaultOverview({ vault }: VaultOverviewProps) {
       </div>
 
       {vault.metadata.description && (
-        <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-6">
+        <div className="rounded-xl border border-border-subtle bg-bg-elevated p-6">
           <h3 className="mb-2 text-sm font-medium text-text-secondary">Description</h3>
           <p className="text-sm text-text-primary">{vault.metadata.description}</p>
         </div>
