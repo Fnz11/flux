@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type portfolioRepo struct {
@@ -29,36 +30,26 @@ func (r *portfolioRepo) UpsertPosition(ctx context.Context, userID, vaultID stri
 		return err
 	}
 
-	db := getDB(ctx, r.db)
-	var existing models.Portfolio
-	err = db.Where("user_id = ? AND vault_id = ?", uid, vid).First(&existing).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		p := models.Portfolio{
-			ID:                 uuid.New(),
-			UserID:             uid,
-			VaultID:            vid,
-			SharesOwned:        shares,
-			TotalInvestedValue: invested,
-			AverageEntryPrice:  entryPrice,
-		}
-		return db.Create(&p).Error
-	}
-	if err != nil {
-		return err
+	p := models.Portfolio{
+		ID:                 uuid.New(),
+		UserID:             uid,
+		VaultID:            vid,
+		SharesOwned:        shares,
+		TotalInvestedValue: invested,
+		AverageEntryPrice:  entryPrice,
 	}
 
-	newShares := existing.SharesOwned.Add(shares)
-	newInvested := existing.TotalInvestedValue.Add(invested)
-	var avgPrice decimal.Decimal
-	if newShares.IsPositive() {
-		avgPrice = newInvested.Div(newShares)
-	}
-
-	return db.Model(&existing).Updates(map[string]interface{}{
-		"shares_owned":         newShares,
-		"total_invested_value": newInvested,
-		"average_entry_price":  avgPrice,
-	}).Error
+	// Atomic upsert: INSERT ... ON CONFLICT (user_id, vault_id) DO UPDATE.
+	// Relies on the unique index uq_portfolios_user_vault (migration 020) and
+	// removes the select-then-insert race between concurrent SyncTrade calls.
+	return getDB(ctx, r.db).Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "user_id"}, {Name: "vault_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"shares_owned":         gorm.Expr("portfolios.shares_owned + EXCLUDED.shares_owned"),
+			"total_invested_value": gorm.Expr("portfolios.total_invested_value + EXCLUDED.total_invested_value"),
+			"average_entry_price":  gorm.Expr("COALESCE((portfolios.total_invested_value + EXCLUDED.total_invested_value) / NULLIF(portfolios.shares_owned + EXCLUDED.shares_owned, 0), 0)"),
+		}),
+	}).Create(&p).Error
 }
 
 func (r *portfolioRepo) ReducePosition(ctx context.Context, userID, vaultID string, sharesSold decimal.Decimal) error {

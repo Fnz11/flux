@@ -9,7 +9,7 @@ import { useAppStore } from '@/stores/app-store'
 import { usePortfolioStore, useVaultStore } from '@/stores'
 
 export function WalletConnectButton() {
-  const { wallets, select, connect, disconnect, connected, publicKey } = useWallet()
+  const { wallets, select, disconnect, connected, publicKey } = useWallet()
   const setCurrentUser = useAppStore((s) => s.setCurrentUser)
 
   const [isOpen, setIsOpen] = useState(false)
@@ -47,19 +47,22 @@ export function WalletConnectButton() {
     try {
       select(walletName)
       setIsOpen(false)
-      await connect()
     } catch (err) {
       console.error('Wallet connection error:', err)
     }
   }
 
-  const handleDisconnect = useCallback(() => {
-    disconnect()
-    usePortfolioStore.getState().reset()
-    useVaultStore.getState().reset()
-    setCurrentUser(null)
-    setDropdownOpen(false)
-  }, [disconnect, setCurrentUser])
+  const handleDisconnect = async () => {
+    try {
+      await disconnect()
+      usePortfolioStore.getState().reset()
+      useVaultStore.getState().reset()
+      setCurrentUser(null)
+      setDropdownOpen(false)
+    } catch (err) {
+      console.error('Wallet disconnect error:', err)
+    }
+  }
 
   if (connected && address) {
     return (
@@ -96,6 +99,12 @@ export function WalletConnectButton() {
     )
   }
 
+  const handleConnectDemo = () => {
+    const demoPubkey = '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1'
+    setCurrentUser(demoPubkey)
+    setIsOpen(false)
+  }
+
   return (
     <>
       <Button
@@ -114,34 +123,43 @@ export function WalletConnectButton() {
             Select a Solana wallet to connect to FBYT platform:
           </p>
           <div className="grid gap-2">
-            {wallets.length > 0 ? (
-              wallets.map((w) => (
-                <Button
-                  key={w.adapter.name}
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleSelectWallet(w.adapter.name)}
-                  className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-all hover:border-primary-coral/50 hover:bg-bg-elevated font-normal"
-                >
-                  <div className="flex items-center gap-3">
-                    {w.adapter.icon && (
-                      <img src={w.adapter.icon} alt={w.adapter.name} className="size-6 rounded" />
-                    )}
-                    <span className="text-sm font-medium text-text-primary">{w.adapter.name}</span>
-                  </div>
-                  <span className="text-xs text-text-tertiary">
-                    {w.readyState}
-                  </span>
-                </Button>
-              ))
-            ) : (
-              <div className="rounded-xl border border-border-subtle bg-bg-inset p-4 text-center">
-                <p className="text-sm text-text-secondary">No wallet extension detected.</p>
-                <p className="mt-1 text-xs text-text-tertiary">
-                  Please install Phantom or Solflare wallet extension in your browser.
-                </p>
+            {wallets.map((w) => (
+              <Button
+                key={w.adapter.name}
+                type="button"
+                variant="outline"
+                onClick={() => handleSelectWallet(w.adapter.name)}
+                className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-all hover:border-primary-coral/50 hover:bg-bg-elevated font-normal"
+              >
+                <div className="flex items-center gap-3">
+                  {w.adapter.icon && (
+                    <img src={w.adapter.icon} alt={w.adapter.name} className="size-6 rounded" />
+                  )}
+                  <span className="text-sm font-medium text-text-primary">{w.adapter.name}</span>
+                </div>
+                <span className="text-xs text-text-tertiary">
+                  {w.readyState}
+                </span>
+              </Button>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleConnectDemo}
+              className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-all hover:border-primary-gold/50 hover:bg-bg-elevated font-normal border-dashed border-primary-gold/40"
+            >
+              <div className="flex items-center gap-3">
+                <div className="size-6 rounded bg-primary-gold/20 flex items-center justify-center text-primary-gold font-bold text-xs">
+                  ⚡
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-text-primary">Demo Wallet (Devnet)</p>
+                  <p className="text-[10px] text-text-tertiary">Instant connection without extension</p>
+                </div>
               </div>
-            )}
+              <span className="text-xs text-primary-gold font-medium">Connect</span>
+            </Button>
           </div>
         </div>
       </Modal>

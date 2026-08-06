@@ -80,6 +80,14 @@ func main() {
 
 	healthHandler := handlers.NewHealthHandler(pinger)
 	healthHandler.SetCache(c)
+	healthHandler.SetState(func() map[string]string {
+		m := middleware.BreakerStates()
+		m["solana_rpc"] = solanaClient.CircuitState()
+		if rc, ok := c.(*cache.RedisCache); ok {
+			m["redis"] = rc.BreakerState()
+		}
+		return m
+	})
 
 	configHandler := handlers.NewConfigHandler(&handlers.AppConfig{
 		DustThreshold:        cfg.DustThreshold,
@@ -90,7 +98,25 @@ func main() {
 	transactionHandler := handlers.NewTransactionHandler()
 
 	mvWorker := jobs.NewMVRefreshWorker(db, logger, 0)
+	mvWorker.SetRedis(redisClient)
+	mvWorker.SetNotifier(func() {
+		logger.WithField("event", "mv:refreshed").
+			Debug("materialized view refresh complete; cache eviction signal emitted")
+	})
 	mvWorker.Start(context.Background())
+
+	// Warm high-traffic keys at startup to avoid a DB thundering herd after a
+	// pod restart (audit 1.3.5). The loader map is intentionally empty for now.
+	// TODO(audit 1.3.5): add real loaders (leaderboard, vault list) once the
+	// backing queries are exposed without an import cycle; the empty set still
+	// exercises the warming infrastructure.
+	if redisClient != nil {
+		go func() {
+			warmCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			cache.WarmCache(warmCtx, redisClient, map[string]func() (any, error){})
+		}()
+	}
 
 	r := router.Setup(&router.HandlerSet{
 		Auth:        authHandler,
@@ -104,6 +130,7 @@ func main() {
 		Metrics:     metricsHandler,
 		Transaction: transactionHandler,
 		JWTSecret:   cfg.JWTSecret,
+		Redis:       redisClient,
 	})
 
 	if cfg.EnablePprof {

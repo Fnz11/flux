@@ -107,6 +107,12 @@ type PnLPosition struct {
 	PnLPercent         decimal.Decimal `json:"pnl_percent"`
 }
 
+type portfolioVaultRow struct {
+	models.Portfolio
+	VaultAddress string
+	VaultTVL     decimal.Decimal
+}
+
 const pnlCacheTTL = 30 * time.Second
 
 const userPnLSummaryQuery = `
@@ -168,18 +174,23 @@ func (s *PnLService) loadUserPnL(ctx context.Context, userID uuid.UUID) ([]PnLPo
 }
 
 func (s *PnLService) calculateUserPnL(ctx context.Context, userID uuid.UUID) ([]PnLPosition, error) {
-	var portfolios []models.Portfolio
-	if err := s.DB.WithContext(ctx).Preload("Vault").Where("user_id = ?", userID).Find(&portfolios).Error; err != nil {
+	var rows []portfolioVaultRow
+	if err := s.DB.WithContext(ctx).
+		Table("portfolios").
+		Select("portfolios.*, vaults.address AS vault_address, vaults.tvl AS vault_tvl").
+		Joins("JOIN vaults ON vaults.id = portfolios.vault_id").
+		Where("portfolios.user_id = ?", userID).
+		Scan(&rows).Error; err != nil {
 		return nil, err
 	}
 
-	positions := make([]PnLPosition, 0, len(portfolios))
-	if len(portfolios) == 0 {
+	positions := make([]PnLPosition, 0, len(rows))
+	if len(rows) == 0 {
 		return positions, nil
 	}
 
-	vaultIDs := make([]uuid.UUID, 0, len(portfolios))
-	for _, p := range portfolios {
+	vaultIDs := make([]uuid.UUID, 0, len(rows))
+	for _, p := range rows {
 		vaultIDs = append(vaultIDs, p.VaultID)
 	}
 
@@ -188,10 +199,10 @@ func (s *PnLService) calculateUserPnL(ctx context.Context, userID uuid.UUID) ([]
 		return nil, err
 	}
 
-	for _, p := range portfolios {
+	for _, p := range rows {
 		var currentValue decimal.Decimal
 		if total := totalByVault[p.VaultID]; total.IsPositive() {
-			currentValue = p.SharesOwned.Div(total).Mul(p.Vault.TVL)
+			currentValue = p.SharesOwned.Div(total).Mul(p.VaultTVL)
 		}
 
 		var currentPrice decimal.Decimal
@@ -202,8 +213,8 @@ func (s *PnLService) calculateUserPnL(ctx context.Context, userID uuid.UUID) ([]
 
 		positions = append(positions, PnLPosition{
 			VaultID:            p.VaultID.String(),
-			VaultAddress:       p.Vault.Address,
-			VaultName:          p.Vault.Address,
+			VaultAddress:       p.VaultAddress,
+			VaultName:          p.VaultAddress,
 			SharesOwned:        p.SharesOwned,
 			TotalInvestedValue: p.TotalInvestedValue,
 			AverageEntryPrice:  p.AverageEntryPrice,
@@ -234,32 +245,36 @@ type PnLResult struct {
 }
 
 func (s *PnLService) RecalculatePosition(portfolioID uuid.UUID) (*PnLResult, error) {
-	var portfolio models.Portfolio
-	if err := s.DB.Preload("Vault").
-		First(&portfolio, "id = ?", portfolioID).Error; err != nil {
+	var row portfolioVaultRow
+	if err := s.DB.
+		Table("portfolios").
+		Select("portfolios.*, vaults.address AS vault_address, vaults.tvl AS vault_tvl").
+		Joins("JOIN vaults ON vaults.id = portfolios.vault_id").
+		Where("portfolios.id = ?", portfolioID).
+		Take(&row).Error; err != nil {
 		return nil, err
 	}
 
 	var totalShares decimal.Decimal
 	if err := s.DB.Model(&models.Portfolio{}).
 		Select("COALESCE(SUM(shares_owned), 0)").
-		Where("vault_id = ?", portfolio.VaultID).
+		Where("vault_id = ?", row.VaultID).
 		Scan(&totalShares).Error; err != nil {
 		return nil, err
 	}
 
 	var currentValue decimal.Decimal
 	if totalShares.IsPositive() {
-		currentValue = portfolio.SharesOwned.Div(totalShares).Mul(portfolio.Vault.TVL)
+		currentValue = row.SharesOwned.Div(totalShares).Mul(row.VaultTVL)
 	}
 
-	pnl := currentValue.Sub(portfolio.TotalInvestedValue)
+	pnl := currentValue.Sub(row.TotalInvestedValue)
 	var pnlPercent decimal.Decimal
-	if portfolio.TotalInvestedValue.IsPositive() {
-		pnlPercent = pnl.Div(portfolio.TotalInvestedValue).Mul(decimal.NewFromInt(100))
+	if row.TotalInvestedValue.IsPositive() {
+		pnlPercent = pnl.Div(row.TotalInvestedValue).Mul(decimal.NewFromInt(100))
 	}
 
-	if err := s.DB.Model(&portfolio).Update("updated_at", gorm.Expr("NOW()")).Error; err != nil {
+	if err := s.DB.Model(&row.Portfolio).Update("updated_at", gorm.Expr("NOW()")).Error; err != nil {
 		return nil, err
 	}
 
@@ -267,9 +282,9 @@ func (s *PnLService) RecalculatePosition(portfolioID uuid.UUID) (*PnLResult, err
 		CurrentValue:       currentValue,
 		PnL:                pnl,
 		PnLPercent:         pnlPercent,
-		TotalInvestedValue: portfolio.TotalInvestedValue,
-		SharesOwned:        portfolio.SharesOwned,
-		AverageEntryPrice:  portfolio.AverageEntryPrice,
+		TotalInvestedValue: row.TotalInvestedValue,
+		SharesOwned:        row.SharesOwned,
+		AverageEntryPrice:  row.AverageEntryPrice,
 	}, nil
 }
 

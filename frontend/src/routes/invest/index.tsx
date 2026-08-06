@@ -14,7 +14,7 @@ export const Route = createFileRoute('/invest/')({ component: InvestPage })
 function InvestPage() {
   useRouteWsChannel(['vaults'])
   const wallet = useWallet()
-  const { data: vaults = [], isLoading: vaultsLoading } = useVaultsQuery()
+  const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useVaultsQuery()
   const { totalInvested, totalValue, totalPnl } = usePortfolioPnl(wallet.publicKey?.toBase58())
 
   const topVaults = vaults.slice(0, 6)
@@ -31,11 +31,7 @@ function InvestPage() {
             <div className="rounded-lg bg-bg-inset px-4 py-2 text-sm font-mono text-text-secondary border border-border-subtle/50">
               {wallet.publicKey.toBase58().slice(0, 4)}...{wallet.publicKey.toBase58().slice(-4)}
             </div>
-          ) : (
-            <div className="rounded-lg bg-bg-inset px-4 py-2 text-sm text-text-muted border border-border-subtle/50">
-              Connect wallet to invest
-            </div>
-          )
+          ) : undefined
         }
       />
 
@@ -62,16 +58,16 @@ function InvestPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <VaultInvestCardSkeleton key={i} />)}
           </div>
-        ) : topVaults.length > 0 ? (
+        ) : vaultsError || topVaults.length === 0 ? (
+          <EmptyVaultsTable
+            title={vaultsError ? "Error loading vaults" : "No vaults available for investment yet"}
+            description={vaultsError ? "Please try again later." : "Vaults created by managers will appear here"}
+            headers={['Vault', 'Focus Assets', 'TVL', 'Perf. Fee', 'Status']}
+          />
+        ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {topVaults.map((vault) => <VaultInvestCard key={vault.id} vault={vault} />)}
           </div>
-        ) : (
-          <EmptyVaultsTable
-            title="No vaults available for investment yet"
-            description="Vaults created by managers will appear here"
-            headers={['Vault', 'Focus Assets', 'TVL', 'Perf. Fee', 'Status']}
-          />
         )}
       </div>
 

@@ -1,6 +1,7 @@
 import { Search, Sun, Bell } from 'lucide-react'
 import { Input } from './input'
 import { Button } from './button'
+import { WalletConnectButton } from './WalletConnectButton'
 
 export function NavHeader() {
   return (
@@ -22,6 +23,9 @@ export function NavHeader() {
         <Button variant="ghost" size="icon" className="size-8 p-1 relative hover:text-text-primary">
           <Bell className="size-5" strokeWidth={1.5} />
         </Button>
+        <div className="hidden sm:block ml-2 border-l border-border-subtle pl-3">
+          <WalletConnectButton />
+        </div>
       </div>
     </>
   )

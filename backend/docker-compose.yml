@@ -31,6 +31,8 @@ services:
       - "timescaledb.license=timescale"
       - "-c"
       - "max_connections=200"
+      - "-c"
+      - "statement_timeout=30000"
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
       - ./deploy/timescaledb/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
@@ -58,6 +60,7 @@ services:
       AUTH_TYPE: scram-sha-256
       MAX_CLIENT_CONN: "1000"
       DEFAULT_POOL_SIZE: "20"
+      MIN_POOL_SIZE: "5"
     volumes:
       - ./deploy/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
       - ./deploy/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro

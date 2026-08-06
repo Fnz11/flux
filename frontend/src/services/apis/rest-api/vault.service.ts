@@ -58,17 +58,9 @@ export interface VaultBalancesResponse {
 }
 
 export async function getVaultBalances(vaultId: string): Promise<VaultBalance[]> {
-  try {
-    const res = await api.get<VaultBalancesResponse | VaultBalance[]>(`/vaults/${vaultId}/balances`)
-    if (Array.isArray(res)) return res
-    if (res && Array.isArray(res.balances)) return res.balances
-  } catch (err) {
-    console.warn(`Backend /vaults/${vaultId}/balances unavailable, using fallback balances:`, err)
-  }
-
-  return [
-    { mint: 'SOL', symbol: 'SOL', amount: 14.52, usdValue: 14.52 * 150 },
-    { mint: 'USDC', symbol: 'USDC', amount: 2450.0, usdValue: 2450.0 },
-  ]
+  const res = await api.get<VaultBalancesResponse | VaultBalance[]>(`/vaults/${vaultId}/balances`)
+  if (Array.isArray(res)) return res
+  if (res && Array.isArray(res.balances)) return res.balances
+  return []
 }
 

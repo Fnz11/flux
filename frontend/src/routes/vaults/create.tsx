@@ -28,6 +28,7 @@ import {
   Clock,
   ArrowLeft,
   Sparkles,
+  Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

@@ -11,6 +11,7 @@ import (
 type HealthHandler struct {
 	pinger domain.Pinger
 	cache  cache.Cache
+	state  func() map[string]string
 }
 
 func NewHealthHandler(pinger domain.Pinger) *HealthHandler {
@@ -19,6 +20,13 @@ func NewHealthHandler(pinger domain.Pinger) *HealthHandler {
 
 func (h *HealthHandler) SetCache(c cache.Cache) {
 	h.cache = c
+}
+
+// SetState registers a callback that returns dependency circuit-breaker
+// states (name -> "closed"/"open"/"half-open") for inclusion in the health
+// details. Passing nil disables it.
+func (h *HealthHandler) SetState(fn func() map[string]string) {
+	h.state = fn
 }
 
 func (h *HealthHandler) HealthCheck(c *gin.Context) {
@@ -45,6 +53,12 @@ func (h *HealthHandler) HealthCheck(c *gin.Context) {
 			"db":    dbStatus,
 			"redis": redisStatus,
 		},
+	}
+
+	if h.state != nil {
+		if states := h.state(); states != nil {
+			details["circuit_breakers"] = states
+		}
 	}
 
 	if !healthy {

@@ -2,6 +2,8 @@ package cache
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -42,4 +44,46 @@ func LeaderboardKey() string {
 // pattern-based invalidation (SCAN + DEL) of all user portfolios.
 func UserPortfolioPrefix() string {
 	return fmt.Sprintf("%s:user:*:portfolio", keyPrefix)
+}
+
+// UserPortfolioSummaryKey returns app:user:{userID}:portfolio-summary.
+func UserPortfolioSummaryKey(userID string) string {
+	return fmt.Sprintf("%s:user:%s:portfolio-summary", keyPrefix, userID)
+}
+
+// UserPnlSummaryKey returns app:user:{userID}:pnl-summary.
+func UserPnlSummaryKey(userID string) string {
+	return fmt.Sprintf("%s:user:%s:pnl-summary", keyPrefix, userID)
+}
+
+// VaultTotalSharesKey returns app:vault:{vaultID}:total-shares.
+func VaultTotalSharesKey(vaultID string) string {
+	return fmt.Sprintf("%s:vault:%s:total-shares", keyPrefix, vaultID)
+}
+
+// TradeSignatureKey returns app:trade:signature:{signature}.
+func TradeSignatureKey(signature string) string {
+	return fmt.Sprintf("%s:trade:signature:%s", keyPrefix, signature)
+}
+
+// TradeListKey returns app:vault:{vaultID}:trades:{tradeType}:{page}:{limit}.
+// Used to cache paginated trade listings keyed by vault + page + limit.
+func TradeListKey(vaultID, tradeType string, page, limit int) string {
+	if tradeType == "" {
+		tradeType = "all"
+	}
+	return fmt.Sprintf("%s:vault:%s:trades:%s:%d:%d", keyPrefix, vaultID, tradeType, page, limit)
+}
+
+// TradeListByVaultIDsKey returns app:vaults:{sorted-ids}:trades:{tradeType}:{page}:{limit}.
+// The vault ids are sorted and joined so the key is deterministic regardless of
+// the caller's slice ordering.
+func TradeListByVaultIDsKey(vaultIDs []string, tradeType string, page, limit int) string {
+	ids := append([]string(nil), vaultIDs...)
+	sort.Strings(ids)
+	joined := strings.Join(ids, "+")
+	if tradeType == "" {
+		tradeType = "all"
+	}
+	return fmt.Sprintf("%s:vaults:%s:trades:%s:%d:%d", keyPrefix, joined, tradeType, page, limit)
 }

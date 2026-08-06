@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/fbyt-clone/backend/internal/cache"
 	"github.com/fbyt-clone/backend/internal/domain"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -13,16 +15,29 @@ const (
 	portfolioTTL = 30 * time.Second
 	summaryTTL   = 60 * time.Second
 	tradeTTL     = 30 * time.Second
+	tradeListTTL = 20 * time.Second
 )
 
-// Key strings follow the cache.Keys.* convention (opt.md 6.4). Integrator:
-// swap these for cache.Keys helpers once internal/cache lands; keep the
-// exact strings aligned with agent 8's invalidation keys.
-func portfolioKey(userID string) string         { return "app:user:" + userID + ":portfolio" }
-func portfolioSummaryKey(userID string) string  { return "app:user:" + userID + ":portfolio-summary" }
-func pnlSummaryKey(userID string) string        { return "app:user:" + userID + ":pnl-summary" }
-func vaultTotalSharesKey(vaultID string) string { return "app:vault:" + vaultID + ":total-shares" }
-func tradeSigKey(sig string) string             { return "app:trade:signature:" + sig }
+// cacheFlight dedupes concurrent cache misses per key so a burst of requests
+// after a key expires performs a single DB read (singleflight stampede
+// protection, audit 1.3.3).
+var cacheFlight = cache.NewGroup()
+
+// BatchDeleter is an optional cache capability: when the underlying cache can
+// delete many keys in one round trip, invalidateKeys uses it instead of one
+// Delete per key (audit 1.3.2).
+type BatchDeleter interface {
+	DeleteMany(ctx context.Context, keys ...string) error
+}
+
+// Short key helpers delegate to cache.Keys so reads and invalidations share the
+// exact same key contract. They are kept as thin wrappers for callers/tests
+// that still reference the short names.
+func portfolioKey(userID string) string         { return cache.UserPortfolioKey(userID) }
+func portfolioSummaryKey(userID string) string  { return cache.UserPortfolioSummaryKey(userID) }
+func pnlSummaryKey(userID string) string        { return cache.UserPnlSummaryKey(userID) }
+func vaultTotalSharesKey(vaultID string) string { return cache.VaultTotalSharesKey(vaultID) }
+func tradeSigKey(sig string) string             { return cache.TradeSignatureKey(sig) }
 
 func cacheGet[T any](ctx context.Context, cache Cache, key string, ttl time.Duration, load func() (T, error)) (T, error) {
 	if cache == nil {
@@ -34,19 +49,73 @@ func cacheGet[T any](ctx context.Context, cache Cache, key string, ttl time.Dura
 		return v, nil
 	}
 
-	v, err := load()
+	got, err := cacheFlight.Do(key, func() (any, error) {
+		v, err := load()
+		if err != nil {
+			return v, err
+		}
+		if err := cache.SetWithTTL(ctx, key, v, ttl); err != nil {
+			logrus.WithError(err).WithField("key", key).Warn("cache set failed")
+		}
+		return v, nil
+	})
 	if err != nil {
-		return v, err
+		var zero T
+		return zero, err
+	}
+	typed, ok := got.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("cache: unexpected value type %T for key %q", got, key)
+	}
+	return typed, nil
+}
+
+// tradeListCache is the JSON envelope stored for paginated trade listings.
+type tradeListCache struct {
+	Items []domain.TradeDetail `json:"items"`
+	Total int64                `json:"total"`
+}
+
+func cacheGetPaged(ctx context.Context, cache Cache, key string, ttl time.Duration, load func() ([]domain.TradeDetail, int64, error)) ([]domain.TradeDetail, int64, error) {
+	if cache == nil {
+		return load()
 	}
 
-	if err := cache.SetWithTTL(ctx, key, v, ttl); err != nil {
-		logrus.WithError(err).WithField("key", key).Warn("cache set failed")
+	var cached tradeListCache
+	if err := cache.Get(ctx, key, &cached); err == nil {
+		return cached.Items, cached.Total, nil
 	}
-	return v, nil
+
+	got, err := cacheFlight.Do(key, func() (any, error) {
+		items, total, err := load()
+		if err != nil {
+			return nil, err
+		}
+		result := tradeListCache{Items: items, Total: total}
+		if err := cache.SetWithTTL(ctx, key, result, ttl); err != nil {
+			logrus.WithError(err).WithField("key", key).Warn("cache set failed")
+		}
+		return result, nil
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	result, ok := got.(tradeListCache)
+	if !ok {
+		return nil, 0, fmt.Errorf("cache: unexpected value type %T for key %q", got, key)
+	}
+	return result.Items, result.Total, nil
 }
 
 func invalidateKeys(ctx context.Context, cache Cache, keys ...string) {
-	if cache == nil {
+	if cache == nil || len(keys) == 0 {
+		return
+	}
+	if bd, ok := cache.(BatchDeleter); ok {
+		if err := bd.DeleteMany(ctx, keys...); err != nil {
+			logrus.WithError(err).WithField("keys", keys).Warn("cache batch delete failed")
+		}
 		return
 	}
 	for _, key := range keys {
@@ -71,10 +140,10 @@ func (c *CachedPortfolioRepository) UpsertPosition(ctx context.Context, userID, 
 		return err
 	}
 	invalidateKeys(ctx, c.cache,
-		portfolioKey(userID),
-		vaultTotalSharesKey(vaultID),
-		portfolioSummaryKey(userID),
-		pnlSummaryKey(userID),
+		cache.UserPortfolioKey(userID),
+		cache.VaultTotalSharesKey(vaultID),
+		cache.UserPortfolioSummaryKey(userID),
+		cache.UserPnlSummaryKey(userID),
 	)
 	return nil
 }
@@ -85,34 +154,34 @@ func (c *CachedPortfolioRepository) ReducePosition(ctx context.Context, userID, 
 		return err
 	}
 	invalidateKeys(ctx, c.cache,
-		portfolioKey(userID),
-		vaultTotalSharesKey(vaultID),
-		portfolioSummaryKey(userID),
-		pnlSummaryKey(userID),
+		cache.UserPortfolioKey(userID),
+		cache.VaultTotalSharesKey(vaultID),
+		cache.UserPortfolioSummaryKey(userID),
+		cache.UserPnlSummaryKey(userID),
 	)
 	return nil
 }
 
 func (c *CachedPortfolioRepository) GetByUser(ctx context.Context, userID string) ([]domain.PortfolioDetail, error) {
-	return cacheGet(ctx, c.cache, portfolioKey(userID), portfolioTTL, func() ([]domain.PortfolioDetail, error) {
+	return cacheGet(ctx, c.cache, cache.UserPortfolioKey(userID), portfolioTTL, func() ([]domain.PortfolioDetail, error) {
 		return c.inner.GetByUser(ctx, userID)
 	})
 }
 
 func (c *CachedPortfolioRepository) GetTotalSharesByVault(ctx context.Context, vaultID string) (decimal.Decimal, error) {
-	return cacheGet(ctx, c.cache, vaultTotalSharesKey(vaultID), portfolioTTL, func() (decimal.Decimal, error) {
+	return cacheGet(ctx, c.cache, cache.VaultTotalSharesKey(vaultID), portfolioTTL, func() (decimal.Decimal, error) {
 		return c.inner.GetTotalSharesByVault(ctx, vaultID)
 	})
 }
 
 func (c *CachedPortfolioRepository) GetPortfolioSummary(ctx context.Context, userID string) (*domain.PortfolioSummary, error) {
-	return cacheGet(ctx, c.cache, portfolioSummaryKey(userID), summaryTTL, func() (*domain.PortfolioSummary, error) {
+	return cacheGet(ctx, c.cache, cache.UserPortfolioSummaryKey(userID), summaryTTL, func() (*domain.PortfolioSummary, error) {
 		return c.inner.GetPortfolioSummary(ctx, userID)
 	})
 }
 
 func (c *CachedPortfolioRepository) GetUserPnLSummary(ctx context.Context, userID string) (*domain.UserPnLSummary, error) {
-	return cacheGet(ctx, c.cache, pnlSummaryKey(userID), summaryTTL, func() (*domain.UserPnLSummary, error) {
+	return cacheGet(ctx, c.cache, cache.UserPnlSummaryKey(userID), summaryTTL, func() (*domain.UserPnLSummary, error) {
 		return c.inner.GetUserPnLSummary(ctx, userID)
 	})
 }
@@ -131,7 +200,7 @@ func NewCachedTradeRepository(inner domain.TradeRepository, cache Cache) domain.
 }
 
 func (c *CachedTradeRepository) FindBySignature(ctx context.Context, sig string) (*domain.TradeDetail, error) {
-	return cacheGet(ctx, c.cache, tradeSigKey(sig), tradeTTL, func() (*domain.TradeDetail, error) {
+	return cacheGet(ctx, c.cache, cache.TradeSignatureKey(sig), tradeTTL, func() (*domain.TradeDetail, error) {
 		return c.inner.FindBySignature(ctx, sig)
 	})
 }
@@ -141,14 +210,20 @@ func (c *CachedTradeRepository) Create(ctx context.Context, trade *domain.TradeD
 	if err != nil {
 		return err
 	}
-	invalidateKeys(ctx, c.cache, tradeSigKey(trade.TransactionSignature))
+	invalidateKeys(ctx, c.cache, cache.TradeSignatureKey(trade.TransactionSignature))
 	return nil
 }
 
 func (c *CachedTradeRepository) ListByVault(ctx context.Context, vaultID string, tradeType string, page, limit int) ([]domain.TradeDetail, int64, error) {
-	return c.inner.ListByVault(ctx, vaultID, tradeType, page, limit)
+	key := cache.TradeListKey(vaultID, tradeType, page, limit)
+	return cacheGetPaged(ctx, c.cache, key, tradeListTTL, func() ([]domain.TradeDetail, int64, error) {
+		return c.inner.ListByVault(ctx, vaultID, tradeType, page, limit)
+	})
 }
 
 func (c *CachedTradeRepository) ListByVaultIDs(ctx context.Context, vaultIDs []string, tradeType string, page, limit int) ([]domain.TradeDetail, int64, error) {
-	return c.inner.ListByVaultIDs(ctx, vaultIDs, tradeType, page, limit)
+	key := cache.TradeListByVaultIDsKey(vaultIDs, tradeType, page, limit)
+	return cacheGetPaged(ctx, c.cache, key, tradeListTTL, func() ([]domain.TradeDetail, int64, error) {
+		return c.inner.ListByVaultIDs(ctx, vaultIDs, tradeType, page, limit)
+	})
 }

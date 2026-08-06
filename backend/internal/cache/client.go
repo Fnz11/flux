@@ -43,3 +43,26 @@ func NewRedisClient(url string) (*redis.Client, error) {
 	}
 	return client, nil
 }
+
+// WarmCache pre-populates high-traffic cache keys on startup so a pod restart
+// does not cause a database thundering herd (audit 1.3.5). It is non-blocking
+// by design: callers should run it from a goroutine, e.g.
+//
+//	go WarmCache(ctx, rdb, map[string]func() (any, error){...})
+func WarmCache(ctx context.Context, rdb *redis.Client, loaders map[string]func() (any, error)) {
+	for key, load := range loaders {
+		v, err := load()
+		if err != nil {
+			logrus.WithError(err).WithField("key", key).Warn("cache warm load failed")
+			continue
+		}
+		raw, err := marshal(v)
+		if err != nil {
+			logrus.WithError(err).WithField("key", key).Warn("cache warm marshal failed")
+			continue
+		}
+		if err := rdb.Set(ctx, key, raw, LeaderboardTTL).Err(); err != nil {
+			logrus.WithError(err).WithField("key", key).Warn("cache warm set failed")
+		}
+	}
+}

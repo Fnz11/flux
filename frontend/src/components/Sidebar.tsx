@@ -28,6 +28,7 @@ const campaignLinks = [
 export function Sidebar() {
   const isManager = useAppStore((s) => s.isManager)
   const setMode = useAppStore((s) => s.setMode)
+  const currentUser = useAppStore((s) => s.currentUser)
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -53,8 +54,8 @@ export function Sidebar() {
     >
       <div className={cn("flex h-16 items-center justify-between", isCollapsed ? "px-0 justify-center" : "px-5")}>
         <Link to="/" className="flex items-center gap-2.5">
-          <div className={cn("flex items-center justify-center rounded-lg bg-gradient-to-br from-primary-coral to-primary-gold", isCollapsed ? "size-6" : "size-7 shrink-0")}>
-            <span className="text-[12px] font-bold text-black font-sans">F</span>
+          <div className={cn("flex items-center justify-center shrink-0", isCollapsed ? "size-6" : "size-8")}>
+            <img src="/logo.png" alt="FBYT Logo" className="w-full h-full object-contain" />
           </div>
           {!isCollapsed && <span className="text-lg font-bold tracking-tight text-text-primary">FBYT</span>}
         </Link>
@@ -131,52 +132,54 @@ export function Sidebar() {
         </div>
       </nav>
 
-      <div className={cn("mt-auto border-t border-border-subtle", isCollapsed ? "p-1" : "p-4")}>
-        {!isCollapsed ? (
-          <div className="mb-4">
-            <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">App Mode</p>
-            <div className="flex overflow-hidden rounded-xl border border-border-medium bg-bg-inset/50 p-1 backdrop-blur-sm">
+      {currentUser && (
+        <div className={cn("mt-auto border-t border-border-subtle", isCollapsed ? "p-1" : "p-4")}>
+          {!isCollapsed ? (
+            <div>
+              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">App Mode</p>
+              <div className="flex overflow-hidden rounded-xl border border-border-medium bg-bg-inset/50 p-1 backdrop-blur-sm">
+                <Button
+                  variant={managerActive ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleModeSwitch(true)}
+                  className={cn('h-7 flex-1 text-[11px]', managerActive ? 'shadow-sm text-text-primary bg-bg-elevated' : 'text-text-tertiary hover:text-text-secondary')}
+                >
+                  Manager
+                </Button>
+                <Button
+                  variant={investActive ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleModeSwitch(false)}
+                  className={cn('h-7 flex-1 text-[11px]', investActive ? 'bg-primary-gold hover:bg-primary-gold/90 shadow-sm text-black' : 'text-text-tertiary hover:text-text-secondary')}
+                >
+                  Invest
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 items-center py-2">
               <Button
                 variant={managerActive ? 'default' : 'ghost'}
-                size="sm"
+                size="icon"
                 onClick={() => handleModeSwitch(true)}
-                className={cn('h-7 flex-1 text-[11px]', managerActive ? 'shadow-sm text-text-primary bg-bg-elevated' : 'text-text-tertiary hover:text-text-secondary')}
+                className={cn('size-8 rounded-full', managerActive ? 'bg-bg-elevated text-text-primary' : 'text-text-tertiary')}
+                title="Manager Mode"
               >
-                Manager
+                M
               </Button>
               <Button
                 variant={investActive ? 'default' : 'ghost'}
-                size="sm"
+                size="icon"
                 onClick={() => handleModeSwitch(false)}
-                className={cn('h-7 flex-1 text-[11px]', investActive ? 'bg-primary-gold hover:bg-primary-gold/90 shadow-sm text-black' : 'text-text-tertiary hover:text-text-secondary')}
+                className={cn('size-8 rounded-full', investActive ? 'bg-primary-gold text-black' : 'text-text-tertiary')}
+                title="Invest Mode"
               >
-                Invest
+                I
               </Button>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2 items-center py-2">
-            <Button
-              variant={managerActive ? 'default' : 'ghost'}
-              size="icon"
-              onClick={() => handleModeSwitch(true)}
-              className={cn('size-8 rounded-full', managerActive ? 'bg-bg-elevated text-text-primary' : 'text-text-tertiary')}
-              title="Manager Mode"
-            >
-              M
-            </Button>
-            <Button
-              variant={investActive ? 'default' : 'ghost'}
-              size="icon"
-              onClick={() => handleModeSwitch(false)}
-              className={cn('size-8 rounded-full', investActive ? 'bg-primary-gold text-black' : 'text-text-tertiary')}
-              title="Invest Mode"
-            >
-              I
-            </Button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </aside>
   )
 }

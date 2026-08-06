@@ -1,6 +1,5 @@
 import {
   ComputeBudgetProgram,
-  PublicKey,
   Transaction,
   TransactionInstruction,
   type Connection,

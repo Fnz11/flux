@@ -28,10 +28,24 @@ var validPeriods = map[string]int{
 
 type metricsRepo struct {
 	db *gorm.DB
+
+	hasVaultMetrics     bool
+	hasPriceHistory     bool
+	hasTradeHistory     bool
+	hasVault            bool
+	hasCAGGPriceOHLCV1h bool
 }
 
 func NewMetricsRepository(db *gorm.DB) domain.MetricsRepository {
-	return &metricsRepo{db: db}
+	r := &metricsRepo{db: db}
+	if db != nil {
+		r.hasVaultMetrics = db.Migrator().HasTable(&models.VaultMetric{})
+		r.hasPriceHistory = db.Migrator().HasTable(&models.PriceHistory{})
+		r.hasTradeHistory = db.Migrator().HasTable(&models.TradeHistory{})
+		r.hasVault = db.Migrator().HasTable(&models.Vault{})
+		r.hasCAGGPriceOHLCV1h = db.Migrator().HasTable("cagg_price_ohlcv_1h")
+	}
+	return r
 }
 
 type bucketQueryResult struct {
@@ -85,7 +99,7 @@ func (r *metricsRepo) GetMetricSeries(ctx context.Context, vaultID string, metri
 
 
 func (r *metricsRepo) queryVaultMetrics(db *gorm.DB, vaultID, metric string, from, to time.Time) ([]domain.MetricDataPoint, error) {
-	if !db.Migrator().HasTable(&models.VaultMetric{}) {
+	if !r.hasVaultMetrics {
 		return nil, nil
 	}
 
@@ -126,17 +140,24 @@ func (r *metricsRepo) queryFallbackMetrics(db *gorm.DB, vaultID, metric string, 
 
 	switch metric {
 	case "tvl":
-		if db.Migrator().HasTable(&models.PriceHistory{}) {
-			bucketSQL := getBucketSQL(db, "fetched_at")
-			q := db.Model(&models.PriceHistory{}).
-				Select(fmt.Sprintf("%s AS bucket, AVG(price) AS val", bucketSQL)).
-				Where("fetched_at >= ? AND fetched_at <= ?", from, to)
-			if parsedVid {
-				q = q.Where("vault_id = ?", vid)
+		if r.hasPriceHistory {
+			if db.Dialector.Name() == "postgres" && r.hasCAGGPriceOHLCV1h && parsedVid {
+				q := db.Table("cagg_price_ohlcv_1h").
+					Select("time_bucket('1 day', bucket) AS bucket, AVG(close) AS val").
+					Where("vault_id = ? AND bucket >= ? AND bucket <= ?", vid, from, to)
+				_ = q.Group("1").Order("bucket ASC").Scan(&results).Error
+			} else {
+				bucketSQL := getBucketSQL(db, "fetched_at")
+				q := db.Model(&models.PriceHistory{}).
+					Select(fmt.Sprintf("%s AS bucket, AVG(price) AS val", bucketSQL)).
+					Where("fetched_at >= ? AND fetched_at <= ?", from, to)
+				if parsedVid {
+					q = q.Where("vault_id = ?", vid)
+				}
+				_ = q.Group("bucket").Order("bucket ASC").Scan(&results).Error
 			}
-			_ = q.Group("bucket").Order("bucket ASC").Scan(&results).Error
 		}
-		if len(results) == 0 && parsedVid && db.Migrator().HasTable(&models.Vault{}) {
+		if len(results) == 0 && parsedVid && r.hasVault {
 			var v models.Vault
 			if err := db.Where("id = ?", vid).First(&v).Error; err == nil {
 				return []domain.MetricDataPoint{
@@ -146,19 +167,26 @@ func (r *metricsRepo) queryFallbackMetrics(db *gorm.DB, vaultID, metric string, 
 		}
 
 	case "volume":
-		if db.Migrator().HasTable(&models.PriceHistory{}) {
-			bucketSQL := getBucketSQL(db, "fetched_at")
-			q := db.Model(&models.PriceHistory{}).
-				Select(fmt.Sprintf("%s AS bucket, SUM(volume) AS val", bucketSQL)).
-				Where("fetched_at >= ? AND fetched_at <= ?", from, to)
-			if parsedVid {
-				q = q.Where("vault_id = ?", vid)
+		if r.hasPriceHistory {
+			if db.Dialector.Name() == "postgres" && r.hasCAGGPriceOHLCV1h && parsedVid {
+				q := db.Table("cagg_price_ohlcv_1h").
+					Select("time_bucket('1 day', bucket) AS bucket, SUM(volume) AS val").
+					Where("vault_id = ? AND bucket >= ? AND bucket <= ?", vid, from, to)
+				_ = q.Group("1").Order("bucket ASC").Scan(&results).Error
+			} else {
+				bucketSQL := getBucketSQL(db, "fetched_at")
+				q := db.Model(&models.PriceHistory{}).
+					Select(fmt.Sprintf("%s AS bucket, SUM(volume) AS val", bucketSQL)).
+					Where("fetched_at >= ? AND fetched_at <= ?", from, to)
+				if parsedVid {
+					q = q.Where("vault_id = ?", vid)
+				}
+				_ = q.Group("bucket").Order("bucket ASC").Scan(&results).Error
 			}
-			_ = q.Group("bucket").Order("bucket ASC").Scan(&results).Error
 		}
 
 	case "invested":
-		if db.Migrator().HasTable(&models.TradeHistory{}) {
+		if r.hasTradeHistory {
 			bucketSQL := getBucketSQL(db, "executed_at")
 			q := db.Table("trade_histories").
 				Select(fmt.Sprintf("%s AS bucket, SUM(amount_in) AS val", bucketSQL)).
@@ -170,7 +198,7 @@ func (r *metricsRepo) queryFallbackMetrics(db *gorm.DB, vaultID, metric string, 
 		}
 
 	case "fees":
-		if db.Migrator().HasTable(&models.TradeHistory{}) {
+		if r.hasTradeHistory {
 			bucketSQL := getBucketSQL(db, "executed_at")
 			q := db.Table("trade_histories").
 				Select(fmt.Sprintf("%s AS bucket, SUM(amount_in * COALESCE(NULLIF(price_at_execution, 0), 1) * 0.001) AS val", bucketSQL)).
@@ -182,7 +210,7 @@ func (r *metricsRepo) queryFallbackMetrics(db *gorm.DB, vaultID, metric string, 
 		}
 
 	case "pnl":
-		if db.Migrator().HasTable(&models.TradeHistory{}) {
+		if r.hasTradeHistory {
 			bucketSQL := getBucketSQL(db, "executed_at")
 			q := db.Table("trade_histories").
 				Select(fmt.Sprintf("%s AS bucket, SUM(amount_out - amount_in) AS val", bucketSQL)).

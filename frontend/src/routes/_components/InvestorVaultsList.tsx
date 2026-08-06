@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
 import { TrendingUp, ChevronRight } from 'lucide-react'
 import { usePortfolioQuery, useVaultsQuery } from '@/services/hooks'

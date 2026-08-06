@@ -57,7 +57,8 @@ func setupPortfolioTestDB(t *testing.T) *gorm.DB {
 		average_entry_price NUMERIC DEFAULT 0,
 		created_at DATETIME,
 		updated_at DATETIME,
-		deleted_at DATETIME
+		deleted_at DATETIME,
+		UNIQUE(user_id, vault_id)
 	)`)
 	_ = db.Exec(`CREATE TABLE user_pnl_summary (
 		user_id TEXT,

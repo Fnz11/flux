@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { PlusCircle, ChevronRight } from 'lucide-react'
 import { useVaultsQuery } from '@/services/hooks'
@@ -30,7 +29,7 @@ export function ManagerVaultsList({ walletAddress }: ManagerVaultsListProps) {
             View All →
           </Link>
           <Link to="/vaults/create">
-            <SweepButton size="sm">
+            <SweepButton className="h-8 px-3 text-xs">
               <PlusCircle className="h-4 w-4 mr-1.5 inline-block" />
               Create Vault
             </SweepButton>

@@ -7,18 +7,53 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/sony/gobreaker"
 )
 
 type Client struct {
 	rpcClient *rpc.Client
 	timeout   time.Duration
 	programID string
+	breaker   *gobreaker.CircuitBreaker
 }
 
 func NewClient(rpcURL string) *Client {
 	return &Client{
 		rpcClient: rpc.New(rpcURL),
 		timeout:   30 * time.Second,
+		breaker: gobreaker.NewCircuitBreaker(gobreaker.Settings{
+			Name:        "solana-rpc",
+			MaxRequests: 1,
+			Interval:    10 * time.Second,
+			Timeout:     30 * time.Second,
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				return counts.ConsecutiveFailures >= 5
+			},
+		}),
+	}
+}
+
+// execute runs fn through the circuit breaker. If the breaker is nil it
+// passes through unchanged (defensive; used by hand-built clients in tests).
+func (c *Client) execute(fn func() (any, error)) (any, error) {
+	if c == nil || c.breaker == nil {
+		return fn()
+	}
+	return c.breaker.Execute(fn)
+}
+
+// CircuitState returns the current circuit breaker state as a string.
+func (c *Client) CircuitState() string {
+	if c == nil || c.breaker == nil {
+		return "closed"
+	}
+	switch c.breaker.State() {
+	case gobreaker.StateOpen:
+		return "open"
+	case gobreaker.StateHalfOpen:
+		return "half-open"
+	default:
+		return "closed"
 	}
 }
 
@@ -45,14 +80,17 @@ func (c *Client) GetTransaction(ctx context.Context, signature string) (*rpc.Get
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	result, err := c.rpcClient.GetTransaction(ctx, sig, &rpc.GetTransactionOpts{
-		Commitment: rpc.CommitmentConfirmed,
+	result, err := c.execute(func() (any, error) {
+		return c.rpcClient.GetTransaction(ctx, sig, &rpc.GetTransactionOpts{
+			Commitment: rpc.CommitmentConfirmed,
+		})
 	})
 	if err != nil {
 		return nil, fmt.Errorf("get transaction: %w", err)
 	}
 
-	return result, nil
+	res, _ := result.(*rpc.GetTransactionResult)
+	return res, nil
 }
 
 func (c *Client) GetBalance(ctx context.Context, pubkey string) (uint64, error) {
@@ -64,22 +102,36 @@ func (c *Client) GetBalance(ctx context.Context, pubkey string) (uint64, error) 
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	result, err := c.rpcClient.GetBalance(ctx, pk, rpc.CommitmentConfirmed)
+	result, err := c.execute(func() (any, error) {
+		res, err := c.rpcClient.GetBalance(ctx, pk, rpc.CommitmentConfirmed)
+		if err != nil {
+			return uint64(0), err
+		}
+		return res.Value, nil
+	})
 	if err != nil {
 		return 0, fmt.Errorf("get balance: %w", err)
 	}
 
-	return result.Value, nil
+	val, _ := result.(uint64)
+	return val, nil
 }
 
 func (c *Client) GetRecentBlockhash(ctx context.Context) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	result, err := c.rpcClient.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
+	result, err := c.execute(func() (any, error) {
+		res, err := c.rpcClient.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
+		if err != nil {
+			return "", err
+		}
+		return res.Value.Blockhash.String(), nil
+	})
 	if err != nil {
 		return "", fmt.Errorf("get recent blockhash: %w", err)
 	}
 
-	return result.Value.Blockhash.String(), nil
+	val, _ := result.(string)
+	return val, nil
 }

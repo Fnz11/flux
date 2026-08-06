@@ -32,8 +32,14 @@ func (r *vaultRepo) GetByAddress(ctx context.Context, address string) (*domain.V
 		return nil, err
 	}
 	detail := vaultToDetail(&v)
-	db.Model(&models.TradeHistory{}).Where("vault_id = ?", v.ID).Count(&detail.TradeCount)
-	db.Model(&models.Portfolio{}).Where("vault_id = ?", v.ID).Count(&detail.PortfolioCount)
+	counts, err := r.fetchVaultCounts(db, []uuid.UUID{v.ID})
+	if err != nil {
+		return nil, err
+	}
+	if c, ok := counts[v.ID]; ok {
+		detail.TradeCount = c.TradeCount
+		detail.PortfolioCount = c.PortfolioCount
+	}
 	detail.InvestorCount = int(detail.PortfolioCount)
 	return detail, nil
 }
@@ -44,7 +50,7 @@ func (r *vaultRepo) GetByID(ctx context.Context, id string) (*domain.VaultDetail
 	}
 	db := getDB(ctx, r.db)
 	var v models.Vault
-	err := db.Preload("Manager").Where("id = ? OR id = ?", id, id).First(&v).Error
+	err := db.Preload("Manager").Where("id = ?", id).First(&v).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -52,8 +58,14 @@ func (r *vaultRepo) GetByID(ctx context.Context, id string) (*domain.VaultDetail
 		return nil, err
 	}
 	detail := vaultToDetail(&v)
-	db.Model(&models.TradeHistory{}).Where("vault_id = ?", v.ID).Count(&detail.TradeCount)
-	db.Model(&models.Portfolio{}).Where("vault_id = ?", v.ID).Count(&detail.PortfolioCount)
+	counts, err := r.fetchVaultCounts(db, []uuid.UUID{v.ID})
+	if err != nil {
+		return nil, err
+	}
+	if c, ok := counts[v.ID]; ok {
+		detail.TradeCount = c.TradeCount
+		detail.PortfolioCount = c.PortfolioCount
+	}
 	detail.InvestorCount = int(detail.PortfolioCount)
 	return detail, nil
 }
@@ -173,15 +185,56 @@ func (r *vaultRepo) List(ctx context.Context, filter domain.VaultListFilter) ([]
 		return nil, 0, err
 	}
 
+	vaultIDs := make([]uuid.UUID, len(vaults))
+	for i, v := range vaults {
+		vaultIDs[i] = v.ID
+	}
+	counts, err := r.fetchVaultCounts(db, vaultIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	details := make([]domain.VaultDetail, len(vaults))
 	for i, v := range vaults {
 		d := vaultToDetail(&v)
-		db.Model(&models.TradeHistory{}).Where("vault_id = ?", v.ID).Count(&d.TradeCount)
-		db.Model(&models.Portfolio{}).Where("vault_id = ?", v.ID).Count(&d.PortfolioCount)
+		if c, ok := counts[v.ID]; ok {
+			d.TradeCount = c.TradeCount
+			d.PortfolioCount = c.PortfolioCount
+		}
 		d.InvestorCount = int(d.PortfolioCount)
 		details[i] = *d
 	}
 	return details, total, nil
+}
+
+type vaultCount struct {
+	VaultID        uuid.UUID
+	TradeCount     int64
+	PortfolioCount int64
+}
+
+const vaultCountsQuery = `
+SELECT v.id AS vault_id,
+	COALESCE(t.cnt, 0) AS trade_count,
+	COALESCE(p.cnt, 0) AS portfolio_count
+FROM vaults v
+LEFT JOIN (SELECT vault_id, COUNT(*) AS cnt FROM trade_histories GROUP BY vault_id) t ON t.vault_id = v.id
+LEFT JOIN (SELECT vault_id, COUNT(*) AS cnt FROM portfolios GROUP BY vault_id) p ON p.vault_id = v.id
+WHERE v.id IN ?`
+
+func (r *vaultRepo) fetchVaultCounts(db *gorm.DB, ids []uuid.UUID) (map[uuid.UUID]vaultCount, error) {
+	result := make(map[uuid.UUID]vaultCount, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+	var rows []vaultCount
+	if err := db.Raw(vaultCountsQuery, ids).Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		result[row.VaultID] = row
+	}
+	return result, nil
 }
 
 func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress string) ([]domain.VaultBalance, error) {

@@ -59,7 +59,7 @@ export function useExecuteTrade() {
 
         let signature: string | null = null
 
-        if (wallet?.publicKey && wallet?.signTransaction) {
+        if (wallet?.publicKey) {
           try {
             const program = await getProgram(wallet, connection)
             if (program && (program.idl as any)?.instructions?.length) {
@@ -156,10 +156,7 @@ export function useExecuteTrade() {
         }
 
         if (!signature) {
-          await new Promise((resolve) => setTimeout(resolve, 800))
-          signature = Array.from({ length: 88 }, () =>
-            '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'[Math.floor(Math.random() * 58)]
-          ).join('')
+          throw new Error('Trade execution failed: no on-chain signature returned')
         }
 
         confirmTransaction(txId, signature)

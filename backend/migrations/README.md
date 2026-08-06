@@ -16,6 +16,9 @@ renumber.
 | 010 | `010_timescale_hypertables.sql` | 2 (this) | TimescaleDB extension, hypertables, retention, OHLCV continuous aggregate |
 | 020 | `020_*.sql` | 3 | B-tree indexes |
 | 030 | `030_*.sql` | 4 | Materialized views |
+| 040 | `040_compression_policy.sql` | 5 | Compression on hypertables + OHLCV CAGG index fix (2.10) |
+| 050 | `050_cagg_trade_volume.sql` | 5 | `cagg_trade_volume_1h` continuous aggregate for trade volume |
+| 060 | `060_missing_indexes.sql` | 5 | Missing B-tree/partial/covering/BRIN indexes (1.4) |
 
 Why 010 first:
 
@@ -29,6 +32,17 @@ Why 010 first:
    `trade_histories`/`portfolio` data; 030 may also reference the OHLCV cagg
    created here, and chunk pruning (what makes matview refreshes fast) only
    exists after 010.
+4. **040/050/060 run AFTER 010/020/030** — agent 5's scripts depend on artifacts
+   from earlier migrations:
+   - `040_compression_policy.sql`: enables compression on the hypertables from
+     010 and adds the vault-first index on `cagg_price_ohlcv_1h` (from 010). It
+     must run after 010 (hypertables + OHLCV cagg must exist); 020/030 order
+     only matters for index-maintenance cost, not correctness.
+   - `050_cagg_trade_volume.sql`: builds `cagg_trade_volume_1h` on `trade_histories`
+     (a hypertable from 010), so it must follow 010 and 030.
+   - `060_missing_indexes.sql`: the BRIN indexes and partial price index need
+     the hypertable / table structure from 010; the vaults indexes need the
+     base tables from AutoMigrate (guaranteed by 010's timing).
 
 ## How to run
 

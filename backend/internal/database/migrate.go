@@ -31,7 +31,7 @@ func AutoMigrate(db *gorm.DB) error {
 		return err
 	}
 
-	return SeedDemoData(db)
+	return nil
 }
 
 func dropMatviews(db *gorm.DB) error {

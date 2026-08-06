@@ -13,7 +13,7 @@ export const Route = createFileRoute('/invest/vaults/')({ component: VaultInvest
 const FOCUS_ASSETS = ['All', 'SOL', 'USDC', 'BTC', 'ETH']
 
 function VaultInvestListPage() {
-  const { data: vaults = [], isLoading } = useVaultsQuery()
+  const { data: vaults = [], isLoading, error: vaultsError } = useVaultsQuery()
 
   const [search, setSearch] = useState('')
   const [focusFilter, setFocusFilter] = useState('All')
@@ -74,8 +74,8 @@ function VaultInvestListPage() {
           <TableBody>
             <TableEmpty
               colSpan={5}
-              title="No matching vaults found"
-              description="Try adjusting your search keywords or focus asset filters"
+              title={vaultsError ? "Error loading vaults" : "No matching vaults found"}
+              description={vaultsError ? "Please try again later." : "Try adjusting your search keywords or focus asset filters"}
             />
           </TableBody>
         </Table>

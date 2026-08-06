@@ -5,7 +5,9 @@ import (
 
 	"github.com/fbyt-clone/backend/internal/handlers"
 	"github.com/fbyt-clone/backend/internal/middleware"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type HandlerSet struct {
@@ -20,6 +22,7 @@ type HandlerSet struct {
 	Metrics     *handlers.MetricsHandler
 	Transaction *handlers.TransactionHandler
 	JWTSecret   string
+	Redis       *redis.Client
 }
 
 func Setup(hs *HandlerSet) *gin.Engine {
@@ -29,8 +32,22 @@ func Setup(hs *HandlerSet) *gin.Engine {
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.JSONMiddleware())
 	r.Use(middleware.SecurityHeadersMiddleware())
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.Use(middleware.TimeoutMiddleware(10 * time.Second))
+	r.Use(middleware.PrometheusMiddleware())
 
 	authMW := middleware.AuthMiddleware(hs.JWTSecret)
+
+	// withIdem returns an authMW chain with the Redis-backed idempotency
+	// middleware appended whenever a Redis client is available. Applied to all
+	// mutation endpoints so safe client retries never double-apply.
+	withIdem := func(handlers ...gin.HandlerFunc) gin.HandlersChain {
+		chain := gin.HandlersChain{authMW}
+		if hs.Redis != nil {
+			chain = append(chain, middleware.IdempotencyMiddleware(hs.Redis, 24*time.Hour))
+		}
+		return append(chain, handlers...)
+	}
 
 	v1 := r.Group("/api/v1")
 	{
@@ -44,7 +61,11 @@ func Setup(hs *HandlerSet) *gin.Engine {
 		}
 
 		auth := v1.Group("/auth")
-		auth.Use(middleware.RateLimitMiddleware(5, time.Minute))
+		if hs.Redis != nil && hs.Auth != nil {
+			auth.Use(middleware.RedisTokenBucketMiddleware(hs.Redis, 5, time.Minute))
+		} else {
+			auth.Use(middleware.RateLimitMiddleware(5, time.Minute))
+		}
 		{
 			if hs.Auth != nil {
 				auth.POST("/nonce", hs.Auth.Nonce)
@@ -56,13 +77,13 @@ func Setup(hs *HandlerSet) *gin.Engine {
 		{
 			if hs.Vault != nil {
 				vaults.GET("", hs.Vault.ListVaults)
-				vaults.POST("", authMW, hs.Vault.CreateVault)
+				vaults.POST("", withIdem(hs.Vault.CreateVault)...)
 				vaults.GET("/:address", hs.Vault.GetVault)
 				vaults.GET("/:address/balances", hs.Vault.GetVaultBalances)
-				vaults.PATCH("/:address", authMW, hs.Vault.UpdateVaultMetadata)
+				vaults.PATCH("/:address", withIdem(hs.Vault.UpdateVaultMetadata)...)
 			}
 			if hs.Sync != nil {
-				vaults.POST("/sync", authMW, hs.Sync.SyncVault)
+				vaults.POST("/sync", withIdem(hs.Sync.SyncVault)...)
 			}
 			if hs.Trade != nil {
 				vaults.GET("/trades", hs.Trade.GetBatchTrades)
@@ -73,7 +94,7 @@ func Setup(hs *HandlerSet) *gin.Engine {
 		trades := v1.Group("/trades")
 		{
 			if hs.Sync != nil {
-				trades.POST("/sync", authMW, hs.Sync.SyncTrade)
+				trades.POST("/sync", withIdem(hs.Sync.SyncTrade)...)
 			}
 		}
 
@@ -102,6 +123,9 @@ func Setup(hs *HandlerSet) *gin.Engine {
 			}
 		}
 	}
+
+	// Prometheus scrape endpoint (standard top-level location).
+	r.GET("/metrics", middleware.MetricsHandler())
 
 	return r
 }

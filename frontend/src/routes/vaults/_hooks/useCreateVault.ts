@@ -122,10 +122,7 @@ export function useCreateVault() {
       }
 
       if (!signature) {
-        await new Promise((resolve) => setTimeout(resolve, 800))
-        signature = Array.from({ length: 88 }, () =>
-          '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'[Math.floor(Math.random() * 58)]
-        ).join('')
+        throw new Error('Vault initialization failed: no on-chain signature returned')
       }
 
       confirmTransaction(txId, signature)

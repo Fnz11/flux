@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import type { Vault } from '@/types'

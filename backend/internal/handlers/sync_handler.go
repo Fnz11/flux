@@ -228,7 +228,7 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 	err = h.txManager.ExecTx(c.Request.Context(), func(ctx context.Context) error {
 		// Re-check unique signature inside tx to avoid race conditions
 		if existing, err := h.tradeRepo.FindBySignature(ctx, req.Signature); err == nil && existing != nil {
-			return errors.New("already_synced")
+			return domain.ErrAlreadySynced
 		}
 
 		actor, err := h.userRepo.FindOrCreateByWallet(ctx, parsed.Signer)
@@ -248,6 +248,9 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 		}
 
 		if err := h.tradeRepo.Create(ctx, tradeDetail); err != nil {
+			if errors.Is(err, domain.ErrAlreadySynced) {
+				return domain.ErrAlreadySynced
+			}
 			return err
 		}
 
@@ -266,7 +269,7 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 	})
 
 	if err != nil {
-		if err.Error() == "already_synced" {
+		if errors.Is(err, domain.ErrAlreadySynced) {
 			ErrorResponse(c, http.StatusConflict, "Transaction already synced")
 			return
 		}

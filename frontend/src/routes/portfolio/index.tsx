@@ -40,7 +40,19 @@ function PortfolioPage() {
         subtitle="Track your investments and portfolio performance."
       />
 
-      <PortfolioSummary />
+      {!walletAddress ? (
+        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-border-subtle bg-bg-elevated text-center">
+          <div className="mb-4 rounded-full bg-bg-inset p-3">
+            <svg className="size-8 text-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+          </div>
+          <h3 className="mb-2 text-lg font-semibold text-text-primary">Connect your wallet</h3>
+          <p className="text-sm text-text-secondary">Please connect your wallet to view your portfolio.</p>
+        </div>
+      ) : (
+        <>
+          <PortfolioSummary />
 
       <div className="grid gap-4 lg:grid-cols-3 items-stretch">
         <div className="lg:col-span-2 flex flex-col">
@@ -125,7 +137,9 @@ function PortfolioPage() {
           <PnLTicker />
           <TradeHistory trades={trades} isLoading={tradesLoading} />
         </div>
-      </div>
+        </div>
+        </>
+      )}
     </div>
   )
 }
