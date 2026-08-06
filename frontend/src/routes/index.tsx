@@ -13,7 +13,18 @@ import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 import { ManagerVaultsList } from './_components/ManagerVaultsList'
 import { InvestorVaultsList } from './_components/InvestorVaultsList'
 
-export const Route = createFileRoute('/')({ component: DashboardPage })
+import { generateMetadata } from '@/lib/metadata'
+
+export const Route = createFileRoute('/')({
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Dashboard',
+      description: 'Overview of your Solana vault portfolio, active investments, and performance metrics.',
+      path: '/',
+    }),
+  }),
+  component: DashboardPage,
+})
 
 function DashboardPage() {
   useRouteWsChannel(['dashboard'])

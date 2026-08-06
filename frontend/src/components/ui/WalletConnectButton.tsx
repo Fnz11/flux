@@ -70,7 +70,7 @@ export function WalletConnectButton() {
         <button
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="group inline-flex items-center gap-2 rounded-xl border border-border-medium bg-bg-elevated px-3 py-1.5 text-xs font-mono text-text-primary transition-all hover:border-primary-gold/40 hover:bg-bg-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral"
+          className="group inline-flex items-center gap-2 rounded-xl border border-border-medium bg-bg-elevated px-3 py-1.5 text-xs font-mono text-text-primary transition-[border-color,background-color] hover:border-primary-gold/40 hover:bg-bg-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral"
         >
           <span className="size-2 rounded-full bg-status-success animate-pulse" />
           <span>{truncatedAddress}</span>
@@ -129,7 +129,7 @@ export function WalletConnectButton() {
                 type="button"
                 variant="outline"
                 onClick={() => handleSelectWallet(w.adapter.name)}
-                className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-all hover:border-primary-coral/50 hover:bg-bg-elevated font-normal"
+                className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-[border-color,background-color] hover:border-primary-coral/50 hover:bg-bg-elevated font-normal"
               >
                 <div className="flex items-center gap-3">
                   {w.adapter.icon && (
@@ -147,7 +147,7 @@ export function WalletConnectButton() {
               type="button"
               variant="outline"
               onClick={handleConnectDemo}
-              className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-all hover:border-primary-gold/50 hover:bg-bg-elevated font-normal border-dashed border-primary-gold/40"
+              className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-[border-color,background-color] hover:border-primary-gold/50 hover:bg-bg-elevated font-normal border-dashed border-primary-gold/40"
             >
               <div className="flex items-center gap-3">
                 <div className="size-6 rounded bg-primary-gold/20 flex items-center justify-center text-primary-gold font-bold text-xs">

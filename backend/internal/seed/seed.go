@@ -10,11 +10,10 @@ import (
 
 	"github.com/fbyt-clone/backend/internal/models"
 	"github.com/gagliardetto/solana-go"
+	"github.com/google/uuid"
 	"github.com/mr-tron/base58"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // Run seeds the database with a realistic dataset backed by real Solana
@@ -88,11 +87,9 @@ func Run(ctx context.Context, db *gorm.DB, opts Options, logger *logrus.Logger, 
 	// ---- 5. Mint signatures ----
 	// ledger tracks lamport balances so no account ever overdraws.
 	ledger := newAccountLedger()
-	userByAddr := map[string]*solana.Wallet{}
 	userByID := map[string]*solana.Wallet{}
 	for i, w := range userKeys {
 		ledger.register(w, uint64(opts.AirdropSOL*float64(lamportsPerSOL)))
-		userByAddr[w.PublicKey().String()] = w
 		userByID[users[i].ID.String()] = w
 	}
 	for _, vk := range vaultKeyList {
@@ -108,7 +105,7 @@ func Run(ctx context.Context, db *gorm.DB, opts Options, logger *logrus.Logger, 
 	}
 	var realJobs []*realSig
 	var simJobs []*models.TradeHistory
-	var idx int
+	var rIdx int
 	for _, spec := range specs {
 		vk := vaultKeys[spec.Vault.Address]
 		to, _ := solana.PublicKeyFromBase58(spec.Vault.Address)
@@ -121,21 +118,26 @@ func Run(ctx context.Context, db *gorm.DB, opts Options, logger *logrus.Logger, 
 			switch t.TradeType {
 			case "Deposit":
 				if from := userByID[t.ActorID.String()]; from != nil {
-					realJobs = append(realJobs, &realSig{trade: t, from: from, to: to, lamport: lamport, idx: idx})
+					realJobs = append(realJobs, &realSig{trade: t, from: from, to: to, lamport: lamport, idx: rIdx})
+					rIdx++
 				}
 			case "Withdraw":
 				if toUser := userByID[t.ActorID.String()]; toUser != nil {
-					realJobs = append(realJobs, &realSig{trade: t, from: vk, to: toUser.PublicKey(), lamport: lamport, idx: idx})
+					realJobs = append(realJobs, &realSig{trade: t, from: vk, to: toUser.PublicKey(), lamport: lamport, idx: rIdx})
+					rIdx++
 				}
 			default: // Buy / Sell: simulated swap signature
 				simJobs = append(simJobs, t)
 			}
-			idx++
 		}
 	}
 
 	// Send real transfers through a small worker pool.
-	results := make([]string, len(realJobs))
+	type sigOut struct {
+		ok  bool
+		sig string
+	}
+	results := make([]sigOut, len(realJobs))
 	var wg sync.WaitGroup
 	jobCh := make(chan *realSig)
 	workerCount := 8
@@ -144,18 +146,25 @@ func Run(ctx context.Context, db *gorm.DB, opts Options, logger *logrus.Logger, 
 		go func() {
 			defer wg.Done()
 			for j := range jobCh {
+				// ensureSender drains the ledged balance first; only tops up on
+				// an actual shortfall.
 				if err := ledger.ensureSender(ctx, sol, j.from, j.lamport); err != nil {
-					// fall back to a simulated signature
-					results[j.idx] = simulateSignature(j.trade.ID.String(), j.trade.ExecutedAt.UnixNano())
+					results[j.idx] = sigOut{sig: simulateSignature(j.trade.ID.String(), j.trade.ExecutedAt.UnixNano())}
 					continue
 				}
-				sig, err := sol.Transfer(ctx, j.from, j.to, j.lamport)
+				sig, err := sol.Transfer(ctx, j.from, j.to, j.lamport, j.trade.ID.String())
 				if err != nil {
-					results[j.idx] = simulateSignature(j.trade.ID.String(), j.trade.ExecutedAt.UnixNano())
+					logger.WithError(err).WithFields(logrus.Fields{
+						"from":    j.from.PublicKey().String(),
+						"to":      j.to.String(),
+						"lamport": j.lamport,
+						"trade":   j.trade.TradeType,
+					}).Warn("transfer failed, falling back to simulated sig")
+					results[j.idx] = sigOut{sig: simulateSignature(j.trade.ID.String(), j.trade.ExecutedAt.UnixNano())}
 					continue
 				}
 				ledger.credit(j.to, j.lamport)
-				results[j.idx] = sig
+				results[j.idx] = sigOut{ok: true, sig: sig}
 			}
 		}()
 	}
@@ -167,8 +176,8 @@ func Run(ctx context.Context, db *gorm.DB, opts Options, logger *logrus.Logger, 
 
 	realCount := 0
 	for i, j := range realJobs {
-		j.trade.TransactionSignature = results[i]
-		if strings.HasPrefix(results[i], "5") {
+		j.trade.TransactionSignature = results[i].sig
+		if results[i].ok {
 			realCount++
 		}
 	}

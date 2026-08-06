@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import type { KeyboardEvent } from 'react'
 import type { Vault } from '@/types'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { VaultSparkline } from './VaultSparkline'
@@ -14,81 +15,108 @@ interface VaultsTableProps {
   onSort: (column: SortColumn) => void
 }
 
+function handleSortKeyDown(event: KeyboardEvent, onSort: () => void) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    onSort()
+  }
+}
+
+function renderSortIcon(column: SortColumn, sortBy?: string, sortOrder?: 'asc' | 'desc') {
+  if (sortBy !== column) {
+    return <ArrowUpDown className="ml-1 inline-block h-3.5 w-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+  }
+  return sortOrder === 'asc' ? (
+    <ArrowUp className="ml-1 inline-block h-3.5 w-3.5 text-primary-coral" />
+  ) : (
+    <ArrowDown className="ml-1 inline-block h-3.5 w-3.5 text-primary-coral" />
+  )
+}
+
+function formatMinRaise(min?: number) {
+  if (!min || min === 0) return '$1 USD'
+  return `$${min.toLocaleString()} USD`
+}
+
+function formatDate(dateStr: string) {
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  } catch {
+    return dateStr
+  }
+}
+
 export function VaultsTable({ vaults, sortBy, sortOrder, onSort }: VaultsTableProps) {
-  const renderSortIcon = (column: SortColumn) => {
-    if (sortBy !== column) {
-      return <ArrowUpDown className="ml-1 inline-block h-3.5 w-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
-    }
-    return sortOrder === 'asc' ? (
-      <ArrowUp className="ml-1 inline-block h-3.5 w-3.5 text-primary-coral" />
-    ) : (
-      <ArrowDown className="ml-1 inline-block h-3.5 w-3.5 text-primary-coral" />
-    )
-  }
-
-  const formatMinRaise = (min?: number) => {
-    if (!min || min === 0) return '$1 USD'
-    return `$${min.toLocaleString()} USD`
-  }
-
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    } catch {
-      return dateStr
-    }
-  }
-
   return (
     <div className="w-full overflow-x-auto rounded-xl border border-border-subtle bg-bg-elevated/60 shadow-lg backdrop-blur-md">
       <table className="w-full text-left text-sm">
         <thead className="border-b border-border-subtle bg-bg-inset/40 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
           <tr>
             <th
+              scope="col"
+              tabIndex={0}
+              aria-sort={sortBy === 'displayName' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
               onClick={() => onSort('displayName')}
-              className="group cursor-pointer py-4 px-6 select-none hover:text-text-primary transition-colors"
+              onKeyDown={(e) => handleSortKeyDown(e, () => onSort('displayName'))}
+              className="group cursor-pointer py-4 px-6 select-none hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral/40 focus-visible:ring-inset"
             >
               <div className="flex items-center">
-                VAULT {renderSortIcon('displayName')}
+                VAULT {renderSortIcon('displayName', sortBy, sortOrder)}
               </div>
             </th>
             <th
+              scope="col"
+              tabIndex={0}
+              aria-sort={sortBy === 'pnl' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
               onClick={() => onSort('pnl')}
+              onKeyDown={(e) => handleSortKeyDown(e, () => onSort('pnl'))}
               className={cn(
-                'group cursor-pointer py-4 px-4 select-none transition-colors',
+                'group cursor-pointer py-4 px-4 select-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral/40 focus-visible:ring-inset',
                 sortBy === 'pnl' ? 'text-primary-coral font-bold' : 'hover:text-text-primary'
               )}
             >
               <div className="flex items-center">
-                PNL {renderSortIcon('pnl')}
+                PNL {renderSortIcon('pnl', sortBy, sortOrder)}
               </div>
             </th>
             <th
+              scope="col"
+              tabIndex={0}
+              aria-sort={sortBy === 'created_at' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
               onClick={() => onSort('created_at')}
-              className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors"
+              onKeyDown={(e) => handleSortKeyDown(e, () => onSort('created_at'))}
+              className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral/40 focus-visible:ring-inset"
             >
               <div className="flex items-center">
-                CREATED {renderSortIcon('created_at')}
+                CREATED {renderSortIcon('created_at', sortBy, sortOrder)}
               </div>
             </th>
             <th
+              scope="col"
+              tabIndex={0}
+              aria-sort={sortBy === 'min_raise_amount' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
               onClick={() => onSort('min_raise_amount')}
-              className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors"
+              onKeyDown={(e) => handleSortKeyDown(e, () => onSort('min_raise_amount'))}
+              className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral/40 focus-visible:ring-inset"
             >
               <div className="flex items-center">
-                MIN {renderSortIcon('min_raise_amount')}
+                MIN {renderSortIcon('min_raise_amount', sortBy, sortOrder)}
               </div>
             </th>
             <th
+              scope="col"
+              tabIndex={0}
+              aria-sort={sortBy === 'investors' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
               onClick={() => onSort('investors')}
-              className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors"
+              onKeyDown={(e) => handleSortKeyDown(e, () => onSort('investors'))}
+              className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral/40 focus-visible:ring-inset"
             >
               <div className="flex items-center">
-                INVESTORS {renderSortIcon('investors')}
+                INVESTORS {renderSortIcon('investors', sortBy, sortOrder)}
               </div>
             </th>
             <th className="py-4 px-4 select-none">ASSET</th>
@@ -184,7 +212,7 @@ export function VaultsTable({ vaults, sortBy, sortOrder, onSort }: VaultsTablePr
                   <Link
                     to="/vaults/$id"
                     params={{ id: vault.id }}
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-bg-inset text-text-secondary hover:text-primary-coral hover:bg-primary-coral/10 border border-border-subtle transition-all"
+                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-bg-inset text-text-secondary hover:text-primary-coral hover:bg-primary-coral/10 border border-border-subtle transition-colors"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Link>

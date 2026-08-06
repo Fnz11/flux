@@ -27,7 +27,19 @@ const editVaultSchema = z.object({
 
 type EditVaultForm = z.infer<typeof editVaultSchema>
 
-export const Route = createFileRoute('/vaults/$id/edit')({ component: EditVaultPage })
+import { generateMetadata } from '@/lib/metadata'
+
+export const Route = createFileRoute('/vaults/$id/edit')({
+  head: ({ params }) => ({
+    meta: generateMetadata({
+      title: `Edit Vault ${params.id}`,
+      description: `Update display metadata, focus assets, and parameters for vault ${params.id}.`,
+      path: `/vaults/${params.id}/edit`,
+      noIndex: true,
+    }),
+  }),
+  component: EditVaultPage,
+})
 
 function EditVaultPage() {
   const { id } = Route.useParams()

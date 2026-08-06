@@ -15,7 +15,19 @@ import { PageHeader } from '@/components/ui/PageHeader'
 
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 
-export const Route = createFileRoute('/portfolio/')({ component: PortfolioPage })
+import { generateMetadata } from '@/lib/metadata'
+
+export const Route = createFileRoute('/portfolio/')({
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Portfolio',
+      description: 'Track your invested Solana vaults, PnL performance, trade history, and asset allocations.',
+      path: '/portfolio',
+      noIndex: true, // Private user data page
+    }),
+  }),
+  component: PortfolioPage,
+})
 
 type SortKey = 'value' | 'pnl' | 'name'
 

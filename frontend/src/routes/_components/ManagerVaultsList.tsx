@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
 import { PlusCircle, ChevronRight } from 'lucide-react'
 import { useVaultsQuery } from '@/services/hooks'
@@ -10,12 +11,24 @@ interface ManagerVaultsListProps {
   walletAddress: string
 }
 
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('en-US', { timeZone: 'UTC' })
+}
+
 export function ManagerVaultsList({ walletAddress }: ManagerVaultsListProps) {
   const { data: vaults = [], isLoading } = useVaultsQuery({
     managerAddress: walletAddress,
     sortBy: 'created_at',
     sortOrder: 'desc',
   })
+
+  const createdAtByVaultId = useMemo(() => {
+    const byId: Record<string, string> = {}
+    for (const vault of vaults) {
+      byId[vault.id] = formatDate(vault.createdAt)
+    }
+    return byId
+  }, [vaults])
 
   return (
     <div className="space-y-4">
@@ -89,7 +102,7 @@ export function ManagerVaultsList({ walletAddress }: ManagerVaultsListProps) {
                       {isPositive ? `+${pnl.toFixed(2)}%` : `${pnl.toFixed(2)}%`}
                     </td>
                     <td className="py-3.5 px-4 font-mono text-xs text-text-tertiary whitespace-nowrap">
-                      {new Date(vault.createdAt).toLocaleDateString()}
+                      {createdAtByVaultId[vault.id]}
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <VaultSparkline isPositive={isPositive} width={80} height={24} />

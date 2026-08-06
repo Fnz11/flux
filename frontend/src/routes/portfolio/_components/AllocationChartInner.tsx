@@ -1,5 +1,4 @@
-import { memo } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { memo, useEffect, useState } from 'react'
 
 interface DataItem { name: string; value: number; color: string }
 
@@ -39,6 +38,26 @@ export const AllocationChartInner = memo(function AllocationChartInner({ data }:
     color: d.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length],
     _total: total,
   }))
+
+  const [Recharts, setRecharts] = useState<typeof import('recharts') | null>(null)
+
+  useEffect(() => {
+    let active = true
+    import('recharts')
+      .then((mod) => {
+        if (active) setRecharts(mod)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (!Recharts) {
+    return <div className="h-[220px] w-[220px] shrink-0 animate-pulse rounded-xl bg-bg-inset" />
+  }
+
+  const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } = Recharts
 
   return (
     <>

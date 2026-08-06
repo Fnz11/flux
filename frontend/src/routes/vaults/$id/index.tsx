@@ -1,7 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { generateMetadata } from '@/lib/metadata'
 
-export const Route = createFileRoute('/vaults/$id/')({ component: VaultDetailPage })
+export const Route = createFileRoute('/vaults/$id/')({
+  head: ({ params }) => ({
+    meta: generateMetadata({
+      title: `Vault ${params.id}`,
+      description: `View vault performance, asset breakdown, and liquidity details for vault ${params.id}.`,
+      path: `/vaults/${params.id}`,
+    }),
+  }),
+  component: VaultDetailPage,
+})
 
 function VaultDetailPage() {
   const { id } = Route.useParams()

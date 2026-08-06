@@ -114,6 +114,35 @@ services:
       timeout: 3s
       retries: 5
 
+  # ---------------------------------------------------------
+  # CI/CD TEST PROFILES
+  # ---------------------------------------------------------
+  test-frontend:
+    build:
+      context: ./frontend
+      target: dev
+    profiles: [test-frontend, test-all]
+    command: npm test
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  test-contracts:
+    build:
+      context: ./contracts
+    profiles: [test-contracts, test-all]
+    command: cargo test
+    volumes:
+      - ./contracts:/workspace
+
+  test-backend:
+    image: golang:1.22
+    profiles: [test-backend, test-all]
+    working_dir: /app
+    command: go test ./...
+    volumes:
+      - ./backend:/app
+
 volumes:
   timescaledb_data:
   redis_data:

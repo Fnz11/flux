@@ -3,7 +3,19 @@ import { WalletStatus } from './settings/_components/WalletStatus'
 import { RpcConfig } from './settings/_components/RpcConfig'
 import { TradePreferences } from './settings/_components/TradePreferences'
 
-export const Route = createFileRoute('/settings')({ component: SettingsPage })
+import { generateMetadata } from '@/lib/metadata'
+
+export const Route = createFileRoute('/settings')({
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Settings',
+      description: 'Configure Solana RPC endpoints, default trade slippage, and platform preferences.',
+      path: '/settings',
+      noIndex: true,
+    }),
+  }),
+  component: SettingsPage,
+})
 
 export function SettingsPage() {
   return (

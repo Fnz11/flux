@@ -14,7 +14,16 @@ const vaultsSearchSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional(),
 })
 
+import { generateMetadata } from '@/lib/metadata'
+
 export const Route = createFileRoute('/vaults/')({
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Vault Management',
+      description: 'Manage non-custodial Solana vaults, view performance metrics, and track investor TVL.',
+      path: '/vaults',
+    }),
+  }),
   component: VaultsListPage,
   validateSearch: (search) => vaultsSearchSchema.parse(search),
 })

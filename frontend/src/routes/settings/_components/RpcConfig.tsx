@@ -3,12 +3,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Server } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-export const RPC_ENDPOINTS = [
-  { name: 'Solana Mainnet-Beta (Helius)', url: 'https://mainnet.helius-rpc.com' },
-  { name: 'Solana Devnet', url: 'https://api.devnet.solana.com' },
-  { name: 'Localhost (Validator)', url: 'http://127.0.0.1:8899' },
-]
+import { RPC_ENDPOINTS } from './rpcEndpoints'
 
 export function RpcConfig() {
   const [rpcUrl, setRpcUrl] = useState(RPC_ENDPOINTS[1].url)

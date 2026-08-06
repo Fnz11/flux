@@ -56,6 +56,7 @@ export function PeriodSelect({
     <div className="relative inline-block text-xs">
       <select
         value={value}
+        aria-label="Chart period"
         onChange={(e) => {
           const found = options.find((o) => o.label === e.target.value)
           if (found) onChange(found)

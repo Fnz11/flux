@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useWebSocketStore } from '@/stores/websocket-store'
 
 export function useRouteWsChannel(channels: (string | null | undefined)[]) {
@@ -8,15 +8,22 @@ export function useRouteWsChannel(channels: (string | null | undefined)[]) {
   const validChannels = channels.filter((c): c is string => Boolean(c))
   const channelKey = validChannels.join(',')
 
-  useEffect(() => {
-    if (validChannels.length === 0) return
+  const channelsRef = useRef(validChannels)
 
-    validChannels.forEach((channel) => {
+  useEffect(() => {
+    channelsRef.current = validChannels
+  })
+
+  useEffect(() => {
+    const activeChannels = channelsRef.current
+    if (activeChannels.length === 0) return
+
+    activeChannels.forEach((channel) => {
       subscribe(channel)
     })
 
     return () => {
-      validChannels.forEach((channel) => {
+      activeChannels.forEach((channel) => {
         unsubscribe(channel)
       })
     }

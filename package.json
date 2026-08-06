@@ -1,0 +1,19 @@
+{
+  "name": "fbyt-clone",
+  "private": true,
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2"
+  },
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx,js,jsx}": [
+      "npm run lint --prefix frontend"
+    ],
+    "backend/**/*.go": [
+      "gofmt -w"
+    ]
+  }
+}

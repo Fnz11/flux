@@ -9,7 +9,19 @@ import { VaultInvestCard, VaultInvestCardSkeleton } from './_components/VaultInv
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 import { PageHeader } from '@/components/ui/PageHeader'
 
-export const Route = createFileRoute('/invest/')({ component: InvestPage })
+import { generateMetadata } from '@/lib/metadata'
+
+export const Route = createFileRoute('/invest/')({
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Invest in Vaults',
+      description: 'Explore top-performing non-custodial Solana vaults and start earning yield.',
+      path: '/invest',
+      keywords: ['Solana Investment', 'DeFi Vaults', 'Yield Farming', 'Crypto Staking'],
+    }),
+  }),
+  component: InvestPage,
+})
 
 function InvestPage() {
   useRouteWsChannel(['vaults'])

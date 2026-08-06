@@ -8,7 +8,17 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { PayoutSummary } from './payout/_components/PayoutSummary'
 import { FeeHistory } from './payout/_components/FeeHistory'
 
+import { generateMetadata } from '@/lib/metadata'
+
 export const Route = createFileRoute('/payout')({
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Fee Payouts',
+      description: 'Manage and claim management and performance fee distributions for your managed vaults.',
+      path: '/payout',
+      noIndex: true,
+    }),
+  }),
   beforeLoad: () => {
     // Note: beforeLoad is not a React component, must use .getState(), not hook selector
     const isManager = useAppStore.getState().isManager

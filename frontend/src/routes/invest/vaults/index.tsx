@@ -8,7 +8,18 @@ import { ToggleGroup } from '@/components/ui/toggle-group'
 import { VaultInvestCard, VaultInvestCardSkeleton } from '../_components/VaultInvestCard'
 import { VirtualizedList } from '@/components/ui/VirtualizedList'
 
-export const Route = createFileRoute('/invest/vaults/')({ component: VaultInvestListPage })
+import { generateMetadata } from '@/lib/metadata'
+
+export const Route = createFileRoute('/invest/vaults/')({
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Browse Vaults',
+      description: 'Filter and discover non-custodial Solana vaults by asset focus, TVL, and performance fee.',
+      path: '/invest/vaults',
+    }),
+  }),
+  component: VaultInvestListPage,
+})
 
 const FOCUS_ASSETS = ['All', 'SOL', 'USDC', 'BTC', 'ETH']
 

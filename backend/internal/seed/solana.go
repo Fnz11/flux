@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/memo"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 )
 
 const lamportsPerSOL = uint64(1_000_000_000)
@@ -55,45 +57,86 @@ func (s *SolanaSeedClient) Airdrop(ctx context.Context, to solana.PublicKey, sol
 }
 
 // Transfer submits a real system.Transfer from a wallet and returns the
-// on-chain signature (confirmed processed/confirmed/finalized).
-func (s *SolanaSeedClient) Transfer(ctx context.Context, from *solana.Wallet, to solana.PublicKey, lamports uint64) (string, error) {
-	recent, err := s.client.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
-	if err != nil {
-		return "", fmt.Errorf("blockhash: %w", err)
-	}
-
-	ix := system.NewTransferInstruction(lamports, from.PublicKey(), to).Build()
-	tx, err := solana.NewTransaction(
-		[]solana.Instruction{ix},
-		recent.Value.Blockhash,
-		solana.TransactionPayer(from.PublicKey()),
-	)
-	if err != nil {
-		return "", err
-	}
-
-	priv := from.PrivateKey
-	if _, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
-		if key.Equals(from.PublicKey()) {
-			return &priv
+// on-chain signature (confirmed processed/confirmed/finalized). A unique memo
+// instruction is added so two otherwise-identical transfers produce distinct
+// transaction bytes and therefore distinct signatures (the DB enforces a
+// unique constraint on transaction_signature).
+func (s *SolanaSeedClient) Transfer(ctx context.Context, from *solana.Wallet, to solana.PublicKey, lamports uint64, memoText string) (string, error) {
+	var lastErr error
+	for attempt := 0; attempt < 5; attempt++ {
+		if attempt > 0 {
+			time.Sleep(300 * time.Millisecond)
 		}
-		return nil
-	}); err != nil {
-		return "", err
-	}
+		recent, err := s.client.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
+		if err != nil {
+			lastErr = fmt.Errorf("blockhash: %w", err)
+			continue
+		}
 
-	sig, err := s.client.SendTransaction(ctx, tx)
-	if err != nil {
-		return "", err
+		transferIx := system.NewTransferInstruction(lamports, from.PublicKey(), to).Build()
+		var ixs []solana.Instruction
+		if memoText != "" {
+			ixs = append(ixs, memo.NewMemoInstruction([]byte(memoText), from.PublicKey()).Build())
+		}
+		ixs = append(ixs, transferIx)
+		tx, err := solana.NewTransaction(
+			ixs,
+			recent.Value.Blockhash,
+			solana.TransactionPayer(from.PublicKey()),
+		)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		priv := from.PrivateKey
+		if _, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+			if key.Equals(from.PublicKey()) {
+				return &priv
+			}
+			return nil
+		}); err != nil {
+			lastErr = err
+			continue
+		}
+
+		sig, err := s.client.SendTransactionWithOpts(ctx, tx, rpc.TransactionOpts{
+			SkipPreflight:       true,
+			PreflightCommitment: rpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			lastErr = err
+			if rpcErr, ok := err.(*jsonrpc.RPCError); ok && isBlockhashNotFound(rpcErr) {
+				continue
+			}
+			return "", err
+		}
+		if err := s.confirm(ctx, sig); err != nil {
+			return sig.String(), err
+		}
+		return sig.String(), nil
 	}
-	if err := s.confirm(ctx, sig); err != nil {
-		return sig.String(), err
+	return "", lastErr
+}
+
+func isBlockhashNotFound(rpcErr *jsonrpc.RPCError) bool {
+	if rpcErr == nil || rpcErr.Data == nil {
+		return false
 	}
-	return sig.String(), nil
+	data, ok := rpcErr.Data.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	if e, ok := data["err"]; ok {
+		if s, ok := e.(string); ok && s == "BlockhashNotFound" {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *SolanaSeedClient) confirm(ctx context.Context, sig solana.Signature) error {
-	deadline := time.Now().Add(20 * time.Second)
+	deadline := time.Now().Add(60 * time.Second)
 	for {
 		res, err := s.client.GetSignatureStatuses(ctx, true, sig)
 		if err == nil && len(res.Value) > 0 && res.Value[0] != nil {

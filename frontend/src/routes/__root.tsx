@@ -15,13 +15,14 @@ import { HeroAmbient } from '../components/ui/HeroAmbient'
 
 import appCss from '../styles.css?url'
 
+import { generateMetadata } from '../lib/metadata'
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'FBYT - Solana Vault Platform' },
-      { name: 'description', content: 'Non-custodial Solana vault investment platform' },
+      ...generateMetadata(),
     ],
     links: [
       { rel: 'stylesheet', href: appCss },

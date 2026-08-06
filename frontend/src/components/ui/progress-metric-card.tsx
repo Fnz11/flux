@@ -1,16 +1,14 @@
 import { useId, useMemo, useState } from 'react';
 import { ArrowDown, ArrowRight, ArrowUp } from 'lucide-react';
 import {
-  ACCENTS,
-  formatCompact,
   MetricChart,
-  SERIES_COLORS,
   type ChartSeries,
   type ChartView,
   type MetricAccent,
   type MetricSeries,
   type SeriesPoint,
 } from './metric-chart';
+import { ACCENTS, SERIES_COLORS, formatCompact } from './metric-chart-constants';
 import { PeriodSelect, ViewToggle, type PeriodOption } from './metric-controls';
 
 export type { SeriesPoint, MetricSeries, MetricAccent, ChartView, PeriodOption };

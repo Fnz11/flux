@@ -4,6 +4,20 @@ import { useToastStore, type ToastItem } from '@/stores/toast-store'
 import { SolscanLink } from './SolscanLink'
 import { cn } from '@/lib/utils'
 
+const icons = {
+  error: <AlertCircle className="size-5 shrink-0 text-status-error" />,
+  success: <CheckCircle2 className="size-5 shrink-0 text-status-success" />,
+  warning: <AlertTriangle className="size-5 shrink-0 text-status-warning" />,
+  info: <Info className="size-5 shrink-0 text-primary-gold" />,
+}
+
+const borderStyles = {
+  error: 'border-status-error/40 bg-bg-surface/95 shadow-red-950/20',
+  success: 'border-status-success/40 bg-bg-surface/95 shadow-emerald-950/20',
+  warning: 'border-status-warning/40 bg-bg-surface/95 shadow-amber-950/20',
+  info: 'border-primary-gold/40 bg-bg-surface/95 shadow-yellow-950/20',
+}
+
 function ToastSingle({ toast }: { toast: ToastItem }) {
   const removeToast = useToastStore((s) => s.removeToast)
 
@@ -14,20 +28,6 @@ function ToastSingle({ toast }: { toast: ToastItem }) {
     }, toast.duration)
     return () => clearTimeout(timer)
   }, [toast.id, toast.duration, removeToast])
-
-  const icons = {
-    error: <AlertCircle className="size-5 shrink-0 text-status-error" />,
-    success: <CheckCircle2 className="size-5 shrink-0 text-status-success" />,
-    warning: <AlertTriangle className="size-5 shrink-0 text-status-warning" />,
-    info: <Info className="size-5 shrink-0 text-primary-gold" />,
-  }
-
-  const borderStyles = {
-    error: 'border-status-error/40 bg-bg-surface/95 shadow-red-950/20',
-    success: 'border-status-success/40 bg-bg-surface/95 shadow-emerald-950/20',
-    warning: 'border-status-warning/40 bg-bg-surface/95 shadow-amber-950/20',
-    info: 'border-primary-gold/40 bg-bg-surface/95 shadow-yellow-950/20',
-  }
 
   return (
     <div

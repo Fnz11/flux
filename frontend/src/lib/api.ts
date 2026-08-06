@@ -4,14 +4,6 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api
 
 let authToken: string | null = null
 
-export function setAuthToken(token: string | null) {
-  authToken = token
-}
-
-export function getAuthToken(): string | null {
-  return authToken
-}
-
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -60,5 +52,3 @@ export const api = {
   delete: <T>(url: string): Promise<T> =>
     client.delete<T>(url).then((res) => res.data),
 }
-
-export default client

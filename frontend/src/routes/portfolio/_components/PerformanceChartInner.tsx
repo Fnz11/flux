@@ -1,13 +1,4 @@
-import { memo } from 'react'
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from 'recharts'
+import { memo, useEffect, useState } from 'react'
 
 interface PerformanceChartInnerProps {
   data: { date: string; value: number }[]
@@ -32,6 +23,26 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export const PerformanceChartInner = memo(function PerformanceChartInner({ data }: PerformanceChartInnerProps) {
+  const [Recharts, setRecharts] = useState<typeof import('recharts') | null>(null)
+
+  useEffect(() => {
+    let active = true
+    import('recharts')
+      .then((mod) => {
+        if (active) setRecharts(mod)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (!Recharts) {
+    return <div className="h-[300px] animate-pulse rounded-xl bg-bg-inset" />
+  }
+
+  const { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } = Recharts
+
   return (
     <div className="h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
