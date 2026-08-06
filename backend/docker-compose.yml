@@ -1,4 +1,4 @@
-# FBYT-Clone backend infrastructure: TimescaleDB + PgBouncer + Redis
+# Flux backend infrastructure: TimescaleDB + PgBouncer + Redis
 #
 # Start everything:
 #   docker compose up -d
@@ -9,88 +9,71 @@
 #   app ──(REDIS_URL, 6379)──────────────────────────▶ redis
 #
 # Runtime API traffic goes THROUGH PgBouncer (transaction pooling).
-# DDL/migrations (agents 2-5) go DIRECT to timescaledb:5432 — never through
+# DDL/migrations go DIRECT to timescaledb:5432 — never through
 # pgbouncer, because CREATE INDEX / CREATE MATERIALIZED VIEW / create_hypertable
 # hold locks and long transactions that fight the pool.
 
 services:
   timescaledb:
     image: timescale/timescaledb:latest-pg16
-    container_name: fbyt-timescaledb
+    container_name: flux-timescaledb
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-fbyt}
-      TIMESCALEDB_TELEMETRY: "off"
-    command:
-      - "postgres"
-      - "-c"
-      - "timescaledb.license=timescale"
-      - "-c"
-      - "max_connections=200"
-      - "-c"
-      - "statement_timeout=30000"
+      POSTGRES_DB: ${POSTGRES_DB:-flux}
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
-      - ./deploy/timescaledb/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fbyt}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-flux}"]
       interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 15s
+      retries: 5
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
-    container_name: fbyt-pgbouncer
+    container_name: flux-pgbouncer
     restart: unless-stopped
     ports:
       - "6432:6432"
     environment:
-      DB_HOST: timescaledb
-      DB_PORT: "5432"
       DB_USER: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      DB_NAME: ${POSTGRES_DB:-fbyt}
-      LISTEN_PORT: "6432"
+      DB_NAME: ${POSTGRES_DB:-flux}
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      LISTEN_PORT: 6432
       POOL_MODE: transaction
-      AUTH_TYPE: scram-sha-256
-      MAX_CLIENT_CONN: "1000"
-      DEFAULT_POOL_SIZE: "20"
-      MIN_POOL_SIZE: "5"
-    volumes:
-      - ./deploy/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./deploy/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      RESERVE_POOL_TIMEOUT: 5
+      SERVER_IDLE_TIMEOUT: 60
     depends_on:
       timescaledb:
         condition: service_healthy
     healthcheck:
-      # pg_isready over the PgBouncer port: PgBouncer answers the startup
-      # packet with an auth request, which pg_isready reads as "accepting".
-      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "6432", "-U", "${POSTGRES_USER:-postgres}", "-d", "${POSTGRES_DB:-fbyt}"]
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "6432", "-U", "${POSTGRES_USER:-postgres}", "-d", "${POSTGRES_DB:-flux}"]
       interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 10s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: fbyt-redis
+    container_name: flux-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
-    volumes:
-      - ./deploy/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 5
+    volumes:
+      - redis_data:/data
 
 volumes:
   timescaledb_data:

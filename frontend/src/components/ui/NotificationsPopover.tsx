@@ -58,7 +58,7 @@ export function NotificationsPopover({ open, onToggle }: NotificationsPopoverPro
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-80 overflow-hidden rounded-2xl border border-border-medium bg-bg-elevated text-text-primary shadow-2xl backdrop-blur-2xl">
+        <div className="absolute right-0 top-full mt-2 z-50 w-80 overflow-hidden rounded-2xl border border-white/15 bg-bg-elevated/95 text-text-primary shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-3xl">
           <div className="flex items-center justify-between border-b border-border-subtle/60 px-4 py-3">
             <span className="text-xs font-bold text-text-primary">Notifications</span>
             {unread > 0 && (

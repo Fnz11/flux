@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/flux-protocol/backend/internal/models"
 	"gorm.io/gorm"
 )
 

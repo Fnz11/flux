@@ -469,7 +469,7 @@ export function SwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
         <Form {...form}>
           <SectionCard
             icon={<ArrowDownUp className="size-4 text-primary-coral" />}
-            title="SWAP CONSOLE"
+            title="Swap Consol"
             description="Execute Pyth Oracle-powered AMM swaps"
             rightContent={
               <VaultSelectField

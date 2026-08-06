@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/config"
+	"github.com/flux-protocol/backend/internal/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

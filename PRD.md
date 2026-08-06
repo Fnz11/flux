@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD): "FBYT-Clone" (MVP)
+# Product Requirements Document (PRD): "Flux" Platform
 
 ## 1. Vision
 

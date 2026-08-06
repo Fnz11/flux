@@ -3,8 +3,8 @@ package router
 import (
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/handlers"
-	"github.com/fbyt-clone/backend/internal/middleware"
+	"github.com/flux-protocol/backend/internal/handlers"
+	"github.com/flux-protocol/backend/internal/middleware"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"

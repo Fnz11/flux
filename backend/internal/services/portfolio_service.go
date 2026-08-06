@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/cache"
-	"github.com/fbyt-clone/backend/internal/domain"
-	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/flux-protocol/backend/internal/cache"
+	"github.com/flux-protocol/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/models"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"

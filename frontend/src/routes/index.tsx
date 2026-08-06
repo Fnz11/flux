@@ -60,7 +60,7 @@ function DashboardPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title={!walletAddress ? 'Welcome to FBYT' : isManager ? 'Manager Dashboard' : 'Dashboard'}
+        title={!walletAddress ? 'Welcome to Flux' : isManager ? 'Manager Dashboard' : 'Dashboard'}
         subtitle={!walletAddress ? 'Connect your wallet to get started.' : isManager ? 'Hey Manager, Welcome back!' : 'Hey Investor, Welcome back!'}
       />
 

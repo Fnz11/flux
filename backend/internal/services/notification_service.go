@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/domain"
-	"github.com/fbyt-clone/backend/internal/models"
-	"github.com/fbyt-clone/backend/internal/ws"
+	"github.com/flux-protocol/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/models"
+	"github.com/flux-protocol/backend/internal/ws"
 )
 
 type NotificationService struct {

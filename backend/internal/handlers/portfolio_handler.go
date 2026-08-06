@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/fbyt-clone/backend/internal/domain"
-	"github.com/fbyt-clone/backend/internal/models"
-	"github.com/fbyt-clone/backend/internal/services"
+	"github.com/flux-protocol/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/models"
+	"github.com/flux-protocol/backend/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"

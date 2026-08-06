@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/cache"
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/cache"
+	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )

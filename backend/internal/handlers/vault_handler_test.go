@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 )

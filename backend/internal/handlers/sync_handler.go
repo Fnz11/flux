@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/fbyt-clone/backend/internal/cache"
-	"github.com/fbyt-clone/backend/internal/domain"
-	"github.com/fbyt-clone/backend/internal/middleware"
-	"github.com/fbyt-clone/backend/internal/services"
-	"github.com/fbyt-clone/backend/pkg/solana"
+	"github.com/flux-protocol/backend/internal/cache"
+	"github.com/flux-protocol/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/middleware"
+	"github.com/flux-protocol/backend/internal/services"
+	"github.com/flux-protocol/backend/pkg/solana"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 )

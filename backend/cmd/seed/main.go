@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/config"
-	"github.com/fbyt-clone/backend/internal/database"
-	"github.com/fbyt-clone/backend/internal/seed"
+	"github.com/flux-protocol/backend/internal/config"
+	"github.com/flux-protocol/backend/internal/database"
+	"github.com/flux-protocol/backend/internal/seed"
 	"github.com/sirupsen/logrus"
 )
 

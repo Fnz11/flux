@@ -9,24 +9,25 @@ export interface MetadataOptions {
 }
 
 export const SITE_CONFIG = {
-  siteName: 'FBYT',
-  titleTemplate: '%s | FBYT - Solana Vault Platform',
-  defaultTitle: 'FBYT - Non-Custodial Solana Vault Investment Platform',
+  siteName: 'Flux',
+  titleTemplate: '%s | Flux - Solana Vault Platform',
+  defaultTitle: 'Flux - Non-Custodial Solana Vault Investment Platform',
   defaultDescription:
-    'Institutional-grade, non-custodial Solana vault platform for automated asset management, yield strategies, and transparent on-chain performance.',
+    'Flux is a non-custodial Solana investment platform empowering users to manage and deposit into algorithmic trading vaults with real-time PnL, Pyth oracles, and transparent fee sharing.',
   defaultKeywords: [
     'Solana',
     'DeFi',
     'Vaults',
-    'Yield Farming',
-    'Asset Management',
+    'Yield',
+    'Trading',
     'Non-Custodial',
-    'Crypto Investment',
-    'Anchor Platform',
+    'Pyth Network',
+    'Solana Vaults',
+    'Asset Management',
   ],
-  siteUrl: 'https://fbyt.io',
+  siteUrl: 'https://flux.io',
   defaultImage: '/logo.png',
-  twitterHandle: '@fbyt_platform',
+  twitterHandle: '@flux_platform',
   themeColor: '#FA9A63',
 }
 

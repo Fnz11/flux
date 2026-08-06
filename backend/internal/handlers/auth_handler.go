@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -75,7 +75,7 @@ func (h *AuthHandler) Nonce(c *gin.Context) {
 		return
 	}
 
-	nonce := "Sign this message to authenticate with FBYT: " + hex.EncodeToString(random)
+	nonce := "Sign this message to authenticate with Flux: " + hex.EncodeToString(random)
 
 	if _, err := h.userRepo.FindOrCreateByWallet(c.Request.Context(), req.WalletAddress); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})

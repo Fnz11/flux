@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"

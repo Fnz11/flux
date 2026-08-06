@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/gin-gonic/gin"
 )
 

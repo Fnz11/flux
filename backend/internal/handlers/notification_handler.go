@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/fbyt-clone/backend/internal/domain"
-	"github.com/fbyt-clone/backend/internal/middleware"
-	"github.com/fbyt-clone/backend/internal/services"
+	"github.com/flux-protocol/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/middleware"
+	"github.com/flux-protocol/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
 

@@ -60,9 +60,9 @@ export function Sidebar() {
       <div className={cn("flex h-16 items-center justify-between", isCollapsed ? "px-0 justify-center" : "px-2")}>
         <Link to="/" className="flex items-center gap-2.5">
           <div className={cn("flex items-center justify-center shrink-0", isCollapsed ? "size-6" : "size-8")}>
-            <img src="/logo.png" alt="FBYT Logo" className="w-full h-full object-contain" />
+            <img src="/logo.png" alt="Flux Logo" className="w-full h-full object-contain" />
           </div>
-          {!isCollapsed && <span className="text-lg font-bold tracking-tight text-text-primary">FBYT</span>}
+          {!isCollapsed && <span className="text-lg font-bold tracking-tight text-text-primary">Flux</span>}
         </Link>
         {!isCollapsed && (
           <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(true)} className="size-6 text-text-tertiary hover:text-text-primary">

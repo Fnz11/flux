@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/cache"
-	"github.com/fbyt-clone/backend/internal/repository"
+	"github.com/flux-protocol/backend/internal/cache"
+	"github.com/flux-protocol/backend/internal/repository"
 	"github.com/glebarez/sqlite"
 	"github.com/google/uuid"
 	"gorm.io/gorm"

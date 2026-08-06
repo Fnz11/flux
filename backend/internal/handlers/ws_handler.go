@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fbyt-clone/backend/internal/middleware"
-	"github.com/fbyt-clone/backend/internal/ws"
+	"github.com/flux-protocol/backend/internal/middleware"
+	"github.com/flux-protocol/backend/internal/ws"
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

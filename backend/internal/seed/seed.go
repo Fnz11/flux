@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/flux-protocol/backend/internal/models"
 	"github.com/gagliardetto/solana-go"
 	"github.com/google/uuid"
 	"github.com/mr-tron/base58"

@@ -569,7 +569,7 @@ function AgreementSection({ control }: { control: Control<CreateVaultFormValues>
                 <a href="#terms" className="text-primary-coral hover:underline font-semibold">
                   Terms and Conditions
                 </a>{' '}
-                for creating an FBYT Solana vault.
+                for creating a Flux Solana vault.
               </FormLabel>
               <FormMessage />
             </div>
@@ -709,9 +709,9 @@ export function CreateVaultPage() {
 
   return (
     <div className="space-y-6 pb-12 w-full">
-      <PageHeader
+        <PageHeader
         title="Create Vault"
-        subtitle="Configure a new Solana investment vault matching OG FBYT parameters."
+        subtitle="Configure a new Solana investment vault with custom parameters."
         backTo="/vaults"
       />
 

@@ -1,4 +1,4 @@
-module github.com/fbyt-clone/backend
+module github.com/flux-protocol/backend
 
 go 1.25.0
 

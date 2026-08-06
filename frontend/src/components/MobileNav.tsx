@@ -256,7 +256,7 @@ export function MobileNav() {
                       {drawerType === 'menu' ? 'Navigation Menu' : 'Account & Wallet'}
                     </h3>
                     <p className="text-[11px] text-text-tertiary">
-                      {drawerType === 'menu' ? 'FBYT Web3 Protocol' : 'Solana Devnet Session'}
+                      {drawerType === 'menu' ? 'Flux Protocol' : 'Solana Devnet Session'}
                     </p>
                   </div>
                 </div>

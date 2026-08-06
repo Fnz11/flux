@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/fbyt-clone/backend/internal/middleware"
-	"github.com/fbyt-clone/backend/internal/ws"
+	"github.com/flux-protocol/backend/internal/middleware"
+	"github.com/flux-protocol/backend/internal/ws"
 	"github.com/gin-gonic/gin"
 )
 

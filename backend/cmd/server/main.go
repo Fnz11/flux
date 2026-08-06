@@ -8,19 +8,19 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/fbyt-clone/backend/internal/cache"
-	"github.com/fbyt-clone/backend/internal/config"
-	"github.com/fbyt-clone/backend/internal/database"
-	"github.com/fbyt-clone/backend/internal/domain"
-	"github.com/fbyt-clone/backend/internal/handlers"
-	"github.com/fbyt-clone/backend/internal/jobs"
-	"github.com/fbyt-clone/backend/internal/middleware"
-	"github.com/fbyt-clone/backend/internal/repository"
-	"github.com/fbyt-clone/backend/internal/router"
-	"github.com/fbyt-clone/backend/internal/server"
-	"github.com/fbyt-clone/backend/internal/services"
-	"github.com/fbyt-clone/backend/internal/ws"
-	"github.com/fbyt-clone/backend/pkg/solana"
+	"github.com/flux-protocol/backend/internal/cache"
+	"github.com/flux-protocol/backend/internal/config"
+	"github.com/flux-protocol/backend/internal/database"
+	"github.com/flux-protocol/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/handlers"
+	"github.com/flux-protocol/backend/internal/jobs"
+	"github.com/flux-protocol/backend/internal/middleware"
+	"github.com/flux-protocol/backend/internal/repository"
+	"github.com/flux-protocol/backend/internal/router"
+	"github.com/flux-protocol/backend/internal/server"
+	"github.com/flux-protocol/backend/internal/services"
+	"github.com/flux-protocol/backend/internal/ws"
+	"github.com/flux-protocol/backend/pkg/solana"
 )
 
 func main() {

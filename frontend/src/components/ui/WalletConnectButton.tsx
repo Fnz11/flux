@@ -92,7 +92,7 @@ export function WalletConnectButton() {
         </button>
 
         {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-52 rounded-xl border border-border-medium bg-bg-elevated p-2 shadow-2xl backdrop-blur-2xl z-50">
+          <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-white/15 bg-bg-elevated/95 p-2 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-3xl z-50">
             <button
               onClick={handleCopy}
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-bg-inset hover:text-text-primary transition-colors cursor-pointer"
@@ -134,7 +134,7 @@ export function WalletConnectButton() {
       <Modal open={isOpen} onOpenChange={setIsOpen} title="Connect Wallet">
         <div className="space-y-3 py-2">
           <p className="text-xs text-text-tertiary">
-            Select a Solana wallet to connect to FBYT platform:
+            Select a Solana wallet to connect to Flux platform:
           </p>
           <div className="grid gap-2">
             {wallets.map((w) => (

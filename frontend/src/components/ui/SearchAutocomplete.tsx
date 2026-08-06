@@ -74,7 +74,7 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
 
       {/* Search Command Palette Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl p-0 overflow-hidden bg-bg-surface/95 backdrop-blur-2xl border-border-subtle/80 shadow-2xl rounded-2xl top-[20%] -translate-y-0 [&>button]:hidden">
+        <DialogContent className="max-w-xl p-0 overflow-hidden bg-bg-surface/95 backdrop-blur-3xl border border-white/15 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] rounded-2xl top-[20%] -translate-y-0 [&>button]:hidden">
           <DialogTitle className="sr-only">Search Modal</DialogTitle>
 
           {/* Search Input Bar */}

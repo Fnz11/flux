@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/ws"
+	"github.com/flux-protocol/backend/internal/ws"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )

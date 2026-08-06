@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/domain"
 	gdriver "github.com/glebarez/go-sqlite"
 	"github.com/glebarez/sqlite"
 	"github.com/shopspring/decimal"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/fbyt-clone/backend/internal/domain"
-	"github.com/fbyt-clone/backend/internal/models"
+	"github.com/flux-protocol/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/models"
 	"gorm.io/gorm"
 )
 

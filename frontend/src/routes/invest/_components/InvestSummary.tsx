@@ -30,7 +30,7 @@ export function InvestSummary() {
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary-coral/10 text-primary-coral border border-primary-coral/20">
               <Wallet className="size-3.5" />
             </div>
-            <span>TOTAL INVESTED</span>
+            <span>Total Invested</span>
           </div>
           <span className="inline-flex items-center gap-1 rounded-full bg-primary-coral/10 px-2.5 py-0.5 text-[10px] font-bold text-primary-coral border border-primary-coral/20">
             Active Capital
@@ -55,7 +55,7 @@ export function InvestSummary() {
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary-gold/10 text-primary-gold border border-primary-gold/20">
               <Coins className="size-3.5" />
             </div>
-            <span>PORTFOLIO VALUE</span>
+            <span>Portfolio Value</span>
           </div>
           <span className="inline-flex items-center gap-1 rounded-full bg-primary-gold/10 px-2.5 py-0.5 text-[10px] font-bold text-primary-gold border border-primary-gold/20">
             Live NAV
@@ -80,7 +80,7 @@ export function InvestSummary() {
             <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <TrendingUp className="size-3.5" />
             </div>
-            <span>NET PROFIT / LOSS</span>
+            <span>Net Profit / Loss</span>
           </div>
           <span
             className={cn(

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mr-tron/base58"
@@ -105,7 +105,7 @@ func TestAuthHandler_Nonce(t *testing.T) {
 		var resp map[string]interface{}
 		json.Unmarshal(w.Body.Bytes(), &resp)
 		nonceStr, ok := resp["nonce"].(string)
-		if !ok || !strings.HasPrefix(nonceStr, "Sign this message to authenticate with FBYT: ") {
+		if !ok || !strings.HasPrefix(nonceStr, "Sign this message to authenticate with Flux: ") {
 			t.Fatalf("unexpected nonce response: %+v", resp)
 		}
 	})

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/fbyt-clone/backend/internal/domain"
+	"github.com/flux-protocol/backend/internal/domain"
 )
 
 type Pair struct {
