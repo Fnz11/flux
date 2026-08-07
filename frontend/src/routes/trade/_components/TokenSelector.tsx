@@ -171,6 +171,8 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
         {query && (
           <button
             type="button"
+            title="Clear search"
+            aria-label="Clear search"
             onClick={() => setQuery('')}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary cursor-pointer p-1"
           >
@@ -229,7 +231,7 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
         variant="outline"
         type="button"
         onClick={() => setOpen(!open)}
-        className="h-10 px-3 min-w-[120px] justify-between gap-2.5 rounded-xl border-border-subtle bg-bg-elevated/80 hover:bg-bg-elevated hover:border-border-medium transition-all shadow-xs cursor-pointer"
+        className="h-10 px-3 min-w-[120px] justify-between gap-2.5 rounded-xl border-border-subtle bg-bg-elevated/80 hover:bg-bg-elevated hover:border-border-medium transition-colors shadow-xs cursor-pointer"
       >
         <span className="flex items-center gap-2">
           <TokenIcon meta={selectedMeta} className="size-5" />

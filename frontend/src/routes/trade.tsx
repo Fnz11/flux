@@ -16,15 +16,6 @@ const tradeSearchSchema = z.object({
 })
 
 export const Route = createFileRoute('/trade')({
-  head: () => ({
-    meta: generateMetadata({
-      title: 'Manager Trade Console',
-      description: 'Execute DEX token swaps, manage liquidity, and rebalance assets for your Solana vaults.',
-      path: '/trade',
-      noIndex: true,
-    }),
-  }),
-  component: TradePage,
   validateSearch: (search) => tradeSearchSchema.parse(search),
   beforeLoad: () => {
     // Note: beforeLoad is not a React component, must use .getState(), not hook selector
@@ -35,6 +26,15 @@ export const Route = createFileRoute('/trade')({
       })
     }
   },
+  head: () => ({
+    meta: generateMetadata({
+      title: 'Manager Trade Console',
+      description: 'Execute DEX token swaps, manage liquidity, and rebalance assets for your Solana vaults.',
+      path: '/trade',
+      noIndex: true,
+    }),
+  }),
+  component: TradePage,
 })
 
 function TradePage() {

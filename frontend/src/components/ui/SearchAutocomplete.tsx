@@ -16,11 +16,21 @@ interface SearchAutocompleteProps {
 
 export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, results, onSelect }: SearchAutocompleteProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [prevKey, setPrevKey] = useState({ query, results })
 
-  // Reset index when query or results change
-  useEffect(() => {
+  if (prevKey.query !== query || prevKey.results !== results) {
+    setPrevKey({ query, results })
     setSelectedIndex(0)
-  }, [query, results])
+  }
+
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => inputRef.current?.focus(), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [open])
 
   // Keyboard shortcut listener (Cmd+F, Cmd+K, Ctrl+F, Ctrl+K)
   useEffect(() => {
@@ -61,7 +71,7 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center rounded-full border border-border-subtle bg-bg-inset/30 px-3 py-1.5 backdrop-blur-md text-text-muted hover:border-border-medium hover:text-text-primary transition-all group cursor-pointer"
+        className="flex items-center rounded-full border border-border-subtle bg-bg-inset/30 px-3 py-1.5 backdrop-blur-md text-text-muted hover:border-border-medium hover:text-text-primary transition-colors group cursor-pointer"
       >
         <Search className="size-3.5 text-text-muted group-hover:text-text-primary transition-colors" strokeWidth={1.5} />
         <span className="ml-2 text-[13px] text-text-muted group-hover:text-text-secondary transition-colors">
@@ -81,8 +91,9 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
           <div className="flex items-center border-b border-border-subtle/40 px-4 py-3.5 bg-bg-inset/20">
             <Search className="size-4 text-text-muted shrink-0" strokeWidth={1.5} />
             <input
+              ref={inputRef}
               type="text"
-              autoFocus
+              aria-label="Search assets, trading pairs, or vaults"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleInputKeyDown}
@@ -134,7 +145,7 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
                       onClick={() => onSelect(pair, 'pairs')}
                       onMouseEnter={() => setSelectedIndex(idx)}
                       className={cn(
-                        'flex w-full items-center justify-between px-3 py-2.5 rounded-lg text-left text-[13px] transition-all group cursor-pointer',
+                        'flex w-full items-center justify-between px-3 py-2.5 rounded-lg text-left text-[13px] transition-colors group cursor-pointer',
                         isSelected
                           ? 'bg-bg-elevated text-text-primary shadow-sm border border-border-subtle/60'
                           : 'text-text-secondary hover:text-text-primary border border-transparent',
@@ -173,7 +184,7 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
                       onClick={() => onSelect(vault, 'vaults')}
                       onMouseEnter={() => setSelectedIndex(idx)}
                       className={cn(
-                        'flex w-full items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left transition-all group cursor-pointer',
+                        'flex w-full items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group cursor-pointer',
                         isSelected
                           ? 'bg-bg-elevated text-text-primary shadow-sm border border-border-subtle/60'
                           : 'text-text-secondary hover:text-text-primary border border-transparent',

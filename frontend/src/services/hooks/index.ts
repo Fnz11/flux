@@ -1,5 +1,3 @@
 export * from './useQuery/useVaultsQuery'
 export * from './useQuery/usePortfolioQuery'
-export * from './useQuery/useConfigQuery'
-export * from './useQuery/useFeeQuery'
 export * from './useMutation/useVaultMutation'

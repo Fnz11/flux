@@ -96,7 +96,7 @@ export function MetricChart({
       {/* Floating Hover Tooltip */}
       {activePt && (
         <div
-          className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1 rounded-md border border-border-subtle bg-bg-elevated/95 px-2 py-1 text-[10px] font-medium text-text-primary shadow-lg backdrop-blur-md pointer-events-none transition-all"
+          className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1 rounded-md border border-border-subtle bg-bg-elevated/95 px-2 py-1 text-[10px] font-medium text-text-primary shadow-lg backdrop-blur-md pointer-events-none transition-[left,opacity]"
           style={{
             left: `${activePt.x}%`,
           }}

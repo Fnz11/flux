@@ -11,11 +11,21 @@ export function subscribeToNotifications(wallet: string): () => void {
   }
 }
 
+export function startWsHeartbeat(intervalMs: number = 30000): () => void {
+  const timer = setInterval(() => {
+    const ws = useWebSocketStore.getState().ws
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'ping' }))
+    }
+  }, intervalMs)
+  return () => clearInterval(timer)
+}
+
 export function useNotificationWs(): void {
   const currentUser = useAppStore((s) => s.currentUser)
 
   useEffect(() => {
-    if (!currentUser) return
+    if (!currentUser) return () => {}
     const channel = 'user:' + currentUser
     useWebSocketStore.getState().subscribe(channel)
     return () => {
@@ -24,7 +34,10 @@ export function useNotificationWs(): void {
   }, [currentUser])
 
   useEffect(() => {
-    const cleanup = registerNotificationWsListener()
-    return cleanup
+    return registerNotificationWsListener()
+  }, [])
+
+  useEffect(() => {
+    return startWsHeartbeat()
   }, [])
 }

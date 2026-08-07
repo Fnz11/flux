@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate, useLocation } from '@tanstack/react-router'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
   Menu,
@@ -54,12 +54,28 @@ const campaignLinks = [
   { label: 'Rewards', icon: Medal },
 ] as const
 
-export function MobileNav() {
-  const [mounted, setMounted] = useState(false)
+function truncateAddress(address: string): string {
+  if (!address) return ''
+  return `${address.slice(0, 6)}...${address.slice(-6)}`
+}
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+function getActiveIndex(pathname: string, drawerType: 'menu' | 'profile' | null): number {
+  if (!drawerType) {
+    if (pathname === '/') return 0
+    if (pathname.startsWith('/vaults') || pathname.startsWith('/invest')) return 1
+    return -1
+  }
+  if (drawerType === 'menu') return 2
+  if (drawerType === 'profile') return 3
+  return -1
+}
+
+export function MobileNav() {
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
   const [drawerType, setDrawerType] = useState<'menu' | 'profile' | null>(null)
   const [copied, setCopied] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -76,21 +92,13 @@ export function MobileNav() {
 
   const links = isManager ? managerLinks : investLinks
   const address = publicKey?.toBase58() || currentUser || ''
-  const truncatedAddress = address ? `${address.slice(0, 6)}...${address.slice(-6)}` : ''
+  const truncatedAddress = truncateAddress(address)
 
   // Primary action link based on mode
   const primaryVaultLink = isManager ? '/vaults' : '/invest'
 
   // Calculate active tab index (0: Dashboard, 1: Vaults/Invest, 2: Menu, 3: Profile)
-  let activeIndex = -1
-  if (!drawerType) {
-    if (location.pathname === '/') activeIndex = 0
-    else if (location.pathname.startsWith('/vaults') || location.pathname.startsWith('/invest')) activeIndex = 1
-  } else if (drawerType === 'menu') {
-    activeIndex = 2
-  } else if (drawerType === 'profile') {
-    activeIndex = 3
-  }
+  const activeIndex = getActiveIndex(location.pathname, drawerType)
 
   const handleNavClick = (path: string) => {
     setDrawerType(null)
@@ -136,13 +144,13 @@ export function MobileNav() {
   }
 
   return (
-    <>
+    <LazyMotion features={domAnimation}>
       {/* Mobile Floating Liquid-Glass Navigation Bar */}
       <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-sm px-1 pointer-events-auto">
         <div className="relative flex items-center justify-around bg-bg-surface/85 backdrop-blur-3xl shadow-[0_12px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.12)] rounded-full px-2 py-1.5 border border-white/10">
           
           {/* Item 1: Dashboard */}
-          <motion.button
+          <m.button
             type="button"
             whileTap={{ scale: 0.92 }}
             onClick={() => handleNavClick('/')}
@@ -153,10 +161,10 @@ export function MobileNav() {
           >
             <LayoutDashboard className="size-5 shrink-0" />
             <span className="text-[10px] mt-0.5 font-medium truncate tracking-tight">Home</span>
-          </motion.button>
+          </m.button>
 
           {/* Item 2: Vaults / Invest */}
-          <motion.button
+          <m.button
             type="button"
             whileTap={{ scale: 0.92 }}
             onClick={() => handleNavClick(primaryVaultLink)}
@@ -169,10 +177,10 @@ export function MobileNav() {
             <span className="text-[10px] mt-0.5 font-medium truncate tracking-tight">
               {isManager ? 'Vaults' : 'Invest'}
             </span>
-          </motion.button>
+          </m.button>
 
           {/* Item 3: Menu Drawer */}
-          <motion.button
+          <m.button
             type="button"
             whileTap={{ scale: 0.92 }}
             onClick={() => setDrawerType((prev) => (prev === 'menu' ? null : 'menu'))}
@@ -183,10 +191,10 @@ export function MobileNav() {
           >
             <Menu className="size-5 shrink-0" />
             <span className="text-[10px] mt-0.5 font-medium truncate tracking-tight">Menu</span>
-          </motion.button>
+          </m.button>
 
           {/* Item 4: Profile Drawer */}
-          <motion.button
+          <m.button
             type="button"
             whileTap={{ scale: 0.92 }}
             onClick={() => setDrawerType((prev) => (prev === 'profile' ? null : 'profile'))}
@@ -202,11 +210,11 @@ export function MobileNav() {
               )}
             </div>
             <span className="text-[10px] mt-0.5 font-medium truncate tracking-tight">Account</span>
-          </motion.button>
+          </m.button>
 
           {/* Sliding Liquid-Glass Active Highlight Pill */}
           {activeIndex >= 0 && (
-            <motion.div
+            <m.div
               layout
               layoutId="mobile-nav-active-pill"
               transition={{ type: 'spring', stiffness: 420, damping: 32 }}
@@ -226,7 +234,7 @@ export function MobileNav() {
           {drawerType && (
             <div className="md:hidden">
               {/* Dark Frosted Backdrop (z-[199]) */}
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -235,7 +243,7 @@ export function MobileNav() {
               />
 
               {/* Bottom Sheet Drawer (z-[200]) */}
-              <motion.div
+              <m.div
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
@@ -282,7 +290,7 @@ export function MobileNav() {
                             type="button"
                             onClick={() => handleModeSwitch(true)}
                             className={cn(
-                              'flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer',
+                              'flex-1 py-2 text-xs font-semibold rounded-lg transition-[background-color,border-color,color,box-shadow] cursor-pointer',
                               isManager
                                 ? 'bg-bg-surface text-text-primary shadow-md border border-border-subtle'
                                 : 'text-text-tertiary hover:text-text-secondary'
@@ -294,7 +302,7 @@ export function MobileNav() {
                             type="button"
                             onClick={() => handleModeSwitch(false)}
                             className={cn(
-                              'flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer',
+                              'flex-1 py-2 text-xs font-semibold rounded-lg transition-[background-color,border-color,color,box-shadow] cursor-pointer',
                               !isManager
                                 ? 'bg-primary-gold text-black shadow-md'
                                 : 'text-text-tertiary hover:text-text-secondary'
@@ -313,7 +321,7 @@ export function MobileNav() {
                         setDrawerType(null)
                         setSearchOpen(true)
                       }}
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-border-medium/80 bg-bg-inset/40 text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all group cursor-pointer"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-border-medium/80 bg-bg-inset/40 text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors group cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <Search className="size-4 text-text-muted group-hover:text-primary-gold transition-colors" />
@@ -341,7 +349,7 @@ export function MobileNav() {
                             inactiveProps={{
                               className: 'text-text-secondary hover:text-text-primary hover:bg-bg-inset/60 border-transparent',
                             }}
-                            className="flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium border transition-all"
+                            className="flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium border transition-colors"
                           >
                             <div className="flex items-center gap-3">
                               <link.icon className="size-4 text-text-tertiary shrink-0" />
@@ -364,7 +372,7 @@ export function MobileNav() {
                             key={link.label}
                             type="button"
                             onClick={() => handleComingSoon(link.label)}
-                            className="flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium border border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-inset/60 transition-all text-left cursor-pointer"
+                            className="flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium border border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-inset/60 transition-colors text-left cursor-pointer"
                           >
                             <div className="flex items-center gap-3">
                               <link.icon className="size-4 text-text-tertiary shrink-0" />
@@ -486,12 +494,12 @@ export function MobileNav() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>,
       document.body
     )}
-    </>
+    </LazyMotion>
   )
 }

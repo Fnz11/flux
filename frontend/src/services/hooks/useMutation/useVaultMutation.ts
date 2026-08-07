@@ -1,16 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createVault, updateVaultMetadata } from '@/services/apis/rest-api/vault.service'
-import type { Vault, VaultMetadata } from '@/types'
-
-export function useCreateVaultMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: Partial<Vault>) => createVault(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vaults'] })
-    },
-  })
-}
+import { updateVaultMetadata } from '@/services/apis/rest-api/vault.service'
+import type { VaultMetadata } from '@/types'
 
 export function useUpdateVaultMetadataMutation() {
   const queryClient = useQueryClient()

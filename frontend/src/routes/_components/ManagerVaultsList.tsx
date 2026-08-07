@@ -9,6 +9,22 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Shield, PlusCircle, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
+const dateFormatter = new Intl.DateTimeFormat('en-US')
+
+function formatCurrency(val: number): string {
+  return currencyFormatter.format(val)
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : dateFormatter.format(d)
+}
+
 export function ManagerVaultsList({ walletAddress }: { walletAddress?: string }) {
   const { data: allVaults = [], isLoading } = useVaultsQuery()
 
@@ -74,7 +90,7 @@ export function ManagerVaultsList({ walletAddress }: { walletAddress?: string })
                     <StatusBadge status={vault.status} />
                   </TableCell>
                   <TableCell className="py-3.5 px-4 font-mono whitespace-nowrap text-xs text-text-primary">
-                    ${vault.tvl.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ${formatCurrency(vault.tvl)}
                   </TableCell>
                   <TableCell className={cn(
                     'py-3.5 px-4 font-mono font-semibold whitespace-nowrap text-xs',
@@ -83,7 +99,7 @@ export function ManagerVaultsList({ walletAddress }: { walletAddress?: string })
                     {isPositive ? `+${pnl.toFixed(2)}%` : `${pnl.toFixed(2)}%`}
                   </TableCell>
                   <TableCell className="py-3.5 px-4 font-mono text-xs text-text-tertiary whitespace-nowrap">
-                    {new Date(vault.createdAt).toLocaleDateString()}
+                    {formatDate(vault.createdAt)}
                   </TableCell>
                   <TableCell className="py-3.5 px-4 whitespace-nowrap">
                     <VaultSparkline isPositive={isPositive} />

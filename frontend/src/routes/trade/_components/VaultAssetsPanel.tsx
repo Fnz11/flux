@@ -104,7 +104,7 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
             return (
               <div
                 key={asset.symbol || asset.mint}
-                className="relative flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3 hover:border-primary-coral/40 transition-all shadow-xs"
+                className="relative flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3 hover:border-primary-coral/40 transition-colors shadow-xs"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

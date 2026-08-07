@@ -34,7 +34,7 @@ export function PortfolioSummary() {
             <Link to="/vaults">
               <button
                 type="button"
-                className="rounded-full bg-gradient-to-r from-primary-coral to-primary-amber px-3 py-1 text-xs font-bold text-black shadow-md hover:brightness-110 transition-all cursor-pointer"
+                className="rounded-full bg-gradient-to-r from-primary-coral to-primary-amber px-3 py-1 text-xs font-bold text-black shadow-md hover:brightness-110 transition-[filter] cursor-pointer"
               >
                 Deposit
               </button>
@@ -42,7 +42,7 @@ export function PortfolioSummary() {
             <Link to="/payout">
               <button
                 type="button"
-                className="rounded-full border border-border-medium bg-bg-inset px-3 py-1 text-xs font-medium text-text-secondary hover:text-text-primary transition-all cursor-pointer"
+                className="rounded-full border border-border-medium bg-bg-inset px-3 py-1 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
               >
                 Withdraw
               </button>
@@ -143,7 +143,7 @@ export function PortfolioSummary() {
           <button
             type="button"
             onClick={handleBecomeManager}
-            className="rounded-xl bg-white px-3.5 py-1.5 text-xs font-bold text-black shadow-md hover:bg-neutral-200 transition-all cursor-pointer"
+            className="rounded-xl bg-white px-3.5 py-1.5 text-xs font-bold text-black shadow-md hover:bg-neutral-200 transition-colors cursor-pointer"
           >
             Become a manager
           </button>

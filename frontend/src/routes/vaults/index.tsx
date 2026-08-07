@@ -18,6 +18,7 @@ const vaultsSearchSchema = z.object({
 })
 
 export const Route = createFileRoute('/vaults/')({
+  validateSearch: (search) => vaultsSearchSchema.parse(search),
   head: () => ({
     meta: generateMetadata({
       title: 'Vault Management',
@@ -26,7 +27,6 @@ export const Route = createFileRoute('/vaults/')({
     }),
   }),
   component: VaultsListPage,
-  validateSearch: (search) => vaultsSearchSchema.parse(search),
 })
 
 const STATUS_TABS = ['All', 'Fundraising', 'Active', 'Dormant'] as const

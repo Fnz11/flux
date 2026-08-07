@@ -44,7 +44,7 @@ export function NotificationsPopover({ open, onToggle }: NotificationsPopoverPro
       <button
         type="button"
         onClick={onToggle}
-        className="relative flex size-9 items-center justify-center rounded-xl border border-border-medium bg-bg-elevated/80 backdrop-blur-md text-text-secondary hover:text-text-primary hover:border-primary-coral/40 hover:bg-bg-inset transition-all shadow-md group cursor-pointer"
+        className="relative flex size-9 items-center justify-center rounded-xl border border-border-medium bg-bg-elevated/80 backdrop-blur-md text-text-secondary hover:text-text-primary hover:border-primary-coral/40 hover:bg-bg-inset transition-colors shadow-md group cursor-pointer"
         title="Notifications"
         aria-haspopup="true"
         aria-expanded={open}
@@ -65,7 +65,7 @@ export function NotificationsPopover({ open, onToggle }: NotificationsPopoverPro
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="flex items-center gap-1 text-[11px] font-semibold text-primary-coral hover:underline transition-all cursor-pointer"
+                className="flex items-center gap-1 text-[11px] font-semibold text-primary-coral hover:underline transition-colors cursor-pointer"
               >
                 <CheckCheck className="size-3.5" strokeWidth={1.75} />
                 Mark all read
@@ -109,6 +109,8 @@ export function NotificationsPopover({ open, onToggle }: NotificationsPopoverPro
   )
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-US')
+
 function formatTime(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
@@ -121,5 +123,5 @@ function formatTime(iso: string): string {
   if (hrs < 24) return `${hrs}h`
   const days = Math.floor(hrs / 24)
   if (days < 7) return `${days}d`
-  return d.toLocaleDateString()
+  return dateFormatter.format(d)
 }

@@ -78,7 +78,7 @@ export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummary
             </div>
             <button
               type="button"
-              className="rounded-full bg-gradient-to-r from-primary-coral to-primary-amber px-3 py-1 text-[11px] font-bold text-black shadow-md hover:brightness-110 transition-all cursor-pointer"
+              className="rounded-full bg-gradient-to-r from-primary-coral to-primary-amber px-3 py-1 text-[11px] font-bold text-black shadow-md hover:brightness-110 transition-[filter] cursor-pointer"
             >
               Claim All
             </button>

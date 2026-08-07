@@ -70,7 +70,7 @@ export function WalletConnectButton() {
         <button
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="group flex w-full items-center justify-between gap-2 rounded-xl border border-border-medium bg-bg-elevated/90 px-2.5 py-1.5 transition-all hover:border-primary-coral/40 hover:bg-bg-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral cursor-pointer shadow-md min-w-0"
+          className="group flex w-full items-center justify-between gap-2 rounded-xl border border-border-medium bg-bg-elevated/90 px-2.5 py-1.5 transition-colors hover:border-primary-coral/40 hover:bg-bg-inset focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral cursor-pointer shadow-md min-w-0"
         >
           {/* Left Square Wallet Icon Badge */}
           <div className="flex size-6 items-center justify-center rounded-md bg-bg-inset border border-border-subtle text-primary-coral group-hover:border-primary-coral/40 transition-colors shrink-0">

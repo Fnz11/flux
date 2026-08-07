@@ -35,7 +35,7 @@ export function NotFoundPage() {
         <div className="grid grid-cols-3 gap-3 w-full pt-1">
           <Link
             to="/portfolio"
-            className="flex flex-col items-center justify-center rounded-xl border border-border-subtle/80 bg-bg-inset/60 p-3 hover:border-primary-coral/40 hover:bg-bg-inset transition-all group cursor-pointer"
+            className="flex flex-col items-center justify-center rounded-xl border border-border-subtle/80 bg-bg-inset/60 p-3 hover:border-primary-coral/40 hover:bg-bg-inset transition-colors group cursor-pointer"
           >
             <Sparkles className="size-4 text-primary-coral mb-1 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-text-primary">Dashboard</span>
@@ -44,7 +44,7 @@ export function NotFoundPage() {
 
           <Link
             to="/invest"
-            className="flex flex-col items-center justify-center rounded-xl border border-border-subtle/80 bg-bg-inset/60 p-3 hover:border-primary-gold/40 hover:bg-bg-inset transition-all group cursor-pointer"
+            className="flex flex-col items-center justify-center rounded-xl border border-border-subtle/80 bg-bg-inset/60 p-3 hover:border-primary-gold/40 hover:bg-bg-inset transition-colors group cursor-pointer"
           >
             <Trophy className="size-4 text-primary-gold mb-1 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-text-primary">Invest</span>
@@ -53,7 +53,7 @@ export function NotFoundPage() {
 
           <Link
             to="/trade"
-            className="flex flex-col items-center justify-center rounded-xl border border-border-subtle/80 bg-bg-inset/60 p-3 hover:border-emerald-400/40 hover:bg-bg-inset transition-all group cursor-pointer"
+            className="flex flex-col items-center justify-center rounded-xl border border-border-subtle/80 bg-bg-inset/60 p-3 hover:border-emerald-400/40 hover:bg-bg-inset transition-colors group cursor-pointer"
           >
             <ArrowDownUp className="size-4 text-emerald-400 mb-1 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-text-primary">Trade</span>

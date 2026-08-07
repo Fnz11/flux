@@ -4,17 +4,17 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
 
+function formatNum(num: number) {
+  const absNum = Math.abs(num)
+  const str = absNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const [intPart, decPart] = str.split('.')
+  return { intPart, decPart }
+}
+
 export function InvestSummary() {
   const wallet = useWallet()
   const walletAddress = wallet.publicKey?.toBase58()
   const { totalInvested, totalValue, totalPnl, totalPnlPercent } = usePortfolioPnl(walletAddress)
-
-  const formatNum = (num: number) => {
-    const absNum = Math.abs(num)
-    const str = absNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    const [intPart, decPart] = str.split('.')
-    return { intPart, decPart }
-  }
 
   const invested = formatNum(totalInvested)
   const val = formatNum(totalValue)
@@ -24,7 +24,7 @@ export function InvestSummary() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
       {/* 1. Total Invested Card */}
-      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-primary-coral/40 transition-all">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-primary-coral/40 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-tertiary">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary-coral/10 text-primary-coral border border-primary-coral/20">
@@ -49,7 +49,7 @@ export function InvestSummary() {
       </Card>
 
       {/* 2. Portfolio Value Card */}
-      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-primary-gold/40 transition-all">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-primary-gold/40 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-tertiary">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary-gold/10 text-primary-gold border border-primary-gold/20">
@@ -74,7 +74,7 @@ export function InvestSummary() {
       </Card>
 
       {/* 3. Net Profit / Loss Card */}
-      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-emerald-500/40 transition-all">
+      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-emerald-500/40 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-tertiary">
             <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
