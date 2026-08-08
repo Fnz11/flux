@@ -6,7 +6,7 @@ import { useAppStore } from '@/stores/app-store'
 import { Card } from '@/components/ui/card'
 
 export function PortfolioSummary() {
-  const { totalInvested, totalValue, totalPnl, totalPnlPercent } = usePortfolioPnl()
+  const { totalValue, totalPnl, totalPnlPercent } = usePortfolioPnl()
   const setMode = useAppStore((s) => s.setMode)
   const navigate = useNavigate()
 

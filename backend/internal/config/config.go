@@ -20,7 +20,49 @@ type Config struct {
 	SolanaProgramID      string
 }
 
+// loadEnvFile reads .env if present and sets OS env variables if not already set.
+func loadEnvFile() {
+	paths := []string{".env", "../.env", "../../.env"}
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		lines := strings.Split(string(data), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				key := strings.TrimSpace(parts[0])
+				val := strings.TrimSpace(parts[1])
+				if len(val) >= 2 && ((val[0] == '"' && val[len(val)-1] == '"') || (val[0] == '\'' && val[len(val)-1] == '\'')) {
+					val = val[1 : len(val)-1]
+				}
+				if os.Getenv(key) == "" {
+					_ = os.Setenv(key, val)
+				}
+			}
+		}
+		break
+	}
+}
+
+func init() {
+	// Load .env automatically unless running unit tests
+	if len(os.Args) > 0 && !strings.HasSuffix(os.Args[0], ".test") && !strings.Contains(os.Args[0], "/_test/") {
+		loadEnvFile()
+	}
+}
+
 func Load() (*Config, error) {
+	// Also attempt loading if DATABASE_URL is not set yet and not running a test
+	if os.Getenv("DATABASE_URL") == "" && len(os.Args) > 0 && !strings.HasSuffix(os.Args[0], ".test") {
+		loadEnvFile()
+	}
+
 	port := 8080
 	if p := os.Getenv("PORT"); p != "" {
 		if v, err := strconv.Atoi(p); err == nil {

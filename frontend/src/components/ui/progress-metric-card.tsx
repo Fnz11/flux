@@ -67,7 +67,7 @@ export function ProgressMetricCard({
   accent,
   data,
   series,
-  defaultIndex,
+  defaultIndex: _defaultIndex,
   showStats = true,
   valueFormatter,
   dateFormatter,

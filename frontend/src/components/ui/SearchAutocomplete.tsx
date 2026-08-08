@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Search, CornerDownLeft, Loader2, X, TrendingUp, ShieldCheck } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from './dialog'
 import { cn } from '@/lib/utils'

@@ -15,7 +15,7 @@ const TIMEFRAMES: Timeframe[] = ['1D', '1W', '1M', '3M', '1Y', 'ALL']
 
 export function PerformanceChart({ data, isLoading }: PerformanceChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>('1M')
-  const [selectedAsset, setSelectedAsset] = useState('SOL / USDC')
+  const [selectedAsset, _setSelectedAsset] = useState('SOL / USDC')
 
   if (isLoading) {
     return (

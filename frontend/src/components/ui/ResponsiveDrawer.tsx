@@ -54,7 +54,7 @@ export function ResponsiveDrawer({
   title,
   description,
   children,
-  trigger,
+  trigger: _trigger,
   className,
   drawerClassName,
   minHeight = 'min-h-[60vh]',

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useSyncExternalStore } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Menu,
   User,
-  X,
   Wallet,
   LineChart,
   HandCoins,
@@ -31,7 +30,6 @@ import { useAppStore } from '@/stores/app-store'
 import { usePortfolioStore, useVaultStore } from '@/stores'
 import { toastInfo, toastSuccess } from '@/lib/toast'
 import { WalletConnectButton } from '@/components/ui/WalletConnectButton'
-import { SearchAutocomplete } from '@/components/ui/SearchAutocomplete'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -70,6 +68,8 @@ function getActiveIndex(pathname: string, drawerType: 'menu' | 'profile' | null)
   return -1
 }
 
+const emptySubscribe = () => () => {}
+
 export function MobileNav() {
   const mounted = useSyncExternalStore(
     emptySubscribe,
@@ -78,7 +78,7 @@ export function MobileNav() {
   )
   const [drawerType, setDrawerType] = useState<'menu' | 'profile' | null>(null)
   const [copied, setCopied] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [_searchOpen, setSearchOpen] = useState(false)
 
   const navigate = useNavigate()
   const location = useLocation()

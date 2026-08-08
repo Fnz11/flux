@@ -8,7 +8,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { ArrowUpDown, Layers, ChevronRight, HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export function InvestorVaultsList({ walletAddress }: { walletAddress?: string }) {
+export function InvestorVaultsList({ walletAddress: _walletAddress }: { walletAddress?: string }) {
   const positions = usePortfolioStore((s) => s.positions)
   const [sortBy, setSortBy] = useState<'currentValue' | 'pnlPercent'>('currentValue')
 
