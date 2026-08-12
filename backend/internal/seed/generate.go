@@ -235,10 +235,10 @@ func buildVault(rng *rand.Rand, opts Options, owner *models.User, users []*model
 			trades = append(trades, &models.TradeHistory{
 				ID: uuid.New(), VaultID: vaultID, ActorID: users[e.idx].ID,
 				TradeType: "Withdraw", InputToken: tok.Symbol, OutputToken: "SOL",
-				AmountIn:           decimal.NewFromFloat(round6(e.sold)),
-				AmountOut:          decimal.NewFromFloat(round6(proceeds)),
-				PriceAtExecution:   decimal.NewFromFloat(round6(pr)),
-				ExecutedAt:         execAt,
+				AmountIn:         decimal.NewFromFloat(round6(e.sold)),
+				AmountOut:        decimal.NewFromFloat(round6(proceeds)),
+				PriceAtExecution: decimal.NewFromFloat(round6(pr)),
+				ExecutedAt:       execAt,
 			})
 		} else {
 			s := e.amount / pr
@@ -247,10 +247,10 @@ func buildVault(rng *rand.Rand, opts Options, owner *models.User, users []*model
 			trades = append(trades, &models.TradeHistory{
 				ID: uuid.New(), VaultID: vaultID, ActorID: users[e.idx].ID,
 				TradeType: "Deposit", InputToken: "SOL", OutputToken: tok.Symbol,
-				AmountIn:           decimal.NewFromFloat(round6(s)),
-				AmountOut:          decimal.NewFromFloat(round6(e.amount)),
-				PriceAtExecution:   decimal.NewFromFloat(round6(pr)),
-				ExecutedAt:         execAt,
+				AmountIn:         decimal.NewFromFloat(round6(s)),
+				AmountOut:        decimal.NewFromFloat(round6(e.amount)),
+				PriceAtExecution: decimal.NewFromFloat(round6(pr)),
+				ExecutedAt:       execAt,
 			})
 		}
 	}
@@ -269,19 +269,19 @@ func buildVault(rng *rand.Rand, opts Options, owner *models.User, users []*model
 			trades = append(trades, &models.TradeHistory{
 				ID: uuid.New(), VaultID: vaultID, ActorID: owner.ID,
 				TradeType: "Buy", InputToken: "SOL", OutputToken: tok.Symbol,
-				AmountIn:           decimal.NewFromFloat(round6(amtIn)),
-				AmountOut:          decimal.NewFromFloat(round6(amtIn * pr)),
-				PriceAtExecution:   decimal.NewFromFloat(round6(pr)),
-				ExecutedAt:         execAt,
+				AmountIn:         decimal.NewFromFloat(round6(amtIn)),
+				AmountOut:        decimal.NewFromFloat(round6(amtIn * pr)),
+				PriceAtExecution: decimal.NewFromFloat(round6(pr)),
+				ExecutedAt:       execAt,
 			})
 		} else {
 			trades = append(trades, &models.TradeHistory{
 				ID: uuid.New(), VaultID: vaultID, ActorID: owner.ID,
 				TradeType: "Sell", InputToken: tok.Symbol, OutputToken: "SOL",
-				AmountIn:           decimal.NewFromFloat(round6(amtIn / pr)),
-				AmountOut:          decimal.NewFromFloat(round6(amtIn)),
-				PriceAtExecution:   decimal.NewFromFloat(round6(pr)),
-				ExecutedAt:         execAt,
+				AmountIn:         decimal.NewFromFloat(round6(amtIn / pr)),
+				AmountOut:        decimal.NewFromFloat(round6(amtIn)),
+				PriceAtExecution: decimal.NewFromFloat(round6(pr)),
+				ExecutedAt:       execAt,
 			})
 		}
 	}
@@ -298,7 +298,7 @@ func buildVault(rng *rand.Rand, opts Options, owner *models.User, users []*model
 		avg := inv / sh
 		totalShares += sh
 		portfolios = append(portfolios, &models.Portfolio{
-			ID:                 uuid.New(), UserID: users[idx].ID, VaultID: vaultID,
+			ID: uuid.New(), UserID: users[idx].ID, VaultID: vaultID,
 			SharesOwned:        decimal.NewFromFloat(round6(sh)),
 			TotalInvestedValue: decimal.NewFromFloat(round6(inv)),
 			AverageEntryPrice:  decimal.NewFromFloat(round6(avg)),
@@ -353,16 +353,16 @@ func buildVault(rng *rand.Rand, opts Options, owner *models.User, users []*model
 		)
 		priceHist = append(priceHist, &models.PriceHistory{
 			ID: uuid.New(), VaultID: vaultID, Token: tok.Symbol,
-			Price: decimal.NewFromFloat(round6(price[i])),
-			Volume: decimal.NewFromFloat(round6(vol)),
+			Price:     decimal.NewFromFloat(round6(price[i])),
+			Volume:    decimal.NewFromFloat(round6(vol)),
 			FetchedAt: ts,
 		})
 		if len(focus) > 1 {
 			other := price[i] * (0.9 + rng.Float64()*0.2)
 			priceHist = append(priceHist, &models.PriceHistory{
 				ID: uuid.New(), VaultID: vaultID, Token: focus[1],
-				Price: decimal.NewFromFloat(round6(other)),
-				Volume: decimal.NewFromFloat(round6(vol)),
+				Price:     decimal.NewFromFloat(round6(other)),
+				Volume:    decimal.NewFromFloat(round6(vol)),
 				FetchedAt: ts,
 			})
 		}
@@ -380,7 +380,7 @@ func buildVault(rng *rand.Rand, opts Options, owner *models.User, users []*model
 }
 
 func volumeOnDay(trades []*models.TradeHistory, now time.Time, day int) float64 {
-	start := now.Add(-time.Duration(day)*24*time.Hour).Truncate(24 * time.Hour)
+	start := now.Add(-time.Duration(day) * 24 * time.Hour).Truncate(24 * time.Hour)
 	end := start.Add(24 * time.Hour)
 	vv := 0.0
 	for _, tr := range trades {

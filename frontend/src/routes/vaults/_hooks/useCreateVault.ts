@@ -27,8 +27,6 @@ export interface CreateVaultParams {
   agreedToTerms: boolean
 }
 
-const NATIVE_MINT = new PublicKey('So11111111111111111111111111111111111111112')
-
 export function useCreateVault() {
   const navigate = useNavigate()
   const wallet = useAnchorWallet()
@@ -66,59 +64,53 @@ export function useCreateVault() {
       updateStatus(txId, 'pending')
 
       let signature: string | null = null
+      let createdVaultPda: PublicKey | null = null
 
-      try {
-        const program = await getProgram(wallet, connection)
-        if (program) {
-          const [vaultPda] = PublicKey.findProgramAddressSync(
-            [Buffer.from('vault'), wallet.publicKey.toBuffer()],
-            program.programId,
+      const program = await getProgram(wallet, connection)
+      if (program) {
+        const [vaultPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from('vault'), wallet.publicKey.toBuffer()],
+          program.programId,
+        )
+        createdVaultPda = vaultPda
+
+        const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from('vault_authority'), vaultPda.toBuffer()],
+          program.programId,
+        )
+
+        const shareTokenMintKeypair = Keypair.generate()
+
+        const minRaiseLamports = new BN(Math.round(data.minRaiseAmount * 1e9))
+        const lockupPeriodSec = new BN(lockupPeriodSeconds)
+
+        const ix = await program.methods
+          .initializeVault(
+            minRaiseLamports,
+            performanceFeeBps,
+            managementFeeBps,
+            lockupPeriodSec,
           )
+          .accounts({
+            manager: wallet.publicKey,
+            vault: vaultPda,
+            shareTokenMint: shareTokenMintKeypair.publicKey,
+            vaultAuthority: vaultAuthorityPda,
+            systemProgram: SystemProgram.programId,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            rent: SYSVAR_RENT_PUBKEY,
+          })
+          .instruction()
 
-          const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
-            [Buffer.from('vault_authority'), vaultPda.toBuffer()],
-            program.programId,
-          )
+        const tx = buildTransactionWithComputeBudget([ix], 1000, 200000)
+        tx.feePayer = wallet.publicKey
+        const { blockhash } = await connection.getLatestBlockhash()
+        tx.recentBlockhash = blockhash
 
-          const shareTokenMintKeypair = Keypair.generate()
-          const depositMintPubkey = NATIVE_MINT
-          const allowedMints: PublicKey[] = [NATIVE_MINT, NATIVE_MINT, NATIVE_MINT, NATIVE_MINT]
+        tx.partialSign(shareTokenMintKeypair)
 
-          const minRaiseLamports = new BN(Math.round(data.minRaiseAmount * 1e9))
-          const lockupPeriodSec = new BN(lockupPeriodSeconds)
-
-          const ix = await program.methods
-            .initializeVault(
-              minRaiseLamports,
-              performanceFeeBps,
-              managementFeeBps,
-              lockupPeriodSec,
-              allowedMints,
-            )
-            .accounts({
-              manager: wallet.publicKey,
-              vault: vaultPda,
-              depositMint: depositMintPubkey,
-              shareTokenMint: shareTokenMintKeypair.publicKey,
-              vaultAuthority: vaultAuthorityPda,
-              systemProgram: SystemProgram.programId,
-              tokenProgram: TOKEN_PROGRAM_ID,
-              rent: SYSVAR_RENT_PUBKEY,
-            })
-            .instruction()
-
-          const tx = buildTransactionWithComputeBudget([ix], 1000, 200000)
-          tx.feePayer = wallet.publicKey
-          const { blockhash } = await connection.getLatestBlockhash()
-          tx.recentBlockhash = blockhash
-
-          tx.partialSign(shareTokenMintKeypair)
-
-          signature = await sendTransaction(connection, tx, wallet)
-          await connection.confirmTransaction(signature, 'confirmed')
-        }
-      } catch (e) {
-        console.warn('On-chain vault initialization fallback to simulation mode:', e)
+        signature = await sendTransaction(connection, tx, wallet)
+        await connection.confirmTransaction(signature, 'confirmed')
       }
 
       if (!signature) {
@@ -128,7 +120,7 @@ export function useCreateVault() {
       confirmTransaction(txId, signature)
 
       await createVault({
-        address: wallet.publicKey.toBase58(),
+        address: createdVaultPda ? createdVaultPda.toBase58() : wallet.publicKey.toBase58(),
         managerAddress: wallet.publicKey.toBase58(),
         performanceFeeBps,
         managementFeeBps,
@@ -145,9 +137,7 @@ export function useCreateVault() {
           minRaiseUnit: data.minRaiseUnit,
           minInvestment: data.minInvestment,
         },
-      } as any).catch(() => {
-        // Backend store fallback
-      })
+      } as any)
 
       moveToHistory(txId)
       navigate({ to: '/vaults' })

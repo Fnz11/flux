@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'node:test'
+import { describe, it, beforeEach } from 'vitest'
 import assert from 'node:assert/strict'
 import { useTransactionStore } from '../src/stores/transaction-store'
 
@@ -22,6 +22,14 @@ describe('useTransactionStore', () => {
     assert.equal(pending[0].id, txId)
     assert.equal(pending[0].status, 'pending')
     assert.equal(pending[0].amountIn, 5)
+  })
+
+  it('keeps newest pending transactions first with unique ids', () => {
+    const firstId = useTransactionStore.getState().addTransaction({ type: 'deposit', vaultId: 'v1', signature: null, errorMessage: null })
+    const secondId = useTransactionStore.getState().addTransaction({ type: 'withdraw', vaultId: 'v2', signature: null, errorMessage: null })
+
+    assert.notEqual(firstId, secondId)
+    assert.deepEqual(useTransactionStore.getState().pending.map((tx) => tx.id), [secondId, firstId])
   })
 
   it('marks failed status and records the error message', () => {
@@ -57,6 +65,34 @@ describe('useTransactionStore', () => {
     assert.equal(history.length, 1)
     assert.equal(history[0].id, txId)
     assert.equal(history[0].signature, 'confirmed_sig_456')
+  })
+
+  it('ignores status, confirmation, and history updates for unknown ids', () => {
+    const id = useTransactionStore.getState().addTransaction({ type: 'trade', vaultId: 'v1', signature: null, errorMessage: null })
+
+    useTransactionStore.getState().updateStatus('missing', 'success')
+    useTransactionStore.getState().confirmTransaction('missing', 'signature')
+    useTransactionStore.getState().moveToHistory('missing')
+
+    const { pending, history } = useTransactionStore.getState()
+    assert.equal(pending.length, 1)
+    assert.equal(pending[0].id, id)
+    assert.equal(pending[0].status, 'pending')
+    assert.equal(history.length, 0)
+  })
+
+  it('keeps history newest-first and capped at 100 transactions', () => {
+    const ids = Array.from({ length: 101 }, (_, index) =>
+      useTransactionStore.getState().addTransaction({ type: 'trade', vaultId: `v${index}`, signature: null, errorMessage: null }),
+    )
+
+    ids.forEach((id) => useTransactionStore.getState().moveToHistory(id))
+
+    const { history } = useTransactionStore.getState()
+    assert.equal(history.length, 100)
+    assert.equal(history[0].id, ids[100])
+    assert.equal(history[99].id, ids[1])
+    assert.equal(history.some((tx) => tx.id === ids[0]), false)
   })
 
   it('clears all pending transactions', () => {

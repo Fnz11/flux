@@ -237,6 +237,16 @@ func (r *vaultRepo) fetchVaultCounts(db *gorm.DB, ids []uuid.UUID) (map[uuid.UUI
 	return result, nil
 }
 
+func (r *vaultRepo) UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error {
+	uid, err := uuid.Parse(vaultID)
+	if err != nil {
+		return err
+	}
+	db := getDB(ctx, r.db)
+	return db.Model(&models.Vault{}).Where("id = ?", uid).
+		Update("tvl", gorm.Expr("GREATEST(0, tvl + ?)", delta)).Error
+}
+
 func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress string) ([]domain.VaultBalance, error) {
 	db := getDB(ctx, r.db)
 	var v models.Vault
@@ -258,32 +268,127 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 	solMint := "So11111111111111111111111111111111111111112"
 	usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
-	solRatio := decimal.NewFromFloat(0.7)
-	usdcRatio := decimal.NewFromFloat(0.3)
+	// Fetch latest SOL price from price_histories or price_history if available
 	solPrice := decimal.NewFromFloat(150.0)
-
-	solUSD := v.TVL.Mul(solRatio)
-	usdcUSD := v.TVL.Mul(usdcRatio)
-
-	solAmount := decimal.Zero
-	if !solPrice.IsZero() {
-		solAmount = solUSD.Div(solPrice)
+	var pricePoint struct {
+		Price decimal.Decimal
 	}
-	usdcAmount := usdcUSD
+	if db.Migrator().HasTable("price_histories") {
+		if err := db.Table("price_histories").
+			Select("price").
+			Where("token IN ?", []string{"SOL", solMint}).
+			Order("fetched_at DESC").
+			Limit(1).
+			Scan(&pricePoint).Error; err == nil && !pricePoint.Price.IsZero() {
+			solPrice = pricePoint.Price
+		}
+	} else if db.Migrator().HasTable("price_history") {
+		if err := db.Table("price_history").
+			Select("price").
+			Where("token IN ?", []string{"SOL", solMint}).
+			Order("fetched_at DESC").
+			Limit(1).
+			Scan(&pricePoint).Error; err == nil && !pricePoint.Price.IsZero() {
+			solPrice = pricePoint.Price
+		}
+	}
+
+	// Fetch trades to calculate actual on-chain asset balances
+	var trades []models.TradeHistory
+	if err := db.Where("vault_id = ?", v.ID).Order("executed_at ASC").Find(&trades).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	holdings := make(map[string]decimal.Decimal)
+	for _, t := range trades {
+		inTok := t.InputToken
+		if inTok == "" {
+			inTok = solMint
+		}
+		outTok := t.OutputToken
+		if outTok == "" {
+			outTok = solMint
+		}
+
+		switch t.TradeType {
+		case "Deposit":
+			holdings[inTok] = holdings[inTok].Add(t.AmountIn)
+		case "Withdraw":
+			holdings[outTok] = holdings[outTok].Sub(t.AmountOut)
+		case "Buy", "Sell":
+			holdings[inTok] = holdings[inTok].Sub(t.AmountIn)
+			holdings[outTok] = holdings[outTok].Add(t.AmountOut)
+		}
+	}
+
+	for k, val := range holdings {
+		if val.IsNegative() {
+			holdings[k] = decimal.Zero
+		}
+	}
+
+	solAmt := holdings[solMint]
+	if solAmt.IsZero() && holdings["SOL"].IsPositive() {
+		solAmt = holdings["SOL"]
+	}
+	usdcAmt := holdings[usdcMint]
+	if usdcAmt.IsZero() && holdings["USDC"].IsPositive() {
+		usdcAmt = holdings["USDC"]
+	}
+
+	// If no trades exist yet, default 100% of TVL to SOL as base deposit
+	if len(trades) == 0 || (solAmt.IsZero() && usdcAmt.IsZero()) {
+		if !solPrice.IsZero() {
+			solAmt = v.TVL.Div(solPrice)
+		}
+		solUSD := v.TVL
+		balances := []domain.VaultBalance{
+			{
+				Mint:     solMint,
+				Symbol:   "SOL",
+				Amount:   solAmt,
+				USDValue: solUSD,
+			},
+			{
+				Mint:     usdcMint,
+				Symbol:   "USDC",
+				Amount:   decimal.Zero,
+				USDValue: decimal.Zero,
+			},
+		}
+		return balances, nil
+	}
+
+	solUSD := solAmt.Mul(solPrice)
+	usdcUSD := usdcAmt
 
 	balances := []domain.VaultBalance{
 		{
 			Mint:     solMint,
 			Symbol:   "SOL",
-			Amount:   solAmount,
+			Amount:   solAmt,
 			USDValue: solUSD,
 		},
 		{
 			Mint:     usdcMint,
 			Symbol:   "USDC",
-			Amount:   usdcAmount,
+			Amount:   usdcAmt,
 			USDValue: usdcUSD,
 		},
+	}
+
+	for tok, amt := range holdings {
+		if tok == solMint || tok == "SOL" || tok == usdcMint || tok == "USDC" {
+			continue
+		}
+		if amt.IsPositive() {
+			balances = append(balances, domain.VaultBalance{
+				Mint:     tok,
+				Symbol:   tok,
+				Amount:   amt,
+				USDValue: amt,
+			})
+		}
 	}
 
 	return balances, nil

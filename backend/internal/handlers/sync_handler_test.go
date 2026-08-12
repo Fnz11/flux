@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/mr-tron/base58"
+	"github.com/shopspring/decimal"
 )
 
 type mockSyncVaultRepo struct {
@@ -58,6 +59,16 @@ func (m *mockSyncVaultRepo) ExistsByAddress(ctx context.Context, address string)
 
 func (m *mockSyncVaultRepo) GetVaultBalances(ctx context.Context, vaultAddressOrID string) ([]domain.VaultBalance, error) {
 	return nil, nil
+}
+
+func (m *mockSyncVaultRepo) UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error {
+	for _, v := range m.vaults {
+		if v.ID == vaultID {
+			v.TVL = v.TVL.Add(delta)
+			return nil
+		}
+	}
+	return nil
 }
 
 type mockTxManager struct{}
@@ -141,3 +152,28 @@ func TestSyncHandler_SyncTrade_SignerMismatch_Returns403(t *testing.T) {
 		t.Fatalf("unexpected code 0")
 	}
 }
+
+func TestClassifyInstructions_Withdraw(t *testing.T) {
+	vaultAddr := "VaultPDA1111111111111111111111111111111111"
+
+	// Test case 1: shares_to_burn in args
+	parsedBurn := &solana.ParsedTransaction{
+		Instructions: []solana.ParsedInstruction{
+			{
+				Data: append([]byte{183, 18, 70, 156, 148, 109, 161, 34}, []byte{100, 0, 0, 0, 0, 0, 0, 0}...), // withdraw discriminator + u64(100)
+				Accounts: []string{vaultAddr},
+			},
+		},
+	}
+	tradeType, amountIn, amountOut, _ := classifyInstructions(parsedBurn, vaultAddr, decimal.NewFromInt(1000), decimal.NewFromInt(500))
+	if tradeType != "Withdraw" {
+		t.Fatalf("expected tradeType Withdraw, got %s", tradeType)
+	}
+	if !amountIn.Equal(decimal.NewFromInt(100)) {
+		t.Fatalf("expected amountIn 100, got %s", amountIn.String())
+	}
+	if !amountOut.Equal(decimal.NewFromInt(200)) { // 100 * (1000 / 500) = 200
+		t.Fatalf("expected amountOut 200, got %s", amountOut.String())
+	}
+}
+

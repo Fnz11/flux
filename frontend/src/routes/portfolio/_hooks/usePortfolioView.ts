@@ -1,11 +1,16 @@
 import { useState, useMemo } from 'react'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
+import { usePortfolioHistoryQuery } from '@/services/hooks/useQuery/usePortfolioHistoryQuery'
 import type { PortfolioPosition } from '@/types'
 
 type SortKey = 'value' | 'pnl' | 'name'
 
 export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPosition[]) {
-  const { totalPnl, totalInvested, totalValue, positions: enriched } = usePortfolioPnl(walletAddressOrPositions)
+  const isString = typeof walletAddressOrPositions === 'string'
+  const walletAddress = isString ? walletAddressOrPositions : ''
+  const { positions: enriched } = usePortfolioPnl(walletAddressOrPositions)
+
+  const { data: historyPoints = [] } = usePortfolioHistoryQuery(walletAddress)
 
   const [sortBy, setSortBy] = useState<SortKey>('value')
   const [sortAsc, setSortAsc] = useState(false)
@@ -31,14 +36,26 @@ export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPo
     return copy
   }, [enriched, sortBy, sortAsc])
 
-  const performanceData = [
-    { date: 'Jan', value: totalInvested },
-    { date: 'Feb', value: totalInvested + totalPnl * 0.3 },
-    { date: 'Mar', value: totalInvested + totalPnl * 0.5 },
-    { date: 'Apr', value: totalInvested + totalPnl * 0.7 },
-    { date: 'May', value: totalInvested + totalPnl * 0.9 },
-    { date: 'Jun', value: totalValue },
-  ]
+  const performanceData = useMemo(() => {
+    if (walletAddress && historyPoints.length > 1) {
+      return historyPoints.map((p) => ({
+        date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        value: p.value,
+      }))
+    }
+
+    if (enriched.length > 1) {
+      const byInvested = [...enriched].sort((a, b) => a.totalInvested - b.totalInvested)
+      const first = byInvested[0]
+      const last = byInvested[byInvested.length - 1]
+      return [
+        { date: 'Start', value: first.totalInvested },
+        { date: 'Now', value: last.currentValue },
+      ]
+    }
+
+    return []
+  }, [walletAddress, historyPoints, enriched])
 
   const allocationData = enriched.map((p) => ({
     name: p.vaultName,

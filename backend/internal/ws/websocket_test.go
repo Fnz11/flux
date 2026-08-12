@@ -13,6 +13,7 @@ func registerTestClient(t *testing.T, h *Hub, wallet string) *Client {
 	t.Helper()
 	c := NewClient(h, nil, wallet)
 	h.Register(c)
+	time.Sleep(10 * time.Millisecond)
 	t.Cleanup(func() {
 		h.Unregister(c)
 	})
@@ -173,6 +174,8 @@ func TestClient_CanSubscribe(t *testing.T) {
 		{"other wallet channel", "wallet:" + otherWallet, false},
 		{"global channel", "vault:vault-1", true},
 		{"empty wallet client global channel", "vault:vault-1", true},
+		{"global activity channel", "global:activity", true},
+		{"global leaderboard channel", "global:leaderboard", true},
 	}
 
 	for _, tt := range tests {
@@ -188,11 +191,52 @@ func TestClient_CanSubscribe(t *testing.T) {
 func TestClient_CanSubscribeEmptyWallet(t *testing.T) {
 	c := NewClient(nil, nil)
 
-	if c.canSubscribe("user:"+testWallet) {
+	if c.canSubscribe("user:" + testWallet) {
 		t.Fatalf("empty-wallet client must not subscribe to user channel")
 	}
 	if !c.canSubscribe("vault:vault-1") {
 		t.Fatalf("empty-wallet client must subscribe to global channels")
+	}
+	if !c.canSubscribe("global:activity") {
+		t.Fatalf("empty-wallet client must subscribe to global:activity channel")
+	}
+	if !c.canSubscribe("global:leaderboard") {
+		t.Fatalf("empty-wallet client must subscribe to global:leaderboard channel")
+	}
+}
+
+func TestHub_GlobalActivityBroadcastToChannel(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	client := registerTestClient(t, h, "")
+	h.Subscribe(client, "global:activity")
+
+	payload := []byte(`{"type":"trade_confirmed","data":{"vault_id":"vault-1"},"timestamp":789}`)
+	h.BroadcastToChannel("global:activity", payload)
+
+	got := readSend(t, client)
+	if string(got) != string(payload) {
+		t.Fatalf("expected message %s, got %s", payload, got)
+	}
+}
+
+func TestHub_GlobalChannelsBroadcastToChannels(t *testing.T) {
+	h := NewHub()
+	go h.Run()
+
+	client := registerTestClient(t, h, "")
+	h.Subscribe(client, "global:activity")
+	h.Subscribe(client, "global:leaderboard")
+
+	payload := []byte(`{"type":"leaderboard_update","data":{},"timestamp":0}`)
+	h.BroadcastToChannels([]string{"global:activity", "global:leaderboard"}, payload)
+
+	if got := readSend(t, client); string(got) != string(payload) {
+		t.Fatalf("expected message %s on global:activity, got %s", payload, got)
+	}
+	if got := readSend(t, client); string(got) != string(payload) {
+		t.Fatalf("expected message %s on global:leaderboard, got %s", payload, got)
 	}
 }
 

@@ -73,7 +73,12 @@ impl VaultManager {
         current_timestamp: i64,
         profit: u64,
     ) -> Result<(u64, u64)> {
-        let elapsed = current_timestamp.saturating_sub(vault.last_trade_at);
+        let last_time = if vault.last_fee_accrual_at > 0 {
+            vault.last_fee_accrual_at
+        } else {
+            vault.last_trade_at
+        };
+        let elapsed = current_timestamp.saturating_sub(last_time);
         let management_fee = fee_math::calculate_management_fee(
             vault.total_assets_deposited,
             vault.management_fee_bps,
@@ -85,6 +90,36 @@ impl VaultManager {
         )?;
 
         Ok((management_fee, performance_fee))
+    }
+
+    /// Accrues fees based on current state and updates the vault's accrued fee fields and high water mark.
+    pub fn accrue_and_apply_fees(
+        vault: &mut VaultState,
+        current_timestamp: i64,
+    ) -> Result<(u64, u64)> {
+        let profit = if vault.total_assets_deposited > vault.high_water_mark {
+            vault.total_assets_deposited.saturating_sub(vault.high_water_mark)
+        } else {
+            0
+        };
+
+        let (mgmt_fee, perf_fee) = Self::accrue_fees(vault, current_timestamp, profit)?;
+
+        if profit > 0 {
+            vault.high_water_mark = vault.total_assets_deposited;
+        }
+
+        vault.accrued_management_fee = vault
+            .accrued_management_fee
+            .checked_add(mgmt_fee)
+            .ok_or(VaultError::MathOverflow)?;
+        vault.accrued_performance_fee = vault
+            .accrued_performance_fee
+            .checked_add(perf_fee)
+            .ok_or(VaultError::MathOverflow)?;
+        vault.last_fee_accrual_at = current_timestamp;
+
+        Ok((mgmt_fee, perf_fee))
     }
 }
 

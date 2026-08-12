@@ -1,3 +1,5 @@
+#![allow(ambiguous_glob_reexports)]
+
 pub mod accept_manager;
 pub mod activate_vault;
 pub mod collect_fees;

@@ -32,6 +32,7 @@ type VaultRepository interface {
 	UpdateMetadata(ctx context.Context, address string, metadata interface{}) error
 	List(ctx context.Context, filter VaultListFilter) ([]VaultDetail, int64, error)
 	GetVaultBalances(ctx context.Context, vaultIDOrAddress string) ([]VaultBalance, error)
+	UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error
 }
 
 type VaultDetail struct {

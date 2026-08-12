@@ -2,7 +2,11 @@ package seed
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math/rand"
+	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,7 +17,18 @@ import (
 	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 )
 
-const lamportsPerSOL = uint64(1_000_000_000)
+const (
+	lamportsPerSOL    = uint64(1_000_000_000)
+	minAirdropLamports = uint64(10_000_000) // 0.01 SOL: ignore sub-threshold shortfalls
+)
+
+// Airdrop retry knobs. Sleep grows exponentially with jitter so a Devnet burst
+// of airdrops backs off instead of hammering the rate limiter.
+var (
+	backoffMaxAttempts = 6
+	backoffInitial     = 500 * time.Millisecond
+	backoffCap         = 30 * time.Second
+)
 
 // SolanaSeedClient talks to a local Solana test validator and creates real
 // accounts, airdrops real SOL, and submits real transfer transactions so every
@@ -35,7 +50,22 @@ func (s *SolanaSeedClient) NewKeypair() *solana.Wallet {
 	return solana.NewWallet()
 }
 
-// Airdrop funds an account in 100 SOL chunks (test validator caps airdrops).
+func (s *SolanaSeedClient) requestAirdrop(ctx context.Context, to solana.PublicKey, lamports uint64, commitment rpc.CommitmentType) (solana.Signature, error) {
+	return s.client.RequestAirdrop(ctx, to, lamports, commitment)
+}
+
+// GetBalance returns the account's current on-chain balance (Confirmed), used
+// to airdrop only real shortfalls.
+func (s *SolanaSeedClient) GetBalance(ctx context.Context, to solana.PublicKey) (uint64, error) {
+	res, err := s.client.GetBalance(ctx, to, rpc.CommitmentConfirmed)
+	if err != nil {
+		return 0, fmt.Errorf("get balance: %w", err)
+	}
+	return res.Value, nil
+}
+
+// Airdrop funds an account in 100 SOL chunks (test validator caps airdrops);
+// each chunk retries on rate-limit / transient errors with backoff.
 func (s *SolanaSeedClient) Airdrop(ctx context.Context, to solana.PublicKey, sol float64) error {
 	lamports := uint64(sol * float64(lamportsPerSOL))
 	const chunk = uint64(100) * lamportsPerSOL
@@ -44,16 +74,117 @@ func (s *SolanaSeedClient) Airdrop(ctx context.Context, to solana.PublicKey, sol
 		if amt > lamports {
 			amt = lamports
 		}
-		sig, err := s.client.RequestAirdrop(ctx, to, amt, rpc.CommitmentConfirmed)
-		if err != nil {
-			return fmt.Errorf("airdrop: %w", err)
-		}
-		if err := s.confirm(ctx, sig); err != nil {
+		if err := airdropWithRetry(ctx, s, to, amt); err != nil {
 			return err
 		}
 		lamports -= amt
 	}
 	return nil
+}
+
+// airdropRPC is the SolanaSeedClient surface the airdrop machinery (and tests)
+// needs, so backoff/retry runs against a stub without a live validator.
+type airdropRPC interface {
+	requestAirdrop(ctx context.Context, to solana.PublicKey, lamports uint64, commitment rpc.CommitmentType) (solana.Signature, error)
+	confirm(ctx context.Context, sig solana.Signature) error
+}
+
+// airdropWithRetry issues a single airdrop, backing off exponentially on
+// rate-limit / transient errors and failing fast on hard errors (blockhash not
+// found, insufficient funds, ...). A canceled ctx aborts any pending sleep.
+func airdropWithRetry(ctx context.Context, sub airdropRPC, to solana.PublicKey, lamports uint64) error {
+	var lastErr error
+	for attempt := 0; attempt < backoffMaxAttempts; attempt++ {
+		sig, err := sub.requestAirdrop(ctx, to, lamports, rpc.CommitmentConfirmed)
+		if err == nil {
+			return sub.confirm(ctx, sig)
+		}
+		lastErr = err
+		if !isRetryable(err) {
+			return fmt.Errorf("airdrop: %w", err)
+		}
+		if attempt == backoffMaxAttempts-1 {
+			break
+		}
+		if err := sleepCtx(ctx, backoffDelay(attempt)); err != nil {
+			return fmt.Errorf("airdrop: %w", err)
+		}
+	}
+	return fmt.Errorf("airdrop: giving up after %d attempts (last: %w)", backoffMaxAttempts, lastErr)
+}
+
+// isRetryable reports whether err looks like a rate limit or transient RPC
+// failure worth backing off on. Hard errors (blockhash, insufficient funds,
+// etc.) are not retryable.
+func isRetryable(err error) bool {
+	var rpcErr *jsonrpc.RPCError
+	if errors.As(err, &rpcErr) {
+		if isRateLimitCode(rpcErr.Code) {
+			return true
+		}
+		if hasRateLimitMarker(rpcErr.Message) {
+			return true
+		}
+	}
+	var httpErr *jsonrpc.HTTPError
+	if errors.As(err, &httpErr) {
+		return true
+	}
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
+		return true
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	return hasRateLimitMarker(err.Error())
+}
+
+// isRateLimitCode matches Solana/cloud RPC error codes that mean "slow down".
+// 429 is the cloud HTTP code; 32002/32005 (and their JSON-RPC negative forms)
+// are server-busy / rate-limit codes.
+func isRateLimitCode(code int) bool {
+	switch code {
+	case 429, -32007, 32002, 32005, -32002, -32005:
+		return true
+	default:
+		return false
+	}
+}
+
+// hasRateLimitMarker does a best-effort case-insensitive substring match on
+// the two signals every rate limiter leaks: a bounded 429 or a known phrase.
+func hasRateLimitMarker(msg string) bool {
+	m := strings.ToLower(msg)
+	for _, needle := range []string{"toomanyrequests", "rate limit", "rate-limited", "429", "slothashroot"} {
+		if strings.Contains(m, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+// backoffDelay grows exponentially per retry with up to ~50% jitter, capped.
+func backoffDelay(retry int) time.Duration {
+	d := backoffInitial * time.Duration(1<<uint(retry))
+	if d > backoffCap {
+		d = backoffCap
+	}
+	if d > 0 {
+		d += time.Duration(rand.Int63n(int64(d)/2 + 1))
+	}
+	return d
+}
+
+func sleepCtx(ctx context.Context, d time.Duration) error {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-t.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // Transfer submits a real system.Transfer from a wallet and returns the
@@ -62,6 +193,33 @@ func (s *SolanaSeedClient) Airdrop(ctx context.Context, to solana.PublicKey, sol
 // transaction bytes and therefore distinct signatures (the DB enforces a
 // unique constraint on transaction_signature).
 func (s *SolanaSeedClient) Transfer(ctx context.Context, from *solana.Wallet, to solana.PublicKey, lamports uint64, memoText string) (string, error) {
+	transferIx := system.NewTransferInstruction(lamports, from.PublicKey(), to).Build()
+	var ixs []solana.Instruction
+	if memoText != "" {
+		ixs = append(ixs, memo.NewMemoInstruction([]byte(memoText), from.PublicKey()).Build())
+	}
+	ixs = append(ixs, transferIx)
+	return s.sendAndConfirm(ctx, from, ixs)
+}
+
+// Sign submits a real memo-only transaction signed by `signer` (no transfer)
+// and returns the confirmed on-chain signature. Buy/Sell vault-internal swaps
+// use this so every trade carries a genuine, verified signature without moving
+// tracked balances.
+func (s *SolanaSeedClient) Sign(ctx context.Context, signer *solana.Wallet, memoText string) (string, error) {
+	if memoText == "" {
+		memoText = "seed"
+	}
+	ixs := []solana.Instruction{
+		memo.NewMemoInstruction([]byte(memoText), signer.PublicKey()).Build(),
+	}
+	return s.sendAndConfirm(ctx, signer, ixs)
+}
+
+// sendAndConfirm builds a transaction from `ixs` signed by `payer`, sends it to
+// the local validator and confirms it, retrying on stale blockhashes. This is
+// the shared core behind Transfer and Sign.
+func (s *SolanaSeedClient) sendAndConfirm(ctx context.Context, payer *solana.Wallet, ixs []solana.Instruction) (string, error) {
 	var lastErr error
 	for attempt := 0; attempt < 5; attempt++ {
 		if attempt > 0 {
@@ -73,25 +231,19 @@ func (s *SolanaSeedClient) Transfer(ctx context.Context, from *solana.Wallet, to
 			continue
 		}
 
-		transferIx := system.NewTransferInstruction(lamports, from.PublicKey(), to).Build()
-		var ixs []solana.Instruction
-		if memoText != "" {
-			ixs = append(ixs, memo.NewMemoInstruction([]byte(memoText), from.PublicKey()).Build())
-		}
-		ixs = append(ixs, transferIx)
 		tx, err := solana.NewTransaction(
 			ixs,
 			recent.Value.Blockhash,
-			solana.TransactionPayer(from.PublicKey()),
+			solana.TransactionPayer(payer.PublicKey()),
 		)
 		if err != nil {
 			lastErr = err
 			continue
 		}
 
-		priv := from.PrivateKey
+		priv := payer.PrivateKey
 		if _, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
-			if key.Equals(from.PublicKey()) {
+			if key.Equals(payer.PublicKey()) {
 				return &priv
 			}
 			return nil

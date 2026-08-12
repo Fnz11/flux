@@ -2,7 +2,6 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { InvestSummary } from './_components/InvestSummary'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableEmpty } from '@/components/ui/table'
 import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { VaultInvestCard, VaultInvestCardSkeleton } from './_components/VaultInvestCard'
@@ -10,6 +9,7 @@ import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Trophy, Activity } from 'lucide-react'
 import { generateMetadata } from '@/lib/metadata'
+import { RecentActivity } from './_components/RecentActivity'
 
 export const Route = createFileRoute('/invest/')({
   head: () => ({
@@ -24,7 +24,7 @@ export const Route = createFileRoute('/invest/')({
 })
 
 function InvestPage() {
-  useRouteWsChannel(['vaults'])
+  useRouteWsChannel(['global:activity'])
   const wallet = useWallet()
   const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useVaultsQuery()
 
@@ -77,26 +77,7 @@ function InvestPage() {
           title="Recent Activity"
           description="Log of deposits, withdrawals, and vault transactions on Solana"
         >
-          <div className="rounded-xl border border-border-subtle/60 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Vault</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Tx</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableEmpty
-                  colSpan={5}
-                  title="No recent activity recorded"
-                  description="Deposits, withdrawals, and vault transactions will be logged here"
-                />
-              </TableBody>
-            </Table>
-          </div>
+          <RecentActivity wallet={wallet.publicKey.toBase58()} />
         </SectionCard>
       )}
     </div>

@@ -42,7 +42,7 @@ export async function createVault(data: Partial<Vault>): Promise<Vault> {
 }
 
 export async function updateVaultMetadata(id: string, metadata: Partial<Vault['metadata']>): Promise<Vault> {
-  const raw = await api.patch(`/vaults/${id}/metadata`, metadata)
+  const raw = await api.patch(`/vaults/${id}`, metadata)
   return mapApiVaultToVault(raw)
 }
 

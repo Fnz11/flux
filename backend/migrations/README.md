@@ -20,6 +20,7 @@ renumber.
 | 050 | `050_cagg_trade_volume.sql` | 5 | `cagg_trade_volume_1h` continuous aggregate for trade volume |
 | 060 | `060_missing_indexes.sql` | 5 | Missing B-tree/partial/covering/BRIN indexes (1.4) |
 | 070 | `070_notifications.sql` | 6 (this) | `notifications` table for notification storage |
+| 080 | `080_global_metrics_cagg.sql` | 10 | `cagg_global_volume_1h`/`cagg_global_tvl_1h`/`cagg_global_ath_price_1h` continuous aggregates (global metrics) |
 
 ### 070 note
 

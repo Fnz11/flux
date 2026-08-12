@@ -1,3 +1,6 @@
 export * from './useQuery/useVaultsQuery'
 export * from './useQuery/usePortfolioQuery'
+export * from './useQuery/usePortfolioHistoryQuery'
+export * from './useQuery/useVaultSparklineQuery'
+export * from './useQuery/useGlobalTransactionsQuery'
 export * from './useMutation/useVaultMutation'

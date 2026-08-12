@@ -113,12 +113,6 @@ export function WalletConnectButton() {
     )
   }
 
-  const handleConnectDemo = () => {
-    const demoPubkey = '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1'
-    setCurrentUser(demoPubkey)
-    setIsOpen(false)
-  }
-
   return (
     <>
       <Button
@@ -157,23 +151,11 @@ export function WalletConnectButton() {
               </Button>
             ))}
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleConnectDemo}
-              className="h-auto w-full items-center justify-between bg-bg-inset px-4 py-3 text-left transition-[border-color,background-color] hover:border-primary-gold/50 hover:bg-bg-elevated font-normal border-dashed border-primary-gold/40 cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="size-6 rounded bg-primary-gold/20 flex items-center justify-center text-primary-gold font-bold text-xs">
-                  ⚡
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-text-primary">Demo Wallet (Devnet)</p>
-                  <p className="text-[10px] text-text-tertiary">Instant connection without extension</p>
-                </div>
-              </div>
-              <span className="text-xs text-primary-gold font-medium">Connect</span>
-            </Button>
+            {wallets.length === 0 && (
+              <p className="rounded-xl border border-border-subtle/50 bg-bg-inset/40 px-4 py-3 text-xs text-text-tertiary">
+                No wallet extension detected. Install a Solana wallet extension to continue.
+              </p>
+            )}
           </div>
         </div>
       </Modal>

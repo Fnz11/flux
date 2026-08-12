@@ -15,9 +15,11 @@ export function VaultStats({ vault }: VaultStatsProps) {
       </div>
 
       <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5">
-        <p className="text-xs font-medium uppercase tracking-wider text-text-muted">APR</p>
-        <p className="mt-1.5 text-2xl font-semibold tracking-tight text-status-success">
-          +12.4%
+        <p className="text-xs font-medium uppercase tracking-wider text-text-muted">Perf. Fee</p>
+        <p className="mt-1.5 text-2xl font-semibold tracking-tight text-text-primary">
+          {vault.performanceFeeBps > 0
+            ? `${(vault.performanceFeeBps / 100).toFixed(1)}%`
+            : '—'}
         </p>
       </div>
 

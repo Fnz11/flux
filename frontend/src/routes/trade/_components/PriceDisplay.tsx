@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Activity, ShieldCheck } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -12,6 +13,7 @@ interface PriceState {
 interface PriceDisplayProps {
   data: PriceState
   label?: string
+  sparkline?: number[]
 }
 
 const statusConfig = {
@@ -21,8 +23,30 @@ const statusConfig = {
   offline: { dot: 'bg-text-muted', text: 'Offline', pulse: false },
 }
 
-export function PriceDisplay({ data, label = 'Pyth Oracle Price' }: PriceDisplayProps) {
+export function PriceDisplay({ data, label = 'Pyth Oracle Price', sparkline }: PriceDisplayProps) {
   const cfg = data.status === 'loading' ? undefined : statusConfig[data.status]
+
+  const [history, setHistory] = useState<number[]>(sparkline ?? [])
+  const lastRef = useRef<number | null>(null)
+  const historyRef = useRef<number[]>(sparkline ?? [])
+
+  useEffect(() => {
+    historyRef.current = sparkline ?? []
+    setHistory(sparkline ?? [])
+  }, [sparkline])
+
+  useEffect(() => {
+    const price = data.price
+    if (!price || price <= 0 || data.status === 'loading' || data.status === 'error' || data.status === 'offline') {
+      return
+    }
+    if (lastRef.current === price) return
+    lastRef.current = price
+    const next = [...historyRef.current, price]
+    if (next.length > 40) next.shift()
+    historyRef.current = next
+    setHistory(next)
+  }, [data.price, data.status])
 
   return (
     <Card className="p-5 space-y-3">
@@ -70,18 +94,37 @@ export function PriceDisplay({ data, label = 'Pyth Oracle Price' }: PriceDisplay
                   <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
-              <path
-                d="M 0 25 C 15 20, 30 28, 45 15 C 60 5, 75 18, 90 8 L 100 12 L 100 30 L 0 30 Z"
-                fill="url(#pythGrad)"
-              />
-              <path
-                d="M 0 25 C 15 20, 30 28, 45 15 C 60 5, 75 18, 90 8 L 100 12"
-                fill="none"
-                stroke="#10B981"
-                strokeWidth="2"
-                strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
-              />
+              {history.length > 1 ? (
+                (() => {
+                  const points = history
+                  const min = Math.min(...points)
+                  const max = Math.max(...points)
+                  const range = max - min || 1
+                  const line = points
+                    .map((val, idx) => {
+                      const x = (idx / (points.length - 1)) * 100
+                      const y = 30 - ((val - min) / range) * 26 - 2
+                      return `${x.toFixed(1)},${y.toFixed(1)}`
+                    })
+                    .join(' ')
+                  const area = `0,30 ${line} 100,30`
+                  return (
+                    <>
+                      <polygon points={area} fill="url(#pythGrad)" />
+                      <polyline
+                        points={line}
+                        fill="none"
+                        stroke="#10B981"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    </>
+                  )
+                })()
+              ) : (
+                <line x1={0} y1={15} x2={100} y2={15} stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="1 3" />
+              )}
             </svg>
           </div>
         </div>

@@ -13,9 +13,24 @@ export function VaultSparkline({
   width = 90,
   height = 28,
 }: VaultSparklineProps) {
-  const points = data && data.length > 1
-    ? data
-    : [10, 12, 11, 15, 14, 18, 17, 22, 20, 25]
+  if (!data || data.length < 2) {
+    return (
+      <svg width={width} height={height} className="overflow-visible">
+        <line
+          x1={0}
+          y1={height / 2}
+          x2={width}
+          y2={height / 2}
+          stroke="#374151"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray="1 3"
+        />
+      </svg>
+    )
+  }
+
+  const points = data
 
   const min = Math.min(...points)
   const max = Math.max(...points)

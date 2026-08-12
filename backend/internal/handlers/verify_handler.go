@@ -146,7 +146,7 @@ func (h *VerifyHandler) Verify(c *gin.Context) {
 	// On-chain amounts are oracle data only: rendered as "" when unavailable
 	// so the frontend never sees a fabricated zero.
 	if req.VaultID != "" {
-		tradeType, amountIn, amountOut, priceAtExecution := classifyInstructions(parsed, req.VaultID)
+		tradeType, amountIn, amountOut, priceAtExecution := classifyInstructions(parsed, req.VaultID, decimal.Zero, decimal.Zero)
 		base.TradeType = tradeType
 		base.AmountIn = decOrEmpty(amountIn)
 		base.AmountOut = decOrEmpty(amountOut)

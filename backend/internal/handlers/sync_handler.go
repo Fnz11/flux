@@ -11,6 +11,7 @@ import (
 	"github.com/flux-protocol/backend/internal/middleware"
 	"github.com/flux-protocol/backend/internal/services"
 	"github.com/flux-protocol/backend/pkg/solana"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 )
@@ -60,6 +61,17 @@ type SyncTradeRequest struct {
 	VaultID   string `json:"vault_id" binding:"required"`
 }
 
+func isNotFoundRPCError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, rpc.ErrNotFound) {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "not found") || strings.Contains(msg, "notfound") || strings.Contains(msg, "null")
+}
+
 func (h *SyncHandler) SyncVault(c *gin.Context) {
 	var req SyncVaultRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -86,6 +98,14 @@ func (h *SyncHandler) SyncVault(c *gin.Context) {
 			ErrorResponse(c, http.StatusBadRequest, "Invalid transaction signature")
 			return
 		}
+		if isNotFoundRPCError(err) {
+			writeJSON(c, http.StatusAccepted, gin.H{
+				"success":   false,
+				"error":     "Transaction not found on chain yet. Please retry shortly",
+				"retryable": true,
+			})
+			return
+		}
 		ErrorResponse(c, http.StatusInternalServerError, "Transaction verification failed")
 		return
 	}
@@ -109,8 +129,8 @@ func (h *SyncHandler) SyncVault(c *gin.Context) {
 			continue
 		}
 		if anchorIx.Name == "initialize_vault" {
-			if len(ix.Accounts) > 0 {
-				vaultAddress = ix.Accounts[0]
+			if len(ix.Accounts) > 1 {
+				vaultAddress = ix.Accounts[1]
 			}
 			found = true
 			break
@@ -159,6 +179,7 @@ func (h *SyncHandler) SyncVault(c *gin.Context) {
 
 	if h.eventService != nil {
 		h.eventService.DispatchVaultUpdate(reloaded.ID)
+		h.eventService.DispatchGlobalLeaderboard()
 	}
 
 	SuccessResponse(c, reloaded)
@@ -195,6 +216,14 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 			ErrorResponse(c, http.StatusBadRequest, "Invalid transaction signature")
 			return
 		}
+		if isNotFoundRPCError(err) {
+			writeJSON(c, http.StatusAccepted, gin.H{
+				"success":   false,
+				"error":     "Transaction not found on chain yet. Please retry shortly",
+				"retryable": true,
+			})
+			return
+		}
 		ErrorResponse(c, http.StatusInternalServerError, "Transaction verification failed")
 		return
 	}
@@ -216,7 +245,12 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 		return
 	}
 
-	tradeType, amountIn, amountOut, priceAtExecution := classifyInstructions(parsed, vault.Address)
+	var totalShares decimal.Decimal
+	if h.portfolioRepo != nil {
+		totalShares, _ = h.portfolioRepo.GetTotalSharesByVault(c.Request.Context(), vault.ID)
+	}
+
+	tradeType, amountIn, amountOut, priceAtExecution := classifyInstructions(parsed, vault.Address, vault.TVL, totalShares)
 	if tradeType == "" {
 		ErrorResponse(c, http.StatusBadRequest, "No recognized instruction found in transaction")
 		return
@@ -224,7 +258,7 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 
 	var tradeDetail *domain.TradeDetail
 
-	// Wrap trade insert and portfolio position recalculation inside a single database transaction
+	// Wrap trade insert, portfolio position recalculation, and TVL update inside a single database transaction
 	err = h.txManager.ExecTx(c.Request.Context(), func(ctx context.Context) error {
 		// Re-check unique signature inside tx to avoid race conditions
 		if existing, err := h.tradeRepo.FindBySignature(ctx, req.Signature); err == nil && existing != nil {
@@ -255,7 +289,14 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 		}
 
 		switch tradeType {
-		case "Deposit", "Buy":
+		case "Deposit":
+			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountIn, amountOut, priceAtExecution); err != nil {
+				return err
+			}
+			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, amountIn); err != nil {
+				return err
+			}
+		case "Buy":
 			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountIn, amountOut, priceAtExecution); err != nil {
 				return err
 			}
@@ -263,6 +304,11 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 			if err := h.portfolioRepo.ReducePosition(ctx, actor.ID, vault.ID, amountIn); err != nil {
 				return err
 			}
+			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, amountOut.Neg()); err != nil {
+				return err
+			}
+		case "Sell":
+			// Trade logged in trade_histories table
 		}
 
 		return nil
@@ -283,12 +329,16 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 
 	if h.eventService != nil {
 		h.eventService.DispatchTradeConfirmed(tradeDetail.VaultID, tradeDetail.TransactionSignature, tradeDetail.TradeType)
+		h.eventService.DispatchGlobalLeaderboard()
 	}
 
 	SuccessResponse(c, tradeDetail)
 }
 
-func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string) (tradeType string, amountIn, amountOut, priceAtExecution decimal.Decimal) {
+func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string, vaultTVL decimal.Decimal, totalShares decimal.Decimal) (tradeType string, amountIn, amountOut, priceAtExecution decimal.Decimal) {
+	solMint := "So11111111111111111111111111111111111111112"
+	usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+
 	for _, ix := range parsed.Instructions {
 		anchorIx, err := solana.ParseAnchorInstruction(ix.Data)
 		if err != nil {
@@ -309,6 +359,15 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string)
 				continue
 			}
 			tradeType = "Buy"
+			if len(ix.Accounts) > 6 {
+				inputMint := ix.Accounts[4]
+				outputMint := ix.Accounts[6]
+				if outputMint == solMint || outputMint == usdcMint {
+					tradeType = "Sell"
+				} else if inputMint == solMint || inputMint == usdcMint {
+					tradeType = "Buy"
+				}
+			}
 			if v, ok := anchorIx.Args["amount_in"].(uint64); ok {
 				amountIn = decimal.NewFromUint64(v)
 			}
@@ -335,8 +394,18 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string)
 				continue
 			}
 			tradeType = "Withdraw"
-			if v, ok := anchorIx.Args["shares"].(uint64); ok {
+			if v, ok := anchorIx.Args["shares_to_burn"].(uint64); ok {
 				amountIn = decimal.NewFromUint64(v)
+			} else if v, ok := anchorIx.Args["shares"].(uint64); ok {
+				amountIn = decimal.NewFromUint64(v)
+			}
+			if totalShares.IsPositive() && vaultTVL.IsPositive() {
+				navPerShare := vaultTVL.Div(totalShares)
+				amountOut = amountIn.Mul(navPerShare)
+				priceAtExecution = navPerShare
+			} else {
+				amountOut = amountIn
+				priceAtExecution = decimal.NewFromInt(1)
 			}
 			return
 		}

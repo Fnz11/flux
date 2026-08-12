@@ -1,5 +1,6 @@
 import { Wallet, Coins, TrendingUp, ArrowUpRight } from 'lucide-react'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
+import { usePortfolioHistoryQuery } from '@/services/hooks/useQuery/usePortfolioHistoryQuery'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
@@ -15,6 +16,22 @@ export function InvestSummary() {
   const wallet = useWallet()
   const walletAddress = wallet.publicKey?.toBase58()
   const { totalInvested, totalValue, totalPnl, totalPnlPercent } = usePortfolioPnl(walletAddress)
+  const { data: history = [] } = usePortfolioHistoryQuery(walletAddress ?? '')
+
+  const historyValues = history.map((point) => Number(point.value)).filter((value) => !Number.isNaN(value))
+  const hasHistory = historyValues.length > 1
+
+  let historyLine = ''
+  const historyMin = Math.min(...historyValues)
+  const historyMax = Math.max(...historyValues)
+  const historyRange = historyMax - historyMin || 1
+  historyLine = historyValues
+    .map((val, idx) => {
+      const x = (idx / (historyValues.length - 1)) * 100
+      const y = 30 - ((val - historyMin) / historyRange) * 26 - 2
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    })
+    .join(' ')
 
   const invested = formatNum(totalInvested)
   const val = formatNum(totalValue)
@@ -114,18 +131,24 @@ export function InvestSummary() {
                 <stop offset="100%" stopColor={isPositivePnl ? '#10B981' : '#F43F5E'} stopOpacity="0.0" />
               </linearGradient>
             </defs>
-            <path
-              d="M 0 25 C 20 22, 35 28, 50 15 C 65 5, 80 18, 100 8 L 100 30 L 0 30 Z"
-              fill="url(#investPnlGrad)"
-            />
-            <path
-              d="M 0 25 C 20 22, 35 28, 50 15 C 65 5, 80 18, 100 8"
-              fill="none"
-              stroke={isPositivePnl ? '#10B981' : '#F43F5E'}
-              strokeWidth="2"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
+            {hasHistory ? (
+              <>
+                <polygon
+                  points={`0,30 ${historyLine} 100,30`}
+                  fill="url(#investPnlGrad)"
+                />
+                <polyline
+                  points={historyLine}
+                  fill="none"
+                  stroke={isPositivePnl ? '#10B981' : '#F43F5E'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </>
+            ) : (
+              <line x1={0} y1={15} x2={100} y2={15} stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="1 3" />
+            )}
           </svg>
         </div>
       </Card>

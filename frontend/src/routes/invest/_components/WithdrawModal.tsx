@@ -131,7 +131,6 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
                         type="number"
                         step="any"
                         placeholder="0.00"
-                        max={position.sharesOwned}
                         className="text-lg font-mono"
                         {...field}
                       />

@@ -50,6 +50,7 @@ pub struct Deposit<'info> {
     #[account(
         mut,
         mint::authority = vault_authority,
+        constraint = share_token_mint.key() == vault.share_token_mint @ crate::errors::VaultError::ShareMintMismatch,
     )]
     pub share_token_mint: Box<InterfaceAccount<'info, Mint>>,
 

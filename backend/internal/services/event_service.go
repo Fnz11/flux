@@ -28,13 +28,22 @@ func (s *EventService) DispatchTradeConfirmed(vaultID string, signature string, 
 		},
 		"timestamp": time.Now().Unix(),
 	})
-	s.hub.BroadcastToChannel("vault:"+vaultID, msg)
+	s.hub.BroadcastToChannels([]string{"vault:" + vaultID, "global:activity"}, msg)
+}
+
+func (s *EventService) DispatchGlobalLeaderboard() {
+	msg, _ := json.Marshal(map[string]interface{}{
+		"type":      "leaderboard_update",
+		"data":      map[string]interface{}{},
+		"timestamp": time.Now().Unix(),
+	})
+	s.hub.BroadcastToChannel("global:leaderboard", msg)
 }
 
 func (s *EventService) DispatchVaultUpdate(vaultID string) {
 	msg, _ := json.Marshal(map[string]interface{}{
-		"type": "vault_update",
-		"data": map[string]string{"vault_id": vaultID},
+		"type":      "vault_update",
+		"data":      map[string]string{"vault_id": vaultID},
 		"timestamp": time.Now().Unix(),
 	})
 	s.hub.BroadcastToChannel("vault:"+vaultID, msg)

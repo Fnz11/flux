@@ -30,7 +30,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    tanstackStart({
+    !process.env.VITEST && tanstackStart({
       srcDirectory: 'src',
       router: {
         routesDirectory: 'routes',
@@ -40,5 +40,11 @@ export default defineConfig({
     }),
     viteReact(),
     tailwindcss(),
-  ],
+  ].filter(Boolean),
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
+    globals: true,
+    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
+  },
 })

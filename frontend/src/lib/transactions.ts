@@ -34,9 +34,13 @@ export async function sendTransaction(
   tx: Transaction,
   signer: { publicKey?: any; signTransaction: (tx: Transaction) => Promise<Transaction> },
 ): Promise<TransactionSignature> {
-  tx.feePayer = signer.publicKey
-  const { blockhash } = await connection.getLatestBlockhash()
-  tx.recentBlockhash = blockhash
+  if (!tx.feePayer && signer.publicKey) {
+    tx.feePayer = signer.publicKey
+  }
+  if (!tx.recentBlockhash) {
+    const { blockhash } = await connection.getLatestBlockhash()
+    tx.recentBlockhash = blockhash
+  }
   const signed = await signer.signTransaction(tx)
   return connection.sendRawTransaction(signed.serialize())
 }

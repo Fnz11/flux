@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test'
+import { describe, it, beforeEach, afterEach, vi } from 'vitest'
 import assert from 'node:assert/strict'
 import { useWebSocketStore } from '../src/stores/websocket-store'
 import { subscribeToNotifications } from '../src/services/ws'
@@ -58,13 +58,11 @@ function receive(socket: FakeLike, data: unknown) {
   socket.onmessage?.({ data })
 }
 
-let originalWebSocket: typeof WebSocket | undefined
 
 describe('websocket notifications client', () => {
   beforeEach(() => {
-    originalWebSocket = globalThis.WebSocket
     FakeWebSocket.instances = []
-    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket
+    vi.stubGlobal('WebSocket', FakeWebSocket)
     useWebSocketStore.getState().disconnect()
     useWebSocketStore.setState({
       isConnected: false,
@@ -77,9 +75,7 @@ describe('websocket notifications client', () => {
   })
 
   afterEach(() => {
-    if (originalWebSocket !== undefined) {
-      globalThis.WebSocket = originalWebSocket
-    }
+    vi.unstubAllGlobals()
   })
 
   it('subscribeToNotifications subscribes while mounted and unsubscribes on cleanup', () => {
@@ -104,7 +100,7 @@ describe('websocket notifications client', () => {
   })
 
   it('re-subscribes on reconnect and replays the subscribe command', () => {
-    mock.timers.enable({ apis: ['setTimeout'] })
+    vi.useFakeTimers()
     try {
       useWebSocketStore.getState().connect('ws://x/ws')
       const first = FakeWebSocket.instances[0]
@@ -113,7 +109,7 @@ describe('websocket notifications client', () => {
       first.close()
       assert.equal(first.sent.filter((m) => m.includes('subscribe')).length, 1)
 
-      mock.timers.tick(65_000)
+      vi.advanceTimersByTime(65_000)
       const second = FakeWebSocket.instances[1]
       assert.ok(second, 'reconnect constructed a new socket')
       openSocket(second)
@@ -124,7 +120,7 @@ describe('websocket notifications client', () => {
       )
       assert.equal(second.sent[0], '{"type":"subscribe","channel":"user:0xWallet"}')
     } finally {
-      mock.timers.reset()
+      vi.useRealTimers()
     }
   })
 
@@ -142,6 +138,19 @@ describe('websocket notifications client', () => {
     off()
   })
 
+  it('ignores malformed messages without changing state or notifying handlers', () => {
+    const handler = vi.fn()
+    useWebSocketStore.getState().onMessage(handler)
+    useWebSocketStore.getState().connect('ws://x/ws')
+    const socket = FakeWebSocket.instances[0]
+    openSocket(socket)
+
+    receive(socket, '{invalid json')
+
+    assert.equal(useWebSocketStore.getState().lastMessage, null)
+    assert.equal(handler.mock.calls.length, 0)
+  })
+
   it('subscribes to the right channel but no other channel (wrong channel not subscribed)', () => {
     subscribeToNotifications('0xWallet')
     useWebSocketStore.getState().connect('ws://x/ws')
@@ -154,7 +163,7 @@ describe('websocket notifications client', () => {
   })
 
   it('reconnects with backoff up to MAX_RECONNECT while subscriptions remain', () => {
-    mock.timers.enable({ apis: ['setTimeout'] })
+    vi.useFakeTimers()
     try {
       useWebSocketStore.getState().connect('ws://x/ws')
       const first = FakeWebSocket.instances[0]
@@ -165,7 +174,7 @@ describe('websocket notifications client', () => {
 
       for (let attempt = 1; attempt < MAX_RECONNECT; attempt++) {
         const delay = 1000 * Math.pow(2, attempt - 1)
-        mock.timers.tick(delay + 1000)
+        vi.advanceTimersByTime(delay + 1000)
         const socket = FakeWebSocket.instances[attempt]
         assert.ok(socket, `reconnect attempt ${attempt} constructed a socket`)
         socket.close()
@@ -179,10 +188,10 @@ describe('websocket notifications client', () => {
         'attempts counter stops at the cap',
       )
 
-      mock.timers.tick(100_000)
+      vi.advanceTimersByTime(100_000)
       assert.equal(FakeWebSocket.instances.length, MAX_RECONNECT, 'no further reconnect after cap')
     } finally {
-      mock.timers.reset()
+      vi.useRealTimers()
     }
   })
 
@@ -190,13 +199,13 @@ describe('websocket notifications client', () => {
     useWebSocketStore.getState().connect('ws://x/ws')
     const first = FakeWebSocket.instances[0]
     openSocket(first)
-    mock.timers.enable({ apis: ['setTimeout'] })
+    vi.useFakeTimers()
     try {
       first.close()
-      mock.timers.tick(100_000)
+      vi.advanceTimersByTime(100_000)
       assert.equal(FakeWebSocket.instances.length, 1)
     } finally {
-      mock.timers.reset()
+      vi.useRealTimers()
     }
   })
 })

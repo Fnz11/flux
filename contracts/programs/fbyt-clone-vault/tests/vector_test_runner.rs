@@ -66,7 +66,8 @@ fn rpyth() {
         let expo: i32 = inputs["expo"].as_i64().unwrap() as i32;
         let input_decimals: u8 = inputs["input_decimals"].as_u64().unwrap() as u8;
         let output_decimals: u8 = inputs["output_decimals"].as_u64().unwrap() as u8;
-        let result = pyth_amount_out(amount_in, price, expo, input_decimals, output_decimals);
+        let is_quote_to_base = inputs.get("is_quote_to_base").and_then(|v| v.as_bool()).unwrap_or(false);
+        let result = pyth_amount_out(amount_in, price, expo, input_decimals, output_decimals, is_quote_to_base);
         let ok = if expect_ok {
             match result { Ok(v) => v.to_string() == case["expected_output"].as_str().unwrap(), Err(_) => false }
         } else { result.is_err() };

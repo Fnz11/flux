@@ -42,12 +42,12 @@ export function PortfolioPage() {
   const wallet = useWallet()
   const walletAddress = wallet.publicKey?.toBase58() ?? ''
 
-  useRouteWsChannel([walletAddress ? `portfolio:${walletAddress}` : null])
+  useRouteWsChannel([walletAddress ? `portfolio:${walletAddress}` : null, 'global:leaderboard'])
 
   const { data: portfolioPositions = [], isLoading } = usePortfolioQuery(walletAddress)
   useVaultsQuery()
 
-  const { sortedPositions, sortBy, toggleSort, sortAsc, performanceData } = usePortfolioView(portfolioPositions)
+  const { sortedPositions, sortBy, toggleSort, sortAsc, performanceData } = usePortfolioView(walletAddress || portfolioPositions)
 
   const positionVaultIds = useMemo(() => sortedPositions.map((p) => p.vaultId), [sortedPositions])
   const { trades, isLoading: tradesLoading } = useTradeHistory(positionVaultIds)

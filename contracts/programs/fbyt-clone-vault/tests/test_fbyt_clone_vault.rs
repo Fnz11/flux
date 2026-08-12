@@ -749,15 +749,15 @@ fn test_decimal_normalization_in_trades() {
     let amount_in = 1_000_000_000u64;
     let price = 15_000_000_000i64;
     let expo = -8i32;
-    let amount_out = calculate_amount_out(amount_in, price, expo, 9, 6).unwrap();
+    let amount_out = calculate_amount_out(amount_in, price, expo, 9, 6, false).unwrap();
     assert_eq!(amount_out, 150_000_000);
 
     // Test with positive exponent
-    let pos_out = calculate_amount_out(100, 50, 2, 0, 0).unwrap();
+    let pos_out = calculate_amount_out(100, 50, 2, 0, 0, false).unwrap();
     assert_eq!(pos_out, 500_000);
 
     // Test with zero exponent
-    let zero_out = calculate_amount_out(500, 3, 0, 0, 0).unwrap();
+    let zero_out = calculate_amount_out(500, 3, 0, 0, 0, false).unwrap();
     assert_eq!(zero_out, 1_500);
 
     // Test performance fee math (10% fee on 1,000,000 profit = 100,000)

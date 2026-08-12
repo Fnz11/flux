@@ -352,7 +352,7 @@ func TestGetVaultBalances(t *testing.T) {
 		t.Fatalf("failed to create vault: %v", err)
 	}
 
-	t.Run("GetVaultBalances by address success", func(t *testing.T) {
+	t.Run("GetVaultBalances by address default 100% SOL when no trades", func(t *testing.T) {
 		balances, err := repo.GetVaultBalances(context.Background(), vaultAddr)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -361,29 +361,56 @@ func TestGetVaultBalances(t *testing.T) {
 			t.Fatalf("expected 2 balances (SOL, USDC), got %d", len(balances))
 		}
 
-		// SOL check (70% of 1000 TVL = 700 USD, price 150 = 4.6666666666666667 SOL)
+		// SOL check (100% of 1000 TVL = 1000 USD, price 150 = 6.6666666666666667 SOL)
 		sol := balances[0]
 		if sol.Symbol != "SOL" {
 			t.Errorf("expected symbol SOL, got %s", sol.Symbol)
 		}
-		if !sol.USDValue.Equal(decimal.NewFromFloat(700.0)) {
-			t.Errorf("expected SOL USDValue 700, got %s", sol.USDValue)
+		if !sol.USDValue.Equal(decimal.NewFromFloat(1000.0)) {
+			t.Errorf("expected SOL USDValue 1000, got %s", sol.USDValue)
 		}
-		expectedSolAmt := decimal.NewFromFloat(700.0).Div(decimal.NewFromFloat(150.0))
+		expectedSolAmt := decimal.NewFromFloat(1000.0).Div(decimal.NewFromFloat(150.0))
 		if !sol.Amount.Equal(expectedSolAmt) {
 			t.Errorf("expected SOL Amount %s, got %s", expectedSolAmt, sol.Amount)
 		}
 
-		// USDC check (30% of 1000 TVL = 300 USD, price 1 = 300 USDC)
+		// USDC check (0% when no trades)
 		usdc := balances[1]
 		if usdc.Symbol != "USDC" {
 			t.Errorf("expected symbol USDC, got %s", usdc.Symbol)
 		}
-		if !usdc.USDValue.Equal(decimal.NewFromFloat(300.0)) {
-			t.Errorf("expected USDC USDValue 300, got %s", usdc.USDValue)
+		if !usdc.USDValue.IsZero() || !usdc.Amount.IsZero() {
+			t.Errorf("expected 0 for USDC without trades, got %s", usdc.USDValue)
 		}
-		if !usdc.Amount.Equal(decimal.NewFromFloat(300.0)) {
-			t.Errorf("expected USDC Amount 300, got %s", usdc.Amount)
+	})
+
+	t.Run("GetVaultBalances calculated dynamically from trade history", func(t *testing.T) {
+		tradeVaultID := uuid.New()
+		tradeVaultAddr := "DynamicTradeVaultAddress111111111111111"
+		_ = db.Create(&models.Vault{ID: tradeVaultID, Address: tradeVaultAddr, ManagerID: managerID, TVL: decimal.NewFromFloat(1000.0)}).Error
+
+		solMint := "So11111111111111111111111111111111111111112"
+		usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+
+		solAmt := decimal.NewFromInt(700).Div(decimal.NewFromInt(150))
+		_ = db.Exec(`INSERT INTO trade_histories (id, vault_id, trade_type, input_token, amount_in, amount_out, price_at_execution) VALUES (?, ?, 'Deposit', ?, 300, 300, 1)`, uuid.New().String(), tradeVaultID.String(), usdcMint).Error
+		_ = db.Exec(`INSERT INTO trade_histories (id, vault_id, trade_type, input_token, amount_in, amount_out, price_at_execution) VALUES (?, ?, 'Deposit', ?, ?, ?, 150)`, uuid.New().String(), tradeVaultID.String(), solMint, solAmt, solAmt).Error
+
+		balances, err := repo.GetVaultBalances(context.Background(), tradeVaultAddr)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(balances) < 2 {
+			t.Fatalf("expected at least 2 balances, got %d", len(balances))
+		}
+
+		sol := balances[0]
+		if !sol.USDValue.Round(2).Equal(decimal.NewFromFloat(700.0)) {
+			t.Errorf("expected dynamic SOL USDValue 700, got %s", sol.USDValue)
+		}
+		usdc := balances[1]
+		if !usdc.USDValue.Equal(decimal.NewFromFloat(300.0)) {
+			t.Errorf("expected dynamic USDC USDValue 300, got %s", usdc.USDValue)
 		}
 	})
 

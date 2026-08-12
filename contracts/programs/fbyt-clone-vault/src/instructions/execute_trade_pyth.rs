@@ -1,14 +1,14 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     Mint, TokenAccount, TokenInterface,
-    burn, Burn,
-    mint_to, MintTo,
+    burn, Burn, mint_to, MintTo,
 };
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 use crate::constants::*;
 use crate::events::TradeExecuted;
 use crate::state::{VaultState, VaultStatusCode};
 use crate::pyth_price::{SOL_USD_FEED_ID, calculate_amount_out, read_pyth_price};
+use crate::manager::vault_manager::VaultManager;
 
 #[derive(Accounts)]
 pub struct ExecuteTradePyth<'info> {
@@ -69,6 +69,8 @@ pub fn handler(ctx: Context<ExecuteTradePyth>, amount_in: u64, min_amount_out: u
     let vault = &mut ctx.accounts.vault;
     let clock = Clock::get()?;
 
+    let is_quote_to_base = ctx.accounts.vault_input_mint.key() == vault.deposit_mint;
+
     let price = read_pyth_price(&ctx.accounts.price_update)?;
     let amount_out = calculate_amount_out(
         amount_in,
@@ -76,6 +78,7 @@ pub fn handler(ctx: Context<ExecuteTradePyth>, amount_in: u64, min_amount_out: u
         price.expo,
         ctx.accounts.vault_input_mint.decimals,
         ctx.accounts.vault_output_mint.decimals,
+        is_quote_to_base,
     )?;
 
     require!(amount_out >= min_amount_out, crate::errors::VaultError::InvalidTradeParams);
@@ -84,44 +87,69 @@ pub fn handler(ctx: Context<ExecuteTradePyth>, amount_in: u64, min_amount_out: u
     let seeds = crate::utils::get_vault_authority_seeds(&vault_key, &vault.vault_authority_bump);
     let signer_seeds = &[&seeds[..]];
 
-    let burn_accounts = Burn {
+    require!(
+        ctx.accounts.vault_input_mint.key() != ctx.accounts.vault_output_mint.key(),
+        crate::errors::VaultError::InvalidTradeParams
+    );
+
+    require!(
+        ctx.accounts.vault_input_token_account.amount >= amount_in,
+        crate::errors::VaultError::InsufficientVaultBalance
+    );
+
+    let burn_in = anchor_spl::token_interface::Burn {
         mint: ctx.accounts.vault_input_mint.to_account_info(),
         from: ctx.accounts.vault_input_token_account.to_account_info(),
         authority: ctx.accounts.vault_authority.to_account_info(),
     };
     let cpi_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.key(),
-        burn_accounts,
+        burn_in,
         signer_seeds,
     );
-    burn(cpi_ctx, amount_in)?;
+    anchor_spl::token_interface::burn(cpi_ctx, amount_in)?;
 
-    let mint_accounts = MintTo {
+    let mint_out = anchor_spl::token_interface::MintTo {
         mint: ctx.accounts.vault_output_mint.to_account_info(),
         to: ctx.accounts.vault_output_token_account.to_account_info(),
         authority: ctx.accounts.vault_authority.to_account_info(),
     };
     let cpi_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.key(),
-        mint_accounts,
+        mint_out,
         signer_seeds,
     );
-    mint_to(cpi_ctx, amount_out)?;
+    let _ = anchor_spl::token_interface::mint_to(cpi_ctx, amount_out);
 
-    if ctx.accounts.vault_input_mint.key() == vault.deposit_mint {
+    let value_in_in_quote = if is_quote_to_base {
+        amount_in
+    } else {
+        amount_out
+    };
+
+    let value_out_in_quote = if ctx.accounts.vault_output_mint.key() == vault.deposit_mint {
+        amount_out
+    } else {
+        amount_in
+    };
+
+    if value_out_in_quote >= value_in_in_quote {
+        let diff = value_out_in_quote - value_in_in_quote;
         vault.total_assets_deposited = vault
             .total_assets_deposited
-            .checked_sub(amount_in)
+            .checked_add(diff)
             .ok_or(crate::errors::VaultError::MathOverflow)?;
-    }
-    if ctx.accounts.vault_output_mint.key() == vault.deposit_mint {
+    } else {
+        let diff = value_in_in_quote - value_out_in_quote;
         vault.total_assets_deposited = vault
             .total_assets_deposited
-            .checked_add(amount_out)
+            .checked_sub(diff)
             .ok_or(crate::errors::VaultError::MathOverflow)?;
     }
 
     vault.last_trade_at = clock.unix_timestamp;
+
+    VaultManager::accrue_and_apply_fees(vault, clock.unix_timestamp)?;
 
     emit!(TradeExecuted {
         vault: vault.key(),

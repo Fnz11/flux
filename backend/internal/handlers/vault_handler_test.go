@@ -77,6 +77,10 @@ func (m *mockVaultRepository) GetVaultBalances(ctx context.Context, vaultIDOrAdd
 	return m.balances, nil
 }
 
+func (m *mockVaultRepository) UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error {
+	return nil
+}
+
 func TestVaultHandler_ListVaults(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

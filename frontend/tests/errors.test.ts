@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test'
+import { describe, it } from 'vitest'
 import assert from 'node:assert/strict'
 import { formatError } from '../src/lib/errors'
 
@@ -13,5 +13,13 @@ describe('formatError helper', () => {
     assert.equal(formatError(null, 'Default failure'), 'Default failure')
     assert.equal(formatError(undefined, 'Default failure'), 'Default failure')
     assert.equal(formatError({ code: 500 }, 'Default failure'), 'Default failure')
+  })
+
+  it('supports Error subclasses', () => {
+    assert.equal(formatError(new TypeError('Invalid amount'), 'Fallback'), 'Invalid amount')
+  })
+
+  it('preserves an empty Error message rather than substituting the fallback', () => {
+    assert.equal(formatError(new Error(''), 'Fallback'), '')
   })
 })

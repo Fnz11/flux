@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
+import { BN } from '@coral-xyz/anchor'
 import { useTransactionStore } from '@/stores'
 import { api } from '@/lib/api'
 import { getProgram } from '@/lib/anchor'
@@ -25,6 +26,8 @@ interface ExecuteTradeParams {
 }
 
 const NATIVE_MINT = new PublicKey('So11111111111111111111111111111111111111112')
+const PYTH_RECEIVER_PROGRAM_ID = new PublicKey('recV279B92B27D6x6s7hPj75CLL62p6z2yC4T1uY2')
+const SOL_USD_FEED_ID = 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d'
 
 function isNativeMint(mintStr: string): boolean {
   return mintStr === 'So11111111111111111111111111111111111111112' || mintStr.toUpperCase() === 'SOL'
@@ -63,9 +66,15 @@ export function useExecuteTrade() {
           try {
             const program = await getProgram(wallet, connection)
             if (program && (program.idl as any)?.instructions?.length) {
-              const vaultPubkey = new PublicKey(
-                params.vaultId.length === 44 ? params.vaultId : wallet.publicKey.toBase58(),
-              )
+              if (!params.vaultId) {
+                throw new Error('Vault ID is required')
+              }
+              let vaultPubkey: PublicKey
+              try {
+                vaultPubkey = new PublicKey(params.vaultId)
+              } catch {
+                throw new Error(`Invalid vault address: ${params.vaultId}`)
+              }
 
               const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
                 [Buffer.from('vault_authority'), vaultPubkey.toBuffer()],
@@ -124,13 +133,19 @@ export function useExecuteTrade() {
                 )
               }
 
-              const amountInLamports = Math.round(params.amountIn * 1e9)
-              const minAmountOutLamports = Math.round(
-                params.amountOut * (1 - params.slippage / 100) * 1e9,
+              const amountInBn = new BN(Math.round(params.amountIn * 1e9))
+              const minAmountOutBn = new BN(
+                Math.round(params.amountOut * (1 - params.slippage / 100) * 1e9),
+              )
+
+              // Derive Pyth oracle price feed PDA
+              const [priceUpdatePda] = PublicKey.findProgramAddressSync(
+                [Buffer.from('write_price_update'), Buffer.from(SOL_USD_FEED_ID, 'hex')],
+                PYTH_RECEIVER_PROGRAM_ID,
               )
 
               const tradeIx = await program.methods
-                .executeTradePyth(amountInLamports, minAmountOutLamports)
+                .executeTradePyth(amountInBn, minAmountOutBn)
                 .accounts({
                   manager: wallet.publicKey,
                   vault: vaultPubkey,
@@ -139,7 +154,7 @@ export function useExecuteTrade() {
                   vaultInputMint: inputMintPubkey,
                   vaultOutputTokenAccount: vaultOutputAta,
                   vaultOutputMint: outputMintPubkey,
-                  priceUpdate: wallet.publicKey, // Pyth oracle price feed
+                  priceUpdate: priceUpdatePda,
                   tokenProgram: TOKEN_PROGRAM_ID,
                 })
                 .instruction()
@@ -151,7 +166,8 @@ export function useExecuteTrade() {
               await connection.confirmTransaction(signature, 'confirmed')
             }
           } catch (e) {
-            console.warn('Trade execution on-chain error, simulation fallback:', e)
+            console.warn('Trade execution on-chain error:', e)
+            throw e
           }
         }
 
@@ -161,11 +177,13 @@ export function useExecuteTrade() {
 
         confirmTransaction(txId, signature)
 
-        const tradeType: TradeType = params.amountIn > 0 ? 'Buy' : 'Sell'
+        const isInputQuote =
+          params.inputToken.toUpperCase() === 'USDC' || params.inputToken.toUpperCase() === 'USDT'
+        const tradeType: TradeType = isInputQuote ? 'Buy' : 'Sell'
 
         const syncPayload: SyncTradeRequest = {
+          signature,
           vault_id: params.vaultId,
-          transaction_signature: signature,
           trade_type: tradeType,
           input_token: params.inputToken,
           output_token: params.outputToken,
@@ -174,9 +192,11 @@ export function useExecuteTrade() {
           price_at_execution: params.priceAtExecution,
         }
 
-        await api.post('/trades/sync', syncPayload).catch(() => {
-          // Backend sync fails silently if API server in offline demo mode
-        })
+        try {
+          await api.post('/trades/sync', syncPayload)
+        } catch (err) {
+          console.warn('Failed to sync executed trade to backend:', err)
+        }
 
         moveToHistory(txId)
       } catch (err) {

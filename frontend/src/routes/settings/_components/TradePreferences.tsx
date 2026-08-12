@@ -69,7 +69,7 @@ export function TradePreferences() {
               name="slippageBps"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Max Slippage Tolerance (BPS)</FormLabel>
+                  <FormLabel htmlFor="slippage">Max Slippage Tolerance (BPS)</FormLabel>
                   <FormControl>
                     <div className="flex gap-2">
                       {['10', '50', '100'].map((bps) => (
@@ -102,7 +102,7 @@ export function TradePreferences() {
               name="dustThreshold"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Dust Asset Threshold (SOL)</FormLabel>
+                  <FormLabel htmlFor="dust">Dust Asset Threshold (SOL)</FormLabel>
                   <FormControl>
                     <Input
                       id="dust"

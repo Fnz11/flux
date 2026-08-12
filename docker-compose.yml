@@ -30,6 +30,7 @@ services:
   # CONTRACTS / BLOCKCHAIN
   # ---------------------------------------------------------
   contracts:
+    platform: linux/amd64 # anchor images are amd64-only; required on Apple Silicon
     build:
       context: ./contracts
     container_name: fbyt-contracts
@@ -128,6 +129,7 @@ services:
       - /app/node_modules
 
   test-contracts:
+    platform: linux/amd64 # anchor images are amd64-only; required on Apple Silicon
     build:
       context: ./contracts
     profiles: [test-contracts, test-all]

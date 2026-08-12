@@ -68,7 +68,13 @@ export interface AppConfig {
 
 // ── WebSocket message (legacy) ──
 export interface WSMessage {
-  type: 'TX_CONFIRMED' | 'TRADE_EXECUTED' | 'VAULT_UPDATED' | 'PRICE_UPDATE'
+  type:
+    | 'TX_CONFIRMED'
+    | 'TRADE_EXECUTED'
+    | 'VAULT_UPDATED'
+    | 'PRICE_UPDATE'
+    | 'trade_confirmed'
+    | 'leaderboard_update'
   vaultId?: string
   tradeId?: string
   transactionId?: string
@@ -76,6 +82,8 @@ export interface WSMessage {
   status?: TransactionStatus
   errorMessage?: string
   payload?: Record<string, unknown>
+  data?: unknown
+  timestamp?: number
 }
 
 // ═══════════════════════════════════════
@@ -141,6 +149,17 @@ export interface ApiPortfolioResponse {
   wallet: string
 }
 
+export interface ApiPortfolioHistoryPoint {
+  date: string
+  value: number
+}
+
+export interface ApiPortfolioHistoryResponse {
+  wallet: string
+  range: string
+  points: ApiPortfolioHistoryPoint[]
+}
+
 export interface ApiConfig {
   dust_threshold: number
   focus_assets_whitelist: string[]
@@ -158,14 +177,14 @@ export interface ApiFee {
 // ═══════════════════════════════════════
 
 export interface SyncTradeRequest {
+  signature: string
   vault_id: string
-  transaction_signature: string
-  trade_type: TradeType
-  input_token: string
-  output_token: string
-  amount_in: number
-  amount_out: number
-  price_at_execution: number
+  trade_type?: TradeType
+  input_token?: string
+  output_token?: string
+  amount_in?: number
+  amount_out?: number
+  price_at_execution?: number
 }
 
 export interface UpdateVaultMetadataRequest {

@@ -26,7 +26,7 @@ export const Route = createFileRoute('/')({
 })
 
 function DashboardPage() {
-  useRouteWsChannel(['dashboard'])
+  useRouteWsChannel(['dashboard', 'global:activity', 'global:leaderboard'])
 
   const isManager = useAppStore((s) => s.isManager)
   const wallet = useWallet()

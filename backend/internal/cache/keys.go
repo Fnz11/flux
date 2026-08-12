@@ -35,9 +35,26 @@ func VaultSummaryKey(address string) string {
 	return fmt.Sprintf("%s:vault:%s:summary", keyPrefix, address)
 }
 
-// LeaderboardKey returns app:global:leaderboard.
+// LeaderboardKey returns app:global:leaderboard. It backs the dashboard's
+// default leaderboard request (trending over 7d) so the single-key invalidators
+// in the handlers keep working without knowing about type-scoped keys.
 func LeaderboardKey() string {
 	return fmt.Sprintf("%s:global:leaderboard", keyPrefix)
+}
+
+// LeaderboardTypeKey returns app:global:leaderboard:type:{lbType}:period:{period},
+// a full-scoped cache key for a specific leaderboard query (lbType × period).
+// The default trending/7d dashboard request is served on LeaderboardKey
+// itself; every other combination uses this scoped key.
+func LeaderboardTypeKey(lbType, period string) string {
+	return fmt.Sprintf("%s:global:leaderboard:type:%s:period:%s", keyPrefix, lbType, period)
+}
+
+// LeaderboardPrefix returns app:global:leaderboard:, the shared prefix of every
+// leaderboard family key. Intended for prefix-based invalidation (SCAN+DEL) of
+// all leaderboard variants in one pass.
+func LeaderboardPrefix() string {
+	return fmt.Sprintf("%s:global:leaderboard:", keyPrefix)
 }
 
 // UserPortfolioPrefix returns app:user:*:portfolio, a glob pattern for

@@ -6,7 +6,7 @@ use anchor_spl::token_interface::{
 };
 use crate::constants::*;
 use crate::events::Withdrawn;
-use crate::state::{VaultState, VaultStatusCode};
+use crate::state::VaultState;
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -17,7 +17,6 @@ pub struct Withdraw<'info> {
         mut,
         seeds = [VAULT_SEED, vault.creator.as_ref()],
         bump = vault.vault_bump,
-        constraint = vault.status != VaultStatusCode::Dormant @ crate::errors::VaultError::VaultLocked,
         constraint = !vault.is_paused @ crate::errors::VaultError::VaultLocked,
     )]
     pub vault: Box<Account<'info, VaultState>>,
@@ -35,6 +34,7 @@ pub struct Withdraw<'info> {
     /// The mint of the token being withdrawn
     #[account(
         constraint = withdraw_mint.key() == investor_token_account.mint,
+        constraint = withdraw_mint.key() == vault.deposit_mint @ crate::errors::VaultError::InvalidMint,
     )]
     pub withdraw_mint: Box<InterfaceAccount<'info, Mint>>,
 
@@ -48,12 +48,14 @@ pub struct Withdraw<'info> {
     #[account(
         mut,
         mint::authority = vault_authority,
+        constraint = share_token_mint.key() == vault.share_token_mint @ crate::errors::VaultError::ShareMintMismatch,
     )]
     pub share_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         constraint = investor_share_account.owner == investor.key(),
+        constraint = investor_share_account.mint == share_token_mint.key(),
     )]
     pub investor_share_account: Box<InterfaceAccount<'info, TokenAccount>>,
 

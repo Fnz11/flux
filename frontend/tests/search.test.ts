@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test'
+import { describe, it } from 'vitest'
 import assert from 'node:assert/strict'
 import {
   buildSearchQuery,
@@ -40,6 +40,11 @@ describe('isManagerPair', () => {
     assert.equal(isManagerPair('SOL'), false)
     assert.equal(isManagerPair({}), false)
   })
+
+  it('rejects non-string symbols', () => {
+    assert.equal(isManagerPair({ symbol: 123 }), false)
+    assert.equal(isManagerPair({ symbol: null }), false)
+  })
 })
 
 describe('isVaultResult', () => {
@@ -53,6 +58,11 @@ describe('isVaultResult', () => {
 
   it('returns false for objects without an id', () => {
     assert.equal(isVaultResult({ displayName: 'V' }), false)
+  })
+
+  it('rejects non-string ids and objects that contain a symbol key', () => {
+    assert.equal(isVaultResult({ id: 123 }), false)
+    assert.equal(isVaultResult({ id: 'v1', symbol: undefined }), false)
   })
 })
 
@@ -81,6 +91,16 @@ describe('computeSuggestionRoute', () => {
     assert.equal(
       computeSuggestionRoute({ id: '', address: 'a', displayName: 'V', tvl: 0 }, 'investor'),
       null,
+    )
+  })
+
+  it('preserves the selected vault id in the generated route', () => {
+    assert.equal(
+      computeSuggestionRoute(
+        { id: 'vault-with-dashes', address: 'a', displayName: 'V', tvl: 0 },
+        'investor',
+      ),
+      '/vaults/vault-with-dashes',
     )
   })
 })

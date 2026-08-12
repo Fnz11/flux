@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'node:test'
+import { describe, it, beforeEach } from 'vitest'
 import assert from 'node:assert/strict'
 import { useNotificationStore } from '../src/stores/notification-store'
 import type { Notification, WSMessage } from '../src/types'
@@ -73,6 +73,20 @@ describe('useNotificationStore', () => {
     assert.equal(total, 10)
     assert.equal(unread, 3)
     assert.equal(isLoading, false)
+  })
+
+  it('reports loading while a notification fetch is pending', async () => {
+    let resolveFetch!: (value: { items: Notification[]; total: number; unread: number }) => void
+    const fetcher = () => new Promise<{ items: Notification[]; total: number; unread: number }>((resolve) => {
+      resolveFetch = resolve
+    })
+
+    const request = useNotificationStore.getState().fetch(true, fetcher)
+    assert.equal(useNotificationStore.getState().isLoading, true)
+
+    resolveFetch({ items: [], total: 0, unread: 0 })
+    await request
+    assert.equal(useNotificationStore.getState().isLoading, false)
   })
 
   it('fetch sets error on failure', async () => {

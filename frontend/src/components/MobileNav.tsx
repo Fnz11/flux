@@ -32,6 +32,7 @@ import { toastInfo, toastSuccess } from '@/lib/toast'
 import { WalletConnectButton } from '@/components/ui/WalletConnectButton'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { SOLSCAN_CLUSTER } from '@/constants'
 
 const managerLinks = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -264,7 +265,7 @@ export function MobileNav() {
                       {drawerType === 'menu' ? 'Navigation Menu' : 'Account & Wallet'}
                     </h3>
                     <p className="text-[11px] text-text-tertiary">
-                      {drawerType === 'menu' ? 'Flux Protocol' : 'Solana Devnet Session'}
+                      {drawerType === 'menu' ? 'Flux Protocol' : 'Connected Session'}
                     </p>
                   </div>
                 </div>
@@ -403,7 +404,7 @@ export function MobileNav() {
                                 <p className="text-xs font-bold text-text-primary">Connected Account</p>
                                 <p className="text-[10px] text-status-success flex items-center gap-1.5 font-mono">
                                   <span className="size-1.5 rounded-full bg-status-success animate-pulse" />
-                                  Solana Devnet
+                                  Connected
                                 </p>
                               </div>
                             </div>
@@ -426,7 +427,7 @@ export function MobileNav() {
                                 {copied ? <Check className="size-4 text-status-success" /> : <Copy className="size-4" />}
                               </button>
                               <a
-                                href={`https://solscan.io/account/${address}?cluster=devnet`}
+                                href={`https://solscan.io/account/${address}?cluster=${SOLSCAN_CLUSTER}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-inset transition-colors"
@@ -482,7 +483,7 @@ export function MobileNav() {
                           <div>
                             <h4 className="text-sm font-bold text-text-primary">Connect Solana Wallet</h4>
                             <p className="text-xs text-text-tertiary mt-1 max-w-[42ch] mx-auto">
-                              Connect Phantom or Devnet wallet to invest in liquidity vaults, track portfolio yield, and rebalance AMM positions.
+                              Connect your Solana wallet to invest in liquidity vaults, track portfolio yield, and rebalance AMM positions.
                             </p>
                           </div>
                           <div className="pt-2">

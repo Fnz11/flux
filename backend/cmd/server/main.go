@@ -95,7 +95,12 @@ func main() {
 	})
 
 	metricsHandler := handlers.NewMetricsHandler(metricsRepo)
-	transactionHandler := handlers.NewTransactionHandler()
+	marketHandler := handlers.NewMarketHandler(repository.NewMarketRepository(db))
+	leaderboardHandler := handlers.NewLeaderboardHandler(repository.NewCachedLeaderboardRepository(repository.NewLeaderboardRepository(db), c))
+	historyHandler := handlers.NewHistoryHandler(repository.NewHistoryRepository(db))
+	globalFeedHandler := handlers.NewGlobalFeedHandler(repository.NewGlobalFeedRepository(db))
+	globalMetricsHandler := handlers.NewGlobalMetricsHandler(repository.NewGlobalMetricsRepository(db))
+	verifyHandler := handlers.NewVerifyHandler(solanaClient, tradeRepo)
 
 	notificationRepo := repository.NewNotificationRepository(db)
 	searchRepo := repository.NewSearchRepository(db)
@@ -103,6 +108,7 @@ func main() {
 	searchSvc := services.NewSearchService(searchRepo)
 	notificationHandler := handlers.NewNotificationHandler(notificationRepo, userRepo, notificationSvc)
 	searchHandler := handlers.NewSearchHandler(searchSvc)
+	feeHandler := handlers.NewFeeHandler(vaultRepo)
 
 	mvWorker := jobs.NewMVRefreshWorker(db, logger, 0)
 	mvWorker.SetRedis(redisClient)
@@ -126,20 +132,26 @@ func main() {
 	}
 
 	r := router.Setup(&router.HandlerSet{
-		Auth:        authHandler,
-		Vault:       vaultHandler,
-		Trade:       tradeHandler,
-		Portfolio:   portfolioHandler,
-		Sync:        syncHandler,
-		Health:      healthHandler,
-		Config:      configHandler,
-		WS:          wsHandler,
-		Metrics:     metricsHandler,
-		Transaction: transactionHandler,
+		Auth:         authHandler,
+		Vault:        vaultHandler,
+		Trade:        tradeHandler,
+		Portfolio:    portfolioHandler,
+		Sync:         syncHandler,
+		Health:       healthHandler,
+		Config:       configHandler,
+		WS:           wsHandler,
+		Metrics:      metricsHandler,
+		Market:       marketHandler,
+		Leaderboard:  leaderboardHandler,
+		History:      historyHandler,
+		GlobalFeed:   globalFeedHandler,
+		Global:       globalMetricsHandler,
+		Verify:       verifyHandler,
 		Notification: notificationHandler,
 		Search:       searchHandler,
-		JWTSecret:   cfg.JWTSecret,
-		Redis:       redisClient,
+		Fee:          feeHandler,
+		JWTSecret:    cfg.JWTSecret,
+		Redis:        redisClient,
 	})
 
 	if cfg.EnablePprof {

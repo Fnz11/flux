@@ -26,6 +26,7 @@ pub struct InitializeVault<'info> {
         payer = manager,
         mint::decimals = SHARE_TOKEN_DECIMALS,
         mint::authority = vault_authority,
+        mint::token_program = token_program,
     )]
     pub share_token_mint: InterfaceAccount<'info, Mint>,
 
@@ -76,6 +77,8 @@ pub fn handler(
     vault.is_paused = false;
     vault.created_at = clock.unix_timestamp;
     vault.last_trade_at = clock.unix_timestamp;
+    vault.high_water_mark = 0;
+    vault.last_fee_accrual_at = clock.unix_timestamp;
 
     emit!(VaultInitialized {
         vault: vault.key(),

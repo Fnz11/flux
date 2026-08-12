@@ -1,5 +1,5 @@
 import { useVaultBalancesQuery } from '@/services/hooks/useQuery/useVaultsQuery'
-import { Wallet, Layers, ArrowUpRight } from 'lucide-react'
+import { Wallet, Layers } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -23,16 +23,11 @@ const TOKEN_LOGOS: Record<string, string> = {
 export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChange }: VaultAssetsPanelProps) {
   const { data: balances = [], isLoading } = useVaultBalancesQuery(vaultId ?? '')
 
-  const totalUsdValue = balances.reduce((sum, b) => sum + (b.usdValue || 0), 0) || (vaultId ? 104423.52 : 0)
+  const totalUsdValue = balances.reduce((sum, b) => sum + (b.usdValue || 0), 0)
   const formattedVal = totalUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const [valInt, valDec] = formattedVal.split('.')
 
-  const displayBalances = balances.length > 0 ? balances : (vaultId ? [
-    { symbol: 'SOL', amount: 480.25, usdValue: 36423.52, mint: 'sol' },
-    { symbol: 'USDC', amount: 45000.00, usdValue: 45000.00, mint: 'usdc' },
-    { symbol: 'USDT', amount: 15000.00, usdValue: 15000.00, mint: 'usdt' },
-    { symbol: 'PYTH', amount: 20000.00, usdValue: 8000.00, mint: 'pyth' },
-  ] : [])
+  const isEmptyBalances = vaultId ? balances.length === 0 : false
 
   return (
     <SectionCard
@@ -72,10 +67,6 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
               <span className="font-mono text-xs font-semibold text-text-tertiary">.{valDec}</span>
             </div>
           </div>
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-400">
-            <ArrowUpRight className="size-3.5" />
-            +12.4%
-          </span>
         </div>
       }
     >
@@ -94,12 +85,21 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
             size="md"
           />
         </div>
+      ) : isEmptyBalances ? (
+        <div className="rounded-xl border border-border-subtle/50 bg-bg-inset/40 p-4">
+          <EmptyState
+            icon={<Wallet className="size-5" />}
+            title="No balances recorded"
+            description="This vault has no recorded balances yet. Balances will appear here once recorded."
+            size="md"
+          />
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {displayBalances.map((asset) => {
+          {balances.map((asset) => {
             const logoUrl = TOKEN_LOGOS[asset.symbol] || TOKEN_LOGOS.SOL
             const unitPrice = (asset.usdValue || 0) / (asset.amount || 1)
-            const allocPct = Math.min(100, Math.round(((asset.usdValue || 0) / totalUsdValue) * 100))
+            const allocPct = totalUsdValue > 0 ? Math.min(100, Math.round(((asset.usdValue || 0) / totalUsdValue) * 100)) : 0
 
             return (
               <div
