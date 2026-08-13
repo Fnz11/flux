@@ -19,7 +19,11 @@ export function InvestSummary() {
   const { totalInvested, totalValue, totalPnl, totalPnlPercent } = usePortfolioPnl(walletAddress)
   const { data: history = [] } = usePortfolioHistoryQuery(walletAddress ?? '')
 
-  const historyValues = history.map((point) => Number(point.value)).filter((value) => !Number.isNaN(value))
+  const historyValues = history.reduce<number[]>((acc, point) => {
+    const val = Number(point.value)
+    if (!Number.isNaN(val)) acc.push(val)
+    return acc
+  }, [])
   const hasHistory = historyValues.length > 1
 
   let historyLine = ''

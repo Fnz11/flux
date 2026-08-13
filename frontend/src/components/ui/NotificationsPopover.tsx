@@ -9,6 +9,10 @@ interface NotificationsPopoverProps {
   onToggle: () => void
 }
 
+function handleMarkAllRead() {
+  useNotificationStore.getState().markAllRead?.()
+}
+
 export function NotificationsPopover({ open, onToggle }: NotificationsPopoverProps) {
   const ref = useRef<HTMLDivElement>(null)
   const items = useNotificationStore((s) => s.items)
@@ -35,10 +39,6 @@ export function NotificationsPopover({ open, onToggle }: NotificationsPopoverPro
       window.removeEventListener('keydown', esc)
     }
   }, [open, onToggle])
-
-  const handleMarkAllRead = () => {
-    useNotificationStore.getState().markAllRead?.()
-  }
 
   return (
     <div ref={ref} className="relative">
@@ -106,7 +106,7 @@ export function NotificationsPopover({ open, onToggle }: NotificationsPopoverPro
   )
 }
 
-const dateFormatter = new Intl.DateTimeFormat('en-US')
+const dateFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC' })
 
 function formatTime(iso: string): string {
   const d = new Date(iso)

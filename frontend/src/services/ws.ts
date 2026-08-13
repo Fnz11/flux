@@ -26,12 +26,8 @@ export function useNotificationWs(): void {
 
   useEffect(() => {
     useWebSocketStore.getState().authenticate(currentUser)
-    if (!currentUser) return () => {}
-    const channel = 'user:' + currentUser
-    useWebSocketStore.getState().subscribe(channel)
-    return () => {
-      useWebSocketStore.getState().unsubscribe(channel)
-    }
+    if (!currentUser) return
+    return subscribeToNotifications(currentUser)
   }, [currentUser])
 
   useEffect(() => {

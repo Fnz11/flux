@@ -145,6 +145,7 @@ function VaultsListPage() {
               <Search className="absolute left-3 size-3.5 text-text-tertiary pointer-events-none" />
               <input
                 type="text"
+                aria-label="Search vaults"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search vaults..."

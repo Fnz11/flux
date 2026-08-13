@@ -39,7 +39,7 @@ export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPo
   const performanceData = useMemo(() => {
     if (walletAddress && historyPoints.length > 1) {
       return historyPoints.map((p) => ({
-        date: new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: new Date(p.date).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }),
         value: p.value,
       }))
     }

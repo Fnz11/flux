@@ -11,5 +11,5 @@ export const DEFAULT_COLORS = [
 
 export const SLIPPAGE_PRESETS = [0.1, 0.5, 1.0, 2.0] as const
 export const BPS_PRESETS = ['10', '50', '100'] as const
-export const PORTFOLIO_SORT_KEYS = ['value', 'pnl', 'name'] as const
+const PORTFOLIO_SORT_KEYS = ['value', 'pnl', 'name'] as const
 export type PortfolioSortKey = (typeof PORTFOLIO_SORT_KEYS)[number]

@@ -23,17 +23,19 @@ const statusConfig = {
   offline: { dot: 'bg-text-muted', text: 'Offline', pulse: false },
 }
 
+const EMPTY_SPARKLINE: number[] = []
+
 export function PriceDisplay({ data, label = 'Pyth Oracle Price', sparkline }: PriceDisplayProps) {
   const cfg = data.status === 'loading' ? undefined : statusConfig[data.status]
 
-  const [history, setHistory] = useState<number[]>(sparkline ?? [])
+  const [livePoints, setLivePoints] = useState<number[]>(sparkline ?? EMPTY_SPARKLINE)
+  const [prevSparkline, setPrevSparkline] = useState<number[] | undefined>(sparkline)
   const lastRef = useRef<number | null>(null)
-  const historyRef = useRef<number[]>(sparkline ?? [])
 
-  useEffect(() => {
-    historyRef.current = sparkline ?? []
-    setHistory(sparkline ?? [])
-  }, [sparkline])
+  if (prevSparkline !== sparkline) {
+    setPrevSparkline(sparkline)
+    setLivePoints(sparkline ?? EMPTY_SPARKLINE)
+  }
 
   useEffect(() => {
     const price = data.price
@@ -42,11 +44,14 @@ export function PriceDisplay({ data, label = 'Pyth Oracle Price', sparkline }: P
     }
     if (lastRef.current === price) return
     lastRef.current = price
-    const next = [...historyRef.current, price]
-    if (next.length > 40) next.shift()
-    historyRef.current = next
-    setHistory(next)
+    setLivePoints((prev) => {
+      const next = [...prev, price]
+      if (next.length > 40) next.shift()
+      return next
+    })
   }, [data.price, data.status])
+
+  const history = livePoints
 
   return (
     <Card className="p-5 space-y-3">
