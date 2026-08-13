@@ -15,7 +15,9 @@ export interface VaultRowProps {
 }
 
 export function VaultRow({ vault, sortBy }: VaultRowProps) {
-  const { data: sparkline } = useVaultSparklineQuery(vault.id)
+  const hasEmbeddedSparkline = Boolean(vault.sparkline && vault.sparkline.length > 0)
+  const { data: fetchedSparkline } = useVaultSparklineQuery(vault.id, '30d', !hasEmbeddedSparkline)
+  const sparkline = hasEmbeddedSparkline ? vault.sparkline : fetchedSparkline
   const pnl = vault.pnlPercent ?? 0
   const isPositivePnl = pnl >= 0
   const displayName = vault.metadata.displayName || `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`

@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/flux-protocol/backend/internal/models"
@@ -144,6 +146,13 @@ func (r *vaultRepo) List(ctx context.Context, filter domain.VaultListFilter) ([]
 		countQuery = countQuery.Where("manager_id IN (?)", subQuery)
 	}
 
+	if filter.Search != "" {
+		searchTerm := "%" + strings.ToLower(filter.Search) + "%"
+		searchClause := "(LOWER(address) LIKE ? OR LOWER(CAST(metadata AS TEXT)) LIKE ?)"
+		query = query.Where(searchClause, searchTerm, searchTerm)
+		countQuery = countQuery.Where(searchClause, searchTerm, searchTerm)
+	}
+
 	var total int64
 	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -194,12 +203,19 @@ func (r *vaultRepo) List(ctx context.Context, filter domain.VaultListFilter) ([]
 		return nil, 0, err
 	}
 
+	sparklines := r.fetchBatchSparklines(db, vaultIDs)
+
 	details := make([]domain.VaultDetail, len(vaults))
 	for i, v := range vaults {
 		d := vaultToDetail(&v)
 		if c, ok := counts[v.ID]; ok {
 			d.TradeCount = c.TradeCount
 			d.PortfolioCount = c.PortfolioCount
+		}
+		if s, ok := sparklines[v.ID]; ok {
+			d.Sparkline = s
+		} else {
+			d.Sparkline = []domain.HistoryPoint{}
 		}
 		d.InvestorCount = int(d.PortfolioCount)
 		details[i] = *d
@@ -235,6 +251,84 @@ func (r *vaultRepo) fetchVaultCounts(db *gorm.DB, ids []uuid.UUID) (map[uuid.UUI
 		result[row.VaultID] = row
 	}
 	return result, nil
+}
+
+func (r *vaultRepo) fetchBatchSparklines(db *gorm.DB, ids []uuid.UUID) map[uuid.UUID][]domain.HistoryPoint {
+	result := make(map[uuid.UUID][]domain.HistoryPoint, len(ids))
+	if len(ids) == 0 {
+		return result
+	}
+	for _, id := range ids {
+		result[id] = []domain.HistoryPoint{}
+	}
+
+	to := time.Now().UTC()
+	from := to.AddDate(0, 0, -30)
+
+	type metricRow struct {
+		VaultID string          `gorm:"column:vault_id"`
+		Bucket  interface{}     `gorm:"column:bucket"`
+		Val     decimal.Decimal `gorm:"column:val"`
+	}
+
+	if db.Migrator().HasTable("vault_metrics") {
+		var rows []metricRow
+		bucketSQL := "DATE_TRUNC('day', timestamp)"
+		if db.Dialector != nil && db.Dialector.Name() == "sqlite" {
+			bucketSQL = "DATE(timestamp)"
+		}
+		err := db.Table("vault_metrics").
+			Select(fmt.Sprintf("vault_id, %s AS bucket, AVG(value) AS val", bucketSQL)).
+			Where("metric = ? AND timestamp >= ? AND timestamp <= ? AND vault_id IN ?", "tvl", from, to, ids).
+			Group("vault_id, bucket").Order("bucket ASC").Scan(&rows).Error
+		if err == nil && len(rows) > 0 {
+			for _, row := range rows {
+				if uid, parseErr := uuid.Parse(row.VaultID); parseErr == nil {
+					ts, err := parseHistoryBucketTime(row.Bucket)
+					if err == nil {
+						result[uid] = append(result[uid], domain.HistoryPoint{
+							Date:  ts.UTC().Format(time.RFC3339),
+							Value: row.Val,
+						})
+					}
+				}
+			}
+			return result
+		}
+	}
+
+	priceTable := ""
+	if db.Migrator().HasTable("price_histories") {
+		priceTable = "price_histories"
+	} else if db.Migrator().HasTable("price_history") {
+		priceTable = "price_history"
+	}
+	if priceTable != "" {
+		var rows []metricRow
+		bucketSQL := "DATE_TRUNC('day', fetched_at)"
+		if db.Dialector != nil && db.Dialector.Name() == "sqlite" {
+			bucketSQL = "DATE(fetched_at)"
+		}
+		err := db.Table(priceTable).
+			Select(fmt.Sprintf("vault_id, %s AS bucket, AVG(price) AS val", bucketSQL)).
+			Where("fetched_at >= ? AND fetched_at <= ? AND vault_id IN ?", from, to, ids).
+			Group("vault_id, bucket").Order("bucket ASC").Scan(&rows).Error
+		if err == nil && len(rows) > 0 {
+			for _, row := range rows {
+				if uid, parseErr := uuid.Parse(row.VaultID); parseErr == nil {
+					ts, err := parseHistoryBucketTime(row.Bucket)
+					if err == nil {
+						result[uid] = append(result[uid], domain.HistoryPoint{
+							Date:  ts.UTC().Format(time.RFC3339),
+							Value: row.Val,
+						})
+					}
+				}
+			}
+		}
+	}
+
+	return result
 }
 
 func (r *vaultRepo) UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error {

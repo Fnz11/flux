@@ -19,6 +19,10 @@ const baseVault = {
   performance_fee_bps: 1000,
   management_fee_bps: 200,
   tvl: 50000,
+  sparkline: [
+    { date: '2026-01-01', value: 10 },
+    { date: '2026-01-02', value: 12 },
+  ],
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-02T00:00:00Z',
 }
@@ -47,7 +51,15 @@ export const handlers = [
   http.get('*/api/v1/vaults', ({ request }) => {
     const url = new URL(request.url)
     const status = url.searchParams.get('status')
+    const search = url.searchParams.get('search')
     if (status && status !== 'All' && status.toLowerCase() !== 'active') {
+      return HttpResponse.json<ApiVaultListResponse>({ vaults: [], total: 0 })
+    }
+    if (
+      search &&
+      !'Alpha Vault'.toLowerCase().includes(search.toLowerCase()) &&
+      !baseVault.address.toLowerCase().includes(search.toLowerCase())
+    ) {
       return HttpResponse.json<ApiVaultListResponse>({ vaults: [], total: 0 })
     }
     return HttpResponse.json<ApiVaultListResponse>({

@@ -43,6 +43,7 @@ func (h *VaultHandler) SetCache(c cache.Cache) {
 func (h *VaultHandler) ListVaults(c *gin.Context) {
 	status := c.Query("status")
 	managerAddress := c.Query("manager_address")
+	search := c.Query("search")
 	sortBy := c.Query("sort_by")
 	sortOrder := c.Query("sort_order")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -61,6 +62,7 @@ func (h *VaultHandler) ListVaults(c *gin.Context) {
 	filter := domain.VaultListFilter{
 		Status:         status,
 		ManagerAddress: managerAddress,
+		Search:         search,
 		SortBy:         sortBy,
 		SortOrder:      sortOrder,
 		Page:           page,
@@ -345,6 +347,7 @@ func vaultDetailToResponse(d *domain.VaultDetail) models.VaultResponse {
 		VaultType:         d.VaultType,
 		InvestorCount:     d.InvestorCount,
 		TVL:               d.TVL,
+		Sparkline:         d.Sparkline,
 		CreatedAt:         d.CreatedAt,
 		UpdatedAt:         d.UpdatedAt,
 	}

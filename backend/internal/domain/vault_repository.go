@@ -18,6 +18,7 @@ type VaultBalance struct {
 type VaultListFilter struct {
 	Status         string
 	ManagerAddress string
+	Search         string
 	SortBy         string
 	SortOrder      string
 	Page           int
@@ -51,6 +52,7 @@ type VaultDetail struct {
 	TVL               decimal.Decimal
 	TradeCount        int64
 	PortfolioCount    int64
+	Sparkline         []HistoryPoint
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }

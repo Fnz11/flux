@@ -7,7 +7,7 @@ import type {
 
 export function mapApiVaultToVault(raw: any): Vault {
   if (!raw) return {} as Vault
-  return {
+  const vault: Vault = {
     id: raw.id ?? '',
     address: raw.address ?? '',
     managerId: raw.managerId ?? raw.manager_id ?? '',
@@ -28,6 +28,10 @@ export function mapApiVaultToVault(raw: any): Vault {
     lockupPeriod: typeof raw.lockup_period === 'number' ? raw.lockup_period : typeof raw.lockupPeriod === 'number' ? raw.lockupPeriod : 7,
     investorCount: typeof raw.investor_count === 'number' ? raw.investor_count : typeof raw.investorCount === 'number' ? raw.investorCount : (raw.investors ?? 0),
   }
+  if (Array.isArray(raw.sparkline)) {
+    vault.sparkline = raw.sparkline.map((p: any) => (typeof p === 'number' ? p : Number(p?.value ?? p)))
+  }
+  return vault
 }
 
 export function mapApiPortfolioToPortfolio(raw: any): PortfolioPosition {

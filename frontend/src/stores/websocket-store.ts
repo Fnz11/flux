@@ -8,11 +8,13 @@ interface WebSocketState {
   lastMessage: WSMessage | null
   reconnectAttempts: number
   subscriptions: string[]
+  wallet: string | null
 }
 
 interface WebSocketActions {
   connect: (url: string) => void
   disconnect: () => void
+  authenticate: (wallet: string | null) => void
   subscribe: (channel: string) => void
   unsubscribe: (channel: string) => void
   onMessage: (handler: MessageHandler) => () => void
@@ -28,6 +30,7 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
   lastMessage: null,
   reconnectAttempts: 0,
   subscriptions: [],
+  wallet: null,
   ws: null,
   handlers: new Set(),
 
@@ -39,7 +42,10 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
 
     socket.onopen = () => {
       set({ isConnected: true, reconnectAttempts: 0 })
-      const { subscriptions } = get()
+      const { wallet, subscriptions } = get()
+      if (wallet) {
+        socket.send(JSON.stringify({ type: 'auth', wallet }))
+      }
       subscriptions.forEach((channel) => {
         socket.send(JSON.stringify({ type: 'subscribe', channel }))
       })
@@ -76,6 +82,14 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
     const { ws } = get()
     ws?.close()
     set({ ws: null, isConnected: false, subscriptions: [] })
+  },
+
+  authenticate: (wallet) => {
+    set({ wallet })
+    const { ws } = get()
+    if (wallet && ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'auth', wallet }))
+    }
   },
 
   subscribe: (channel) =>

@@ -4,15 +4,29 @@ import type { Vault } from '@/types'
 
 export interface GetVaultsParams {
   status?: string
+  search?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   managerAddress?: string
+  page?: number
+  limit?: number
 }
 
-export async function getVaults(params?: GetVaultsParams): Promise<Vault[]> {
+export interface PaginatedVaults {
+  vaults: Vault[]
+  total: number
+  page: number
+  limit: number
+  hasMore: boolean
+}
+
+export async function getPaginatedVaults(params?: GetVaultsParams): Promise<PaginatedVaults> {
   const queryParams = new URLSearchParams()
   if (params?.status && params.status !== 'All') {
     queryParams.set('status', params.status)
+  }
+  if (params?.search) {
+    queryParams.set('search', params.search)
   }
   if (params?.sortBy) {
     queryParams.set('sort_by', params.sortBy)
@@ -23,23 +37,56 @@ export async function getVaults(params?: GetVaultsParams): Promise<Vault[]> {
   if (params?.managerAddress) {
     queryParams.set('manager_address', params.managerAddress)
   }
+  if (params?.page) {
+    queryParams.set('page', params.page.toString())
+  }
+  if (params?.limit) {
+    queryParams.set('limit', params.limit.toString())
+  }
 
   const queryString = queryParams.toString()
   const url = `/vaults${queryString ? `?${queryString}` : ''}`
   const res = await api.get<any>(url)
 
-  let vaults: any[] = []
+  let rawVaults: any[] = []
+  let total = 0
+  const page = params?.page ?? 1
+  const limit = params?.limit ?? 20
+
   if (Array.isArray(res)) {
-    vaults = res
-  } else if (Array.isArray(res?.data?.items)) {
-    vaults = res.data.items
-  } else if (Array.isArray(res?.data)) {
-    vaults = res.data
-  } else if (Array.isArray(res?.vaults)) {
-    vaults = res.vaults
+    rawVaults = res
+    total = res.length
+  } else if (res && typeof res === 'object') {
+    if (Array.isArray(res.data?.items)) {
+      rawVaults = res.data.items
+      total = res.data.total ?? rawVaults.length
+    } else if (Array.isArray(res.data)) {
+      rawVaults = res.data
+      total = res.total ?? rawVaults.length
+    } else if (Array.isArray(res.vaults)) {
+      rawVaults = res.vaults
+      total = res.total ?? rawVaults.length
+    } else if (Array.isArray(res.items)) {
+      rawVaults = res.items
+      total = res.total ?? rawVaults.length
+    }
   }
 
-  return vaults.map(mapApiVaultToVault)
+  const vaults = rawVaults.map(mapApiVaultToVault)
+  const hasMore = vaults.length === limit && page * limit < total
+
+  return {
+    vaults,
+    total,
+    page,
+    limit,
+    hasMore,
+  }
+}
+
+export async function getVaults(params?: GetVaultsParams): Promise<Vault[]> {
+  const result = await getPaginatedVaults(params)
+  return result.vaults
 }
 
 export async function getVault(id: string): Promise<Vault> {

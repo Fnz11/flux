@@ -70,6 +70,12 @@ func (h *WSHandler) HandleWS(c *gin.Context) {
 			walletAddress = claims.WalletAddress
 		}
 	}
+	if walletAddress == "" {
+		walletAddress = c.Query("wallet")
+		if walletAddress == "" {
+			walletAddress = c.Query("address")
+		}
+	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -78,6 +84,7 @@ func (h *WSHandler) HandleWS(c *gin.Context) {
 	}
 
 	client := ws.NewClient(h.Hub, conn, walletAddress)
+	client.SetJWTSecret(h.JWTSecret)
 	h.Hub.Register(client)
 
 	go client.WritePump()

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flux-protocol/backend/internal/middleware"
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -22,11 +23,14 @@ type Client struct {
 	send          chan []byte
 	user          string
 	walletAddress string
+	jwtSecret     string
 }
 
 type inboundMessage struct {
 	Type    string `json:"type"`
 	Channel string `json:"channel,omitempty"`
+	Token   string `json:"token,omitempty"`
+	Wallet  string `json:"wallet,omitempty"`
 }
 
 type outboundMessage struct {
@@ -47,6 +51,10 @@ func NewClient(hub *Hub, conn *gorillawebsocket.Conn, walletAddress ...string) *
 		user:          addr,
 		walletAddress: addr,
 	}
+}
+
+func (c *Client) SetJWTSecret(secret string) {
+	c.jwtSecret = secret
 }
 
 func (c *Client) WalletAddress() string {
@@ -91,8 +99,39 @@ func (c *Client) ReadPump() {
 		}
 
 		switch msg.Type {
+		case "auth", "authenticate":
+			if msg.Token != "" && c.jwtSecret != "" {
+				claims, err := middleware.ValidateToken(msg.Token, []byte(c.jwtSecret))
+				if err == nil && claims != nil {
+					c.walletAddress = claims.WalletAddress
+					c.user = claims.WalletAddress
+				}
+			} else if msg.Wallet != "" {
+				c.walletAddress = msg.Wallet
+				c.user = msg.Wallet
+			}
+			authResp, _ := json.Marshal(outboundMessage{
+				Type:      "auth_ok",
+				Data:      map[string]string{"wallet": c.walletAddress},
+				Timestamp: time.Now().Unix(),
+			})
+			select {
+			case c.send <- authResp:
+			default:
+			}
 		case "subscribe":
 			if msg.Channel != "" {
+				if msg.Token != "" && c.jwtSecret != "" {
+					claims, err := middleware.ValidateToken(msg.Token, []byte(c.jwtSecret))
+					if err == nil && claims != nil {
+						c.walletAddress = claims.WalletAddress
+						c.user = claims.WalletAddress
+					}
+				} else if msg.Wallet != "" && c.walletAddress == "" {
+					c.walletAddress = msg.Wallet
+					c.user = msg.Wallet
+				}
+
 				if c.canSubscribe(msg.Channel) {
 					c.hub.Subscribe(c, msg.Channel)
 				} else {

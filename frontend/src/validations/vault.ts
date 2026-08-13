@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const vaultsSearchSchema = z.object({
   status: z.enum(['All', 'Fundraising', 'Active', 'Dormant']).optional(),
+  search: z.string().optional(),
   sortBy: z.enum(['displayName', 'pnl', 'created_at', 'min_raise_amount', 'investors', 'tvl']).optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 })

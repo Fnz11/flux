@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useVaultsQuery } from '@/services/hooks'
 import { VaultsTable, type SortColumn } from './_components/VaultsTable'
@@ -6,11 +7,12 @@ import { SweepButton } from '@/components/ui/SweepButton'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
-import { Layers } from 'lucide-react'
+import { Layers, Search, X, Loader2 } from 'lucide-react'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 import { generateMetadata } from '@/lib/metadata'
 import { vaultsSearchSchema } from '@/validations/vault'
 import { STATUS_TABS, type StatusTab } from '@/constants/vault'
+import type { Vault } from '@/types'
 
 export const Route = createFileRoute('/vaults/')({
   validateSearch: (search) => vaultsSearchSchema.parse(search),
@@ -30,14 +32,77 @@ function VaultsListPage() {
   const search = Route.useSearch()
 
   const currentStatus = search.status ?? 'All'
+  const currentSearch = search.search ?? ''
   const sortBy = search.sortBy
   const sortOrder = search.sortOrder
 
-  const { data: vaults = [], isLoading } = useVaultsQuery({
+  const [searchInput, setSearchInput] = useState(currentSearch)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  // Sync local searchInput if URL search param changes externally
+  useEffect(() => {
+    setSearchInput(search.search ?? '')
+  }, [search.search])
+
+  // Debounce updating search param in URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== (search.search ?? '')) {
+        navigate({
+          search: (prev) => ({
+            ...prev,
+            search: searchInput.trim() ? searchInput.trim() : undefined,
+          }),
+          replace: true,
+        })
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput, search.search, navigate])
+
+  const queryResult = useVaultsQuery({
     status: currentStatus,
+    search: search.search,
     sortBy: sortBy,
     sortOrder: sortOrder,
-  })
+  }) as any
+
+  const {
+    data: vaultsData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = queryResult
+
+  const vaults: Vault[] = useMemo(() => {
+    if (!vaultsData) return []
+    if (Array.isArray(vaultsData)) return vaultsData
+    if (Array.isArray(vaultsData.pages)) {
+      return vaultsData.pages.flatMap((page: any) => page.vaults ?? page)
+    }
+    return []
+  }, [vaultsData])
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' },
+    )
+
+    const el = loadMoreRef.current
+    if (el) observer.observe(el)
+    return () => {
+      if (el) observer.unobserve(el)
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
   const handleStatusChange = (status: (typeof STATUS_TABS)[number]) => {
     navigate({
@@ -80,6 +145,28 @@ function VaultsListPage() {
         description="Browse, filter, and manage non-custodial Solana investment vaults"
         rightContent={
           <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
+            {/* Search Input */}
+            <div className="relative flex items-center min-w-[200px] sm:w-64">
+              <Search className="absolute left-3 size-3.5 text-text-tertiary pointer-events-none" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search vaults..."
+                className="w-full h-8 pl-8 pr-7 text-xs rounded-xl bg-bg-inset border border-border-medium text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary-coral/50 transition-colors font-mono"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  className="absolute right-2.5 size-3.5 text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+
             <SegmentedControl
               options={STATUS_TABS}
               value={currentStatus as StatusTab}
@@ -99,19 +186,33 @@ function VaultsListPage() {
           <EmptyVaultsTable
             title="No vaults found"
             description={
-              currentStatus === 'All'
-                ? 'Create your first Solana investment vault to get started'
-                : `No vaults found with status "${currentStatus}"`
+              searchInput
+                ? `No vaults matching "${searchInput}"`
+                : currentStatus === 'All'
+                  ? 'Create your first Solana investment vault to get started'
+                  : `No vaults found with status "${currentStatus}"`
             }
             headers={['VAULT', 'PNL', 'CREATED', 'MIN', 'INVESTORS', 'ASSET', 'PERFORMANCE', 'ACTION']}
           />
         ) : (
-          <VaultsTable
-            vaults={vaults}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-          />
+          <div className="space-y-4">
+            <VaultsTable
+              vaults={vaults}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            />
+
+            {/* Infinite scroll sentinel and status */}
+            <div ref={loadMoreRef} className="py-2 flex items-center justify-center">
+              {isFetchingNextPage && (
+                <div className="flex items-center gap-2 text-xs text-text-tertiary font-mono">
+                  <Loader2 className="size-3.5 animate-spin text-primary-coral" />
+                  Loading more vaults...
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </SectionCard>
     </div>

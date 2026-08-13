@@ -43,6 +43,7 @@ export interface Vault {
   minRaiseAmount?: number
   lockupPeriod?: number
   investorCount?: number
+  sparkline?: number[]
 }
 
 // ── Portfolio position ──
