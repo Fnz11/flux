@@ -102,7 +102,7 @@ func Setup(hs *HandlerSet) *gin.Engine {
 				vaults.POST("/sync", withIdem(hs.Sync.SyncVault)...)
 			}
 			if hs.History != nil {
-				vaults.GET("/:id/sparkline", hs.History.GetVaultSparkline)
+				vaults.GET("/:address/sparkline", hs.History.GetVaultSparkline)
 			}
 			if hs.Trade != nil {
 				vaults.GET("/trades", hs.Trade.GetBatchTrades)

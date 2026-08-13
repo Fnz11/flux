@@ -36,8 +36,37 @@ services:
     container_name: fbyt-contracts
     ports:
       - "8899:8899" # Solana RPC port
-      - "8900:8900" # Solana PubSub port
+    security_opt:
+      - seccomp:unconfined
+    restart: on-failure:3
+
+  # ---------------------------------------------------------
+  # BACKEND API (Go)
+  # ---------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+    container_name: fbyt-backend
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-at-least-32-bytes-long-secret-key!}
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@pgbouncer:6432/${POSTGRES_DB:-fbyt}?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      SOLANA_RPC_URL: http://contracts:8899
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # ---------------------------------------------------------
   # BACKEND INFRASTRUCTURE
@@ -104,7 +133,7 @@ services:
     container_name: fbyt-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
       - ./backend/deploy/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro

@@ -4,6 +4,7 @@ package_manager = "npm"
 [features]
 resolution = true
 skip-lint = false
+validator = "legacy"
 
 [programs.devnet]
 fbyt_clone_vault = "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais"

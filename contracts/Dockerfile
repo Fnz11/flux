@@ -12,14 +12,13 @@ COPY . .
 
 # Place the committed program keypair where anchor expects it, so the built
 # binary keeps the declared program ID (FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais).
+# Ensure target/deploy directory exists before anchor build
 RUN mkdir -p target/deploy && \
     cp deploy/fbyt_clone_vault-keypair.json target/deploy/fbyt_clone_vault-keypair.json
 
-# Run build to compile the smart contracts (this creates the .so files in target/)
+# Run build to compile the smart contracts (creates target/deploy/fbyt_clone_vault.so)
 RUN anchor build
 
-# By default, run a local testnet with the contracts deployed
-# The frontend and backend can connect to this container on port 8899
 EXPOSE 8899 8900
 
-CMD ["anchor", "localnet"]
+CMD ["solana-test-validator", "--reset", "--bpf-program", "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais", "/workspace/programs/fbyt-clone-vault/target/deploy/fbyt_clone_vault.so"]
