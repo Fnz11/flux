@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js'
-import { BN } from '@coral-xyz/anchor'
+import { BN } from 'bn.js'
 import { api } from '@/lib/api'
 import { getProgram } from '@/lib/anchor'
 import {

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
-import { BN } from '@coral-xyz/anchor'
+import { BN } from 'bn.js'
 import { useTransactionStore } from '@/stores'
 import { api } from '@/lib/api'
 import { getProgram } from '@/lib/anchor'
