@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Trophy } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useLeaderboardQuery } from '@/services/hooks/useQuery/useLeaderboardQuery'
 import type { LeaderboardType } from '@/services/apis/rest-api/market.service'
@@ -100,17 +102,17 @@ export function LeaderboardWidget() {
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="grid grid-cols-12 items-center rounded-xl px-2 py-2 text-xs">
                 <div className="col-span-6 flex items-center gap-2.5 min-w-0">
-                  <div className="size-6 shrink-0 animate-pulse rounded-full bg-bg-inset" />
+                  <Skeleton className="size-6 shrink-0 rounded-full" />
                   <div className="space-y-1.5 min-w-0">
-                    <div className="h-2.5 w-24 animate-pulse rounded bg-bg-inset" />
-                    <div className="h-2 w-10 animate-pulse rounded bg-bg-inset/60" />
+                    <Skeleton className="h-2.5 w-24" />
+                    <Skeleton className="h-2 w-10" />
                   </div>
                 </div>
                 <div className="col-span-3 text-right">
-                  <div className="ml-auto h-2.5 w-14 animate-pulse rounded bg-bg-inset" />
+                  <Skeleton className="ml-auto h-2.5 w-14" />
                 </div>
                 <div className="col-span-3 text-right">
-                  <div className="ml-auto h-2.5 w-12 animate-pulse rounded bg-bg-inset" />
+                  <Skeleton className="ml-auto h-2.5 w-12" />
                 </div>
               </div>
             ))
@@ -128,13 +130,14 @@ export function LeaderboardWidget() {
                   className="grid grid-cols-12 items-center rounded-xl px-2 py-2 text-xs transition-colors hover:bg-bg-inset/60 cursor-pointer"
                 >
                   <div className="col-span-6 flex items-center gap-2.5 min-w-0">
-                    {item.icon ? (
-                      <img src={item.icon} alt={item.symbol} className="size-6 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-bg-inset text-[10px] font-bold text-text-secondary">
+                    <Avatar className="size-6 shrink-0">
+                      {item.icon ? (
+                        <AvatarImage src={item.icon} alt={item.symbol} />
+                      ) : null}
+                      <AvatarFallback className="text-[10px] bg-bg-inset text-text-secondary border-0">
                         {item.symbol.charAt(0)}
-                      </div>
-                    )}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-1">
                         <span className="font-semibold text-text-primary text-[12px] truncate">{item.name}</span>

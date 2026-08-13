@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js'
-import { BN } from 'bn.js'
+import { BN } from '@coral-xyz/anchor'
 import { api } from '@/lib/api'
 import { getProgram } from '@/lib/anchor'
 import {
@@ -134,16 +134,16 @@ export function useWithdraw() {
         ixs.push(withdrawIx)
 
         const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
-        const result = await sendTransaction(
+        const signature = await sendTransaction(
           connection,
           tx,
           wallet as any,
         )
-        await confirmTransactionHelper(connection, result.signature, result, 'confirmed')
+        await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
 
         try {
           await api.post('/trades/sync', {
-            signature: result.signature,
+            signature,
             vault_id: vaultId || vaultPubkey.toBase58(),
           })
         } catch (syncErr) {
@@ -151,7 +151,7 @@ export function useWithdraw() {
         }
 
         updateStatus(txId, 'success')
-        return result.signature
+        return signature
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Withdraw failed'
         updateStatus(txId, 'failed', message)

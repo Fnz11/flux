@@ -1,7 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
 import { ChevronDown, TrendingUp } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
-import { cn } from '@/lib/utils'
 import { useMarketStatsQuery } from '@/services/hooks/useQuery/useMarketStatsQuery'
 
 const PerformanceChartInner = lazy(() => import('./PerformanceChartInner').then(m => ({ default: m.PerformanceChartInner })))
@@ -47,33 +46,7 @@ function formatSupply(value: string): string {
   return `${n.toLocaleString('en-US')} SOL`
 }
 
-function ChangeBadge({ value }: { value: string }) {
-  const n = toNum(value)
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-bold',
-        n === null ? 'bg-bg-inset text-text-tertiary' : n >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400',
-      )}
-    >
-      {n === null ? '—' : `${n >= 0 ? '▲' : '▼'} ${Math.abs(n).toFixed(2)}%`}
-    </span>
-  )
-}
-
-function ChangeText({ value }: { value: string }) {
-  const n = toNum(value)
-  return (
-    <span
-      className={cn(
-        'text-[10px] font-medium ml-1',
-        n === null ? 'text-text-tertiary' : n >= 0 ? 'text-emerald-400' : 'text-amber-400',
-      )}
-    >
-      {n === null ? '—' : `${n >= 0 ? '▲' : '▼'} ${Math.abs(n).toFixed(2)}%`}
-    </span>
-  )
-}
+import { ChangeBadge, ChangeText } from './ChangeIndicators'
 
 export function PerformanceChart({ data, isLoading }: PerformanceChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>('1M')

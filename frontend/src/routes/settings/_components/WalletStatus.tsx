@@ -1,5 +1,6 @@
 import { useWallet } from '@solana/wallet-adapter-react'
 import { AddressPill } from '@/components/ui/AddressPill'
+import { Badge } from '@/components/ui/badge'
 import { ShieldCheck } from 'lucide-react'
 
 export function WalletStatus() {
@@ -19,10 +20,10 @@ export function WalletStatus() {
               <AddressPill address={wallet.publicKey.toBase58()} />
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success/10 px-2.5 py-1 text-xs font-medium text-status-success border border-status-success/20">
+          <Badge variant="success" className="gap-1.5 py-1">
             <span className="size-1.5 rounded-full bg-status-success animate-pulse" />
             Connected ({wallet.wallet?.adapter.name || 'Solana'})
-          </span>
+          </Badge>
         </div>
       ) : (
         <p className="text-sm text-text-tertiary">

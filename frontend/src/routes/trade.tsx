@@ -1,5 +1,4 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { z } from 'zod'
 import { useMemo, useState, useEffect } from 'react'
 import { SwapForm } from '@/routes/trade/_components/SwapForm'
 import { VaultAssetsPanel } from '@/routes/trade/_components/VaultAssetsPanel'
@@ -10,10 +9,7 @@ import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useTradeHistory } from '@/hooks/useTradeHistory'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
 import { generateMetadata } from '@/lib/metadata'
-
-const tradeSearchSchema = z.object({
-  vaultId: z.string().optional(),
-})
+import { tradeSearchSchema } from '@/validations/trade'
 
 export const Route = createFileRoute('/trade')({
   validateSearch: (search) => tradeSearchSchema.parse(search),

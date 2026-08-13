@@ -5,9 +5,10 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableEmpty } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup } from '@/components/ui/toggle-group'
-import { VaultInvestCard, VaultInvestCardSkeleton } from '../_components/VaultInvestCard'
+import { VaultInvestCard } from '../_components/VaultInvestCard'
+import { VaultInvestCardSkeleton } from '../_components/VaultInvestCardSkeleton'
 import { VirtualizedList } from '@/components/ui/VirtualizedList'
-
+import { FOCUS_ASSETS } from '@/constants/vault'
 import { generateMetadata } from '@/lib/metadata'
 
 export const Route = createFileRoute('/invest/vaults/')({
@@ -20,8 +21,6 @@ export const Route = createFileRoute('/invest/vaults/')({
   }),
   component: VaultInvestListPage,
 })
-
-const FOCUS_ASSETS = ['All', 'SOL', 'USDC', 'BTC', 'ETH']
 
 function VaultInvestListPage() {
   const { data: vaults = [], isLoading, error: vaultsError } = useVaultsQuery()

@@ -254,7 +254,7 @@ describe('VaultAssetsPanel', () => {
     expect(screen.getByText('Alpha Vault')).toBeInTheDocument()
     expect(screen.getByText('$400')).toBeInTheDocument()
     expect(screen.getByText('75%')).toBeInTheDocument()
-    const solCard = screen.getByAltText('SOL').closest('div.relative')!
+    const solCard = screen.getByAltText('SOL').closest('div.relative') as HTMLElement
     expect(within(solCard).getByText('$300.00')).toBeInTheDocument()
   })
 })

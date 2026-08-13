@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
-import { BN } from 'bn.js'
+import { BN } from '@coral-xyz/anchor'
 import { useTransactionStore } from '@/stores'
 import { api } from '@/lib/api'
 import { getProgram } from '@/lib/anchor'
@@ -163,9 +163,10 @@ export function useExecuteTrade() {
               ixs.push(tradeIx)
 
               const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
-              const result = await sendTransaction(connection, tx, wallet)
-              signature = result.signature
-              await confirmTransactionHelper(connection, result.signature, result, 'confirmed')
+              signature = await sendTransaction(connection, tx, wallet)
+              if (signature) {
+                await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
+              }
             }
           } catch (e) {
             console.warn('Trade execution on-chain error:', e)

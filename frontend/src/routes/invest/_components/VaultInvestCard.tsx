@@ -1,17 +1,17 @@
 import { Link } from '@tanstack/react-router'
 import type { Vault } from '@/types'
-import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 interface VaultInvestCardProps {
   vault: Vault
 }
 
 export function VaultInvestCard({ vault }: VaultInvestCardProps) {
-  const statusColor = {
-    Fundraising: 'text-status-warn',
-    Active: 'text-status-success',
-    Dormant: 'text-text-muted',
-  }[vault.status]
+  const badgeVariant = {
+    Fundraising: 'warning',
+    Active: 'success',
+    Dormant: 'secondary',
+  }[vault.status] as 'warning' | 'success' | 'secondary'
 
   return (
     <div className="group rounded-xl border border-border-subtle bg-bg-elevated p-6 transition-colors hover:border-border-medium hover:bg-bg-elevated/80">
@@ -24,9 +24,9 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
             {vault.address.slice(0, 4)}...{vault.address.slice(-4)}
           </p>
         </div>
-        <span className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium bg-bg-inset', statusColor)}>
+        <Badge variant={badgeVariant} className="shrink-0">
           {vault.status}
-        </span>
+        </Badge>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
@@ -60,21 +60,4 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
   )
 }
 
-export function VaultInvestCardSkeleton() {
-  return (
-    <div className="animate-pulse rounded-xl border border-border-subtle bg-bg-elevated p-6">
-      <div className="flex items-start justify-between">
-        <div className="h-5 w-36 rounded bg-bg-inset" />
-        <div className="h-5 w-20 rounded-full bg-bg-inset" />
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="h-4 w-20 rounded bg-bg-inset" />
-        <div className="h-4 w-20 rounded bg-bg-inset" />
-      </div>
-      <div className="mt-4 flex gap-2">
-        <div className="h-10 flex-1 rounded-xl bg-bg-inset" />
-        <div className="h-10 flex-1 rounded-xl bg-bg-inset" />
-      </div>
-    </div>
-  )
-}
+export { VaultInvestCardSkeleton } from './VaultInvestCardSkeleton'

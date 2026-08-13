@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Bell, Loader2, CheckCheck, Inbox } from 'lucide-react'
+import { NotificationBadge } from './NotificationBadge'
 import { cn } from '@/lib/utils'
 import { useNotificationStore } from '@/stores/notification-store'
 
@@ -50,11 +51,7 @@ export function NotificationsPopover({ open, onToggle }: NotificationsPopoverPro
         aria-expanded={open}
       >
         <Bell className="size-4 text-text-secondary group-hover:text-primary-coral transition-colors" strokeWidth={1.75} />
-        {unread > 0 && (
-          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-gradient-to-r from-primary-coral to-primary-amber text-[10px] font-bold leading-none text-black shadow-md">
-            {unread > 9 ? '9+' : unread}
-          </span>
-        )}
+        <NotificationBadge count={unread} />
       </button>
 
       {open && (

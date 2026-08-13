@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react'
-import { PublicKey, Keypair, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
+import { PublicKey, Keypair, SystemProgram } from '@solana/web3.js'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { BN } from 'bn.js'
+import { BN } from '@coral-xyz/anchor'
 import { useTransactionStore } from '@/stores'
 import { createVault } from '@/services/apis/rest-api/vault.service'
 import { getProgram } from '@/lib/anchor'
@@ -67,7 +67,6 @@ export function useCreateVault() {
     const managementFeeBps = Math.round(data.managementFeePercent * 100)
     const minRaiseLamports = new BN(Math.round(data.minRaiseAmount * 1e9))
     const lockupPeriodSec = new BN(lockupPeriodSeconds)
-    const allowedOutputMints: PublicKey[] = []
 
     try {
       const shareTokenMintKeypair = Keypair.generate()
@@ -115,9 +114,8 @@ export function useCreateVault() {
 
         tx.partialSign(shareTokenMintKeypair)
 
-        const result = await sendTransaction(connection, tx, wallet)
-        signature = result.signature
-        await confirmTransactionHelper(connection, result.signature, result, 'confirmed')
+        signature = await sendTransaction(connection, tx, wallet)
+        await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
       }
 
       if (!signature) {

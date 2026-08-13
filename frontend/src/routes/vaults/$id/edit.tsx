@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useConfigStore } from '@/stores'
 import { useVaultDetailQuery, useUpdateVaultMetadataMutation } from '@/services/hooks'
 import { Input } from '@/components/ui/input'
@@ -17,17 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-
-const editVaultSchema = z.object({
-  displayName: z.string().min(1, 'Display name is required').max(64),
-  description: z.string().max(500).optional(),
-  focusAssets: z.array(z.string()).min(1, 'Select at least one asset'),
-  tags: z.string().optional(),
-})
-
-type EditVaultForm = z.infer<typeof editVaultSchema>
-
 import { generateMetadata } from '@/lib/metadata'
+import { editVaultSchema, type EditVaultForm } from '@/validations/vault'
 
 export const Route = createFileRoute('/vaults/$id/edit')({
   head: ({ params }) => ({

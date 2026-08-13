@@ -1,31 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useConfigStore } from '@/stores/config-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Sliders } from 'lucide-react'
-
-const tradePreferencesSchema = z.object({
-  slippageBps: z
-    .string()
-    .min(1, 'Slippage is required')
-    .refine((val) => {
-      const num = Number(val)
-      return !isNaN(num) && num >= 1 && num <= 10000
-    }, { message: 'Slippage must be between 1 and 10000 BPS' }),
-  dustThreshold: z
-    .string()
-    .min(1, 'Dust threshold is required')
-    .refine((val) => {
-      const num = Number(val)
-      return !isNaN(num) && num >= 0
-    }, { message: 'Dust threshold must be a valid non-negative number' }),
-})
-
-type TradePreferencesFormValues = z.infer<typeof tradePreferencesSchema>
+import { tradePreferencesSchema, type TradePreferencesFormValues } from '@/validations/trade'
+import { BPS_PRESETS } from '@/constants/ui'
 
 export function TradePreferences() {
   const config = useConfigStore((s) => s.config)
@@ -72,7 +54,7 @@ export function TradePreferences() {
                   <FormLabel htmlFor="slippage">Max Slippage Tolerance (BPS)</FormLabel>
                   <FormControl>
                     <div className="flex gap-2">
-                      {['10', '50', '100'].map((bps) => (
+                      {BPS_PRESETS.map((bps) => (
                         <Button
                           key={bps}
                           type="button"

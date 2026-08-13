@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useWithdraw } from '@/hooks/useWithdraw'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useVaultsQuery, usePortfolioQuery } from '@/services/hooks'
@@ -12,18 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Wallet } from 'lucide-react'
-
-const withdrawSchema = z.object({
-  shareAmount: z
-    .string()
-    .min(1, 'Share amount is required')
-    .refine((val) => {
-      const num = Number(val)
-      return !isNaN(num) && num > 0
-    }, { message: 'Amount must be greater than 0' }),
-})
-
-type WithdrawFormValues = z.infer<typeof withdrawSchema>
+import { withdrawSchema, type WithdrawFormValues } from '@/validations/invest'
 
 interface WithdrawModalProps {
   vaultId: string

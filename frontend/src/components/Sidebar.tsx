@@ -1,30 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from '@tanstack/react-router'
-import { LayoutDashboard, Wallet, LineChart, HandCoins, ArrowRightLeft, Gift, BookOpen, Medal, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAppStore } from '../stores/app-store'
 import { toastInfo } from '@/lib/toast'
 import { WalletConnectButton } from '@/components/ui/WalletConnectButton'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-const managerLinks = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/vaults', label: 'Vaults', icon: Wallet },
-  { to: '/payout', label: 'Payout', icon: HandCoins },
-  { to: '/trade', label: 'Trade', icon: ArrowRightLeft },
-] as const
-
-const investLinks = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/invest', label: 'Invest', icon: HandCoins },
-  { to: '/portfolio', label: 'Portfolio', icon: LineChart },
-] as const
-
-const campaignLinks = [
-  { to: '#', label: 'Learn & earn', icon: BookOpen },
-  { to: '#', label: 'Airdrops', icon: Gift },
-  { to: '#', label: 'Rewards', icon: Medal },
-] as const
+import { managerLinks, investLinks, campaignLinks } from '@/constants/navigation'
 
 const handleComingSoon = (label: string) => {
   toastInfo(`${label} is on its way.`)

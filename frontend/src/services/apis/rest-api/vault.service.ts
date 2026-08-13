@@ -1,6 +1,6 @@
 import { api } from '@/lib/api'
 import { mapApiVaultToVault } from '@/lib/mappers'
-import type { Vault, ApiVaultListResponse } from '@/types'
+import type { Vault } from '@/types'
 
 export interface GetVaultsParams {
   status?: string

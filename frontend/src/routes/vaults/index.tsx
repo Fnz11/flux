@@ -1,21 +1,16 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { z } from 'zod'
 import { useVaultsQuery } from '@/services/hooks'
 import { VaultsTable, type SortColumn } from './_components/VaultsTable'
 import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { SweepButton } from '@/components/ui/SweepButton'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Layers } from 'lucide-react'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
-import { cn } from '@/lib/utils'
 import { generateMetadata } from '@/lib/metadata'
-
-const vaultsSearchSchema = z.object({
-  status: z.enum(['All', 'Fundraising', 'Active', 'Dormant']).optional(),
-  sortBy: z.enum(['displayName', 'pnl', 'created_at', 'min_raise_amount', 'investors', 'tvl']).optional(),
-  sortOrder: z.enum(['asc', 'desc']).optional(),
-})
+import { vaultsSearchSchema } from '@/validations/vault'
+import { STATUS_TABS, type StatusTab } from '@/constants/vault'
 
 export const Route = createFileRoute('/vaults/')({
   validateSearch: (search) => vaultsSearchSchema.parse(search),
@@ -28,8 +23,6 @@ export const Route = createFileRoute('/vaults/')({
   }),
   component: VaultsListPage,
 })
-
-const STATUS_TABS = ['All', 'Fundraising', 'Active', 'Dormant'] as const
 
 function VaultsListPage() {
   useRouteWsChannel(['vaults'])
@@ -87,25 +80,12 @@ function VaultsListPage() {
         description="Browse, filter, and manage non-custodial Solana investment vaults"
         rightContent={
           <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
-            <div className="flex items-center space-x-1 rounded-xl bg-bg-inset p-1 overflow-x-auto max-w-full no-scrollbar shrink-0">
-              {STATUS_TABS.map((tab) => {
-                const isActive = currentStatus === tab
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => handleStatusChange(tab)}
-                    className={cn(
-                      'px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap',
-                      isActive
-                        ? 'bg-primary-coral/10 text-primary-coral border border-primary-coral/30 shadow-xs'
-                        : 'text-text-tertiary hover:text-text-primary hover:bg-bg-elevated'
-                    )}
-                  >
-                    {tab}
-                  </button>
-                )
-              })}
-            </div>
+            <SegmentedControl
+              options={STATUS_TABS}
+              value={currentStatus as StatusTab}
+              onChange={(tab) => handleStatusChange(tab as StatusTab)}
+              className="bg-bg-inset border-0 shrink-0"
+            />
 
             <Link to="/vaults/create" className="shrink-0">
               <SweepButton className="h-8 text-xs whitespace-nowrap">Create Vault</SweepButton>

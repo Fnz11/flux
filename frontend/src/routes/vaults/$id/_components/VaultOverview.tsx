@@ -37,10 +37,10 @@ export function VaultOverview({ vault }: VaultOverviewProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="AUM" value={<TokenAmount amount={vault.tvl} symbol="USD" compact />} />
-        <MetricCard label="Performance Fee" value={`${bpsToPercent(vault.performanceFeeBps)} (${vault.performanceFeeBps} BPS)`} />
-        <MetricCard label="Management Fee" value={`${bpsToPercent(vault.managementFeeBps)} (${vault.managementFeeBps} BPS)`} />
-        <MetricCard label="Lockup Period" value="N/A" />
+        <VaultOverviewMetricCard label="AUM" value={<TokenAmount amount={vault.tvl} symbol="USD" compact />} />
+        <VaultOverviewMetricCard label="Performance Fee" value={`${bpsToPercent(vault.performanceFeeBps)} (${vault.performanceFeeBps} BPS)`} />
+        <VaultOverviewMetricCard label="Management Fee" value={`${bpsToPercent(vault.managementFeeBps)} (${vault.managementFeeBps} BPS)`} />
+        <VaultOverviewMetricCard label="Lockup Period" value="N/A" />
       </div>
 
       <div className="rounded-xl border border-border-subtle bg-bg-elevated p-6">
@@ -71,11 +71,4 @@ export function VaultOverview({ vault }: VaultOverviewProps) {
   )
 }
 
-function MetricCard({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border-subtle bg-bg-elevated p-4">
-      <p className="text-xs text-text-tertiary">{label}</p>
-      <div className="mt-1">{value}</div>
-    </div>
-  )
-}
+import { VaultOverviewMetricCard } from './VaultOverviewMetricCard'

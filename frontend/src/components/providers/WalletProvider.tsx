@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react'
-import { clusterApiUrl } from '@solana/web3.js'
 
 interface Props {
   children: React.ReactNode

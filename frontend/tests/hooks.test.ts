@@ -81,6 +81,7 @@ vi.mock('../src/lib/anchor', () => ({ getProgram: mocks.getProgram }))
 vi.mock('../src/lib/transactions', () => ({
   buildTransactionWithComputeBudget: vi.fn(() => ({})),
   sendTransaction: mocks.sendTransaction,
+  confirmTransactionHelper: vi.fn(async () => ({})),
   getAssociatedTokenAddressSync: vi.fn(() => ({ toBase58: () => 'ata' })),
   createAssociatedTokenAccountInstruction: vi.fn(() => ({})),
   createSyncNativeInstruction: vi.fn(() => ({})),

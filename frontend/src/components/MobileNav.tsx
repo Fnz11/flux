@@ -5,16 +5,8 @@ import { createPortal } from 'react-dom'
 import { Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard,
   Menu,
   User,
-  Wallet,
-  LineChart,
-  HandCoins,
-  ArrowRightLeft,
-  Gift,
-  BookOpen,
-  Medal,
   LogOut,
   Copy,
   Check,
@@ -24,6 +16,12 @@ import {
   Zap,
   Search,
   SlidersHorizontal,
+  LayoutDashboard,
+  Wallet,
+  ArrowRightLeft,
+  BookOpen,
+  Gift,
+  Medal,
 } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useAppStore } from '@/stores/app-store'
@@ -34,18 +32,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SOLSCAN_CLUSTER } from '@/constants'
 
-const managerLinks = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/vaults', label: 'Vaults', icon: Wallet },
-  { to: '/payout', label: 'Payout', icon: HandCoins },
-  { to: '/trade', label: 'Trade', icon: ArrowRightLeft },
-] as const
-
-const investLinks = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/invest', label: 'Invest', icon: HandCoins },
-  { to: '/portfolio', label: 'Portfolio', icon: LineChart },
-] as const
+import { managerLinks, investLinks } from '@/constants/navigation'
 
 const campaignLinks = [
   { label: 'Learn & Earn', icon: BookOpen },

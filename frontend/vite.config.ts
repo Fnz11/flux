@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
@@ -21,7 +22,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
+        manualChunks(id: string) {
           if (id.includes('node_modules/recharts')) {
             return 'recharts'
           }
@@ -47,4 +48,4 @@ export default defineConfig({
     globals: true,
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
   },
-})
+} as any)

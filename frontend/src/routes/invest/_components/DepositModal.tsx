@@ -1,6 +1,5 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useDepositModal, TOKENS } from '../_hooks/useDepositModal'
 import { Modal } from '@/components/ui/modal'
@@ -8,18 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
-
-const depositSchema = z.object({
-  amount: z
-    .string()
-    .min(1, 'Amount is required')
-    .refine((val) => {
-      const num = Number(val)
-      return !isNaN(num) && num > 0
-    }, { message: 'Amount must be greater than 0' }),
-})
-
-type DepositFormValues = z.infer<typeof depositSchema>
+import { depositSchema, type DepositFormValues } from '@/validations/invest'
 
 interface DepositModalProps {
   vaultId: string

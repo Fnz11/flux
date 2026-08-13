@@ -2,6 +2,7 @@ import {
   ComputeBudgetProgram,
   Transaction,
   TransactionInstruction,
+  PublicKey,
   type Connection,
   type TransactionSignature,
 } from '@solana/web3.js'
@@ -37,7 +38,7 @@ export async function ensureSolBalance(
 ): Promise<void> {
   if (!publicKey) return
 
-  const rpcEndpoint = connection.rpcEndpoint.toLowerCase()
+  const rpcEndpoint = connection?.rpcEndpoint?.toLowerCase() || ''
   const isNonMainnet =
     rpcEndpoint.includes('localhost') ||
     rpcEndpoint.includes('127.0.0.1') ||
@@ -103,7 +104,7 @@ export async function sendTransaction(
   connection: Connection,
   tx: Transaction,
   signer: { publicKey?: any; signTransaction: (tx: Transaction) => Promise<Transaction> },
-): Promise<{ signature: TransactionSignature; blockhash: string; lastValidBlockHeight: number }> {
+): Promise<TransactionSignature> {
   if (signer.publicKey) {
     await ensureSolBalance(connection, signer.publicKey)
   }
@@ -111,30 +112,29 @@ export async function sendTransaction(
     tx.feePayer = signer.publicKey
   }
 
-  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed')
+  const { blockhash } = await connection.getLatestBlockhash()
   if (!tx.recentBlockhash) {
     tx.recentBlockhash = blockhash
   }
 
   // Pre-flight simulation check before asking user to sign
-  try {
-    const simRes = await connection.simulateTransaction(tx)
-    if (simRes.value.err) {
-      console.warn('Pre-flight simulation warning/error:', simRes.value.err, simRes.value.logs)
+  if (typeof connection.simulateTransaction === 'function') {
+    try {
+      const simRes = await connection.simulateTransaction(tx)
+      if (simRes.value.err) {
+        console.warn('Pre-flight simulation warning/error:', simRes.value.err, simRes.value.logs)
+      }
+    } catch (simErr) {
+      console.warn('Simulation check error:', simErr)
     }
-  } catch (simErr) {
-    console.warn('Simulation check error:', simErr)
   }
 
   const signed = await signer.signTransaction(tx)
   const rawTx = signed.serialize()
 
   try {
-    const signature = await connection.sendRawTransaction(rawTx, {
-      skipPreflight: false,
-      preflightCommitment: 'confirmed',
-    })
-    return { signature, blockhash, lastValidBlockHeight }
+    const signature = await connection.sendRawTransaction(rawTx)
+    return signature
   } catch (err: any) {
     if (err?.logs) {
       console.error('SendTransactionError logs:', err.logs)

@@ -4,6 +4,7 @@ import { usePortfolioHistoryQuery } from '@/services/hooks/useQuery/usePortfolio
 import { useWallet } from '@solana/wallet-adapter-react'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 function formatNum(num: number) {
   const absNum = Math.abs(num)
@@ -49,9 +50,9 @@ export function InvestSummary() {
             </div>
             <span>Total Invested</span>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary-coral/10 px-2.5 py-0.5 text-[10px] font-bold text-primary-coral border border-primary-coral/20">
+          <Badge variant="coral" className="text-[10px]">
             Active Capital
-          </span>
+          </Badge>
         </div>
 
         <div className="mt-4">
@@ -74,9 +75,9 @@ export function InvestSummary() {
             </div>
             <span>Portfolio Value</span>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary-gold/10 px-2.5 py-0.5 text-[10px] font-bold text-primary-gold border border-primary-gold/20">
+          <Badge variant="gold" className="text-[10px]">
             Live NAV
-          </span>
+          </Badge>
         </div>
 
         <div className="mt-4">

@@ -1,25 +1,8 @@
 import { memo, useEffect, useState } from 'react'
+import { PerformanceCustomTooltip } from './PerformanceCustomTooltip'
 
 interface PerformanceChartInnerProps {
   data: { date: string; value: number }[]
-}
-
-interface CustomTooltipProps {
-  active?: boolean
-  payload?: Array<{ value: number }>
-  label?: string
-}
-
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload?.length || payload[0]?.value === undefined) return null
-  return (
-    <div className="rounded-xl border border-border-subtle bg-bg-elevated p-3 shadow-xl">
-      <p className="text-xs text-text-muted">{label}</p>
-      <p className="text-sm font-semibold text-text-primary font-mono">
-        ${payload[0].value.toLocaleString()}
-      </p>
-    </div>
-  )
 }
 
 export const PerformanceChartInner = memo(function PerformanceChartInner({ data }: PerformanceChartInnerProps) {
@@ -66,7 +49,7 @@ export const PerformanceChartInner = memo(function PerformanceChartInner({ data 
             tickLine={false}
             tickFormatter={(v) => `$${v.toLocaleString()}`}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<PerformanceCustomTooltip />} />
           <Area
             type="monotone"
             dataKey="value"

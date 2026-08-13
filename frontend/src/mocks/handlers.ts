@@ -1,10 +1,9 @@
 import { http, HttpResponse } from 'msw'
-import {
+import type {
   ApiVaultListResponse,
   ApiPortfolioResponse,
   ApiTradeHistoryResponse,
   NotificationsResponse,
-  GlobalTransactionsResponse,
   ApiConfig,
   ApiFee,
   ApiPortfolioHistoryResponse,
@@ -15,7 +14,7 @@ const baseVault = {
   address: 'Vault11111111111111111111111111111111111111',
   manager_id: 'manager_1',
   manager_address: 'Manager11111111111111111111111111111111111',
-  status: 'Active',
+  status: 'Active' as const,
   metadata: { displayName: 'Alpha Vault', description: 'Test', focusAssets: ['SOL', 'USDC'] },
   performance_fee_bps: 1000,
   management_fee_bps: 200,
@@ -188,7 +187,7 @@ export const handlers = [
 
   // Transactions
   http.get('*/api/v1/transactions', () => {
-    return HttpResponse.json<GlobalTransactionsResponse>({
+    return HttpResponse.json({
       items: [
         {
           id: 'gtx_1',

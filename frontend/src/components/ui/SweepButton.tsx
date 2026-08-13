@@ -6,26 +6,7 @@ export interface SweepButtonProps extends React.ButtonHTMLAttributes<HTMLButtonE
   showDots?: boolean
 }
 
-const DotMatrix = () => (
-  <div className="flex flex-col gap-[2px]">
-    {[0, 1, 2, 3, 4].map((row) => (
-      <div key={row} className="flex gap-[2px]">
-        {[0, 1, 2, 3, 4].map((col) => {
-          const isActive = (row + col) % 2 === 0 || row === 2 || col === 2
-          return (
-            <span
-              key={col}
-              className={cn(
-                'h-[3px] w-[3px] rounded-full transition-colors duration-400',
-                isActive ? 'bg-black' : 'bg-black/30',
-              )}
-            />
-          )
-        })}
-      </div>
-    ))}
-  </div>
-)
+import { DotMatrix } from './DotMatrix'
 
 export const SweepButton = React.forwardRef<HTMLButtonElement, SweepButtonProps>(
   ({ className, children, icon, showDots = true, disabled, type = 'button', ...props }, ref) => {

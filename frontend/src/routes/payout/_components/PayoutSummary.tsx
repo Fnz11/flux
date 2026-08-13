@@ -1,5 +1,6 @@
 import { Percent, Sliders, Coins, ArrowUpRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 interface PayoutSummaryProps {
   totalPerf: number
@@ -22,10 +23,10 @@ export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummary
               <Percent className="size-4 text-primary-coral" />
               <span>Total Performance Fee</span>
             </div>
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+            <Badge variant="success" className="text-[10px] px-2 py-0.5 gap-0.5">
               <ArrowUpRight className="size-3" />
               +14.2%
-            </span>
+            </Badge>
           </div>
 
           <div className="mt-4 flex items-baseline">
@@ -49,10 +50,10 @@ export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummary
               <Sliders className="size-4 text-primary-amber" />
               <span>Total Management Fee</span>
             </div>
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+            <Badge variant="success" className="text-[10px] px-2 py-0.5 gap-0.5">
               <ArrowUpRight className="size-3" />
               +3.8%
-            </span>
+            </Badge>
           </div>
 
           <div className="mt-4 flex items-baseline">
