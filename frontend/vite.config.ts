@@ -19,6 +19,12 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['@coral-xyz/anchor', 'bn.js'],
+  },
+  ssr: {
+    external: ['@coral-xyz/anchor', '@coral-xyz/borsh', 'bn.js'],
+  },
   build: {
     rollupOptions: {
       output: {
