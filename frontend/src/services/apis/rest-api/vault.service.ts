@@ -26,8 +26,19 @@ export async function getVaults(params?: GetVaultsParams): Promise<Vault[]> {
 
   const queryString = queryParams.toString()
   const url = `/vaults${queryString ? `?${queryString}` : ''}`
-  const res = await api.get<ApiVaultListResponse | any[]>(url)
-  const vaults = Array.isArray(res) ? res : (res?.vaults ?? [])
+  const res = await api.get<any>(url)
+
+  let vaults: any[] = []
+  if (Array.isArray(res)) {
+    vaults = res
+  } else if (Array.isArray(res?.data?.items)) {
+    vaults = res.data.items
+  } else if (Array.isArray(res?.data)) {
+    vaults = res.data
+  } else if (Array.isArray(res?.vaults)) {
+    vaults = res.vaults
+  }
+
   return vaults.map(mapApiVaultToVault)
 }
 

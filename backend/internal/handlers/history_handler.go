@@ -29,6 +29,9 @@ func (h *HistoryHandler) GetVaultSparkline(c *gin.Context) {
 
 	vaultID := c.Param("id")
 	if vaultID == "" {
+		vaultID = c.Param("address")
+	}
+	if vaultID == "" {
 		ErrorResponse(c, http.StatusBadRequest, "vault id is required")
 		return
 	}
