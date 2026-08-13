@@ -7,6 +7,7 @@ import { getProgram } from '@/lib/anchor'
 import {
   buildTransactionWithComputeBudget,
   sendTransaction,
+  confirmTransactionHelper,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   TOKEN_PROGRAM_ID,
@@ -133,16 +134,16 @@ export function useWithdraw() {
         ixs.push(withdrawIx)
 
         const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
-        const signature = await sendTransaction(
+        const result = await sendTransaction(
           connection,
           tx,
           wallet as any,
         )
-        await connection.confirmTransaction(signature, 'confirmed')
+        await confirmTransactionHelper(connection, result.signature, result, 'confirmed')
 
         try {
           await api.post('/trades/sync', {
-            signature,
+            signature: result.signature,
             vault_id: vaultId || vaultPubkey.toBase58(),
           })
         } catch (syncErr) {
@@ -150,7 +151,7 @@ export function useWithdraw() {
         }
 
         updateStatus(txId, 'success')
-        return signature
+        return result.signature
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Withdraw failed'
         updateStatus(txId, 'failed', message)

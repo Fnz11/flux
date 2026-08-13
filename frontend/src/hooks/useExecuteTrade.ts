@@ -8,6 +8,7 @@ import { getProgram } from '@/lib/anchor'
 import {
   buildTransactionWithComputeBudget,
   sendTransaction,
+  confirmTransactionHelper,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
@@ -162,8 +163,9 @@ export function useExecuteTrade() {
               ixs.push(tradeIx)
 
               const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
-              signature = await sendTransaction(connection, tx, wallet)
-              await connection.confirmTransaction(signature, 'confirmed')
+              const result = await sendTransaction(connection, tx, wallet)
+              signature = result.signature
+              await confirmTransactionHelper(connection, result.signature, result, 'confirmed')
             }
           } catch (e) {
             console.warn('Trade execution on-chain error:', e)

@@ -569,6 +569,10 @@
               {
                 "kind": "account",
                 "path": "manager"
+              },
+              {
+                "kind": "account",
+                "path": "share_token_mint"
               }
             ]
           }

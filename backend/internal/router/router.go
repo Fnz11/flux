@@ -89,7 +89,7 @@ func Setup(hs *HandlerSet) *gin.Engine {
 		{
 			if hs.Vault != nil {
 				vaults.GET("", hs.Vault.ListVaults)
-				vaults.POST("", withIdem(hs.Vault.CreateVault)...)
+				vaults.POST("", hs.Vault.CreateVault)
 				vaults.GET("/:address", hs.Vault.GetVault)
 				vaults.GET("/:address/balances", hs.Vault.GetVaultBalances)
 				vaults.PATCH("/:address", withIdem(hs.Vault.UpdateVaultMetadata)...)

@@ -83,13 +83,19 @@ func (h *VaultHandler) ListVaults(c *gin.Context) {
 
 type CreateVaultRequest struct {
 	Address           string          `json:"address" binding:"required"`
-	ManagerAddress    string          `json:"manager_address" binding:"required"`
+	ManagerAddress    string          `json:"manager_address"`
+	AltManagerAddress string          `json:"managerAddress"`
 	Status            string          `json:"status"`
 	PerformanceFeeBps int             `json:"performance_fee_bps"`
+	AltPerfFeeBps     int             `json:"performanceFeeBps"`
 	ManagementFeeBps  int             `json:"management_fee_bps"`
+	AltMgmtFeeBps     int             `json:"managementFeeBps"`
 	MinRaiseAmount    decimal.Decimal `json:"min_raise_amount"`
+	AltMinRaiseAmount decimal.Decimal `json:"minRaiseAmount"`
 	LockupPeriod      int64           `json:"lockup_period"`
+	AltLockupPeriod   int64           `json:"lockupPeriod"`
 	VaultType         string          `json:"vault_type"`
+	AltVaultType      string          `json:"vaultType"`
 	Metadata          datatypes.JSON  `json:"metadata"`
 }
 
@@ -100,9 +106,37 @@ func (h *VaultHandler) CreateVault(c *gin.Context) {
 		return
 	}
 
+	managerAddress := req.ManagerAddress
+	if managerAddress == "" {
+		managerAddress = req.AltManagerAddress
+	}
+	perfFee := req.PerformanceFeeBps
+	if perfFee == 0 {
+		perfFee = req.AltPerfFeeBps
+	}
+	mgmtFee := req.ManagementFeeBps
+	if mgmtFee == 0 {
+		mgmtFee = req.AltMgmtFeeBps
+	}
+	minRaise := req.MinRaiseAmount
+	if minRaise.IsZero() {
+		minRaise = req.AltMinRaiseAmount
+	}
+	lockup := req.LockupPeriod
+	if lockup == 0 {
+		lockup = req.AltLockupPeriod
+	}
+	vaultType := req.VaultType
+	if vaultType == "" {
+		vaultType = req.AltVaultType
+	}
+	if vaultType == "" {
+		vaultType = "open"
+	}
+
 	var managerID string
 	if h.userRepo != nil {
-		user, err := h.userRepo.FindOrCreateByWallet(c.Request.Context(), req.ManagerAddress)
+		user, err := h.userRepo.FindOrCreateByWallet(c.Request.Context(), managerAddress)
 		if err != nil {
 			ErrorResponse(c, http.StatusInternalServerError, "Failed to find or create user")
 			return
@@ -114,21 +148,17 @@ func (h *VaultHandler) CreateVault(c *gin.Context) {
 	if status == "" {
 		status = "Fundraising"
 	}
-	vaultType := req.VaultType
-	if vaultType == "" {
-		vaultType = "open"
-	}
 
 	vaultDetail := domain.VaultDetail{
 		Address:           req.Address,
 		ManagerID:         managerID,
-		ManagerAddress:    req.ManagerAddress,
+		ManagerAddress:    managerAddress,
 		Status:            status,
 		Metadata:          req.Metadata,
-		PerformanceFeeBps: req.PerformanceFeeBps,
-		ManagementFeeBps:  req.ManagementFeeBps,
-		MinRaiseAmount:    req.MinRaiseAmount,
-		LockupPeriod:      req.LockupPeriod,
+		PerformanceFeeBps: perfFee,
+		ManagementFeeBps:  mgmtFee,
+		MinRaiseAmount:    minRaise,
+		LockupPeriod:      lockup,
 		VaultType:         vaultType,
 	}
 

@@ -17,8 +17,10 @@ RUN mkdir -p target/deploy && \
     cp deploy/fbyt_clone_vault-keypair.json target/deploy/fbyt_clone_vault-keypair.json
 
 # Run build to compile the smart contracts (creates target/deploy/fbyt_clone_vault.so)
-RUN anchor build
+RUN anchor build && \
+    mkdir -p target/deploy && \
+    cp programs/fbyt-clone-vault/target/deploy/fbyt_clone_vault.so target/deploy/fbyt_clone_vault.so
 
 EXPOSE 8899 8900
 
-CMD ["solana-test-validator", "--reset", "--bpf-program", "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais", "/workspace/programs/fbyt-clone-vault/target/deploy/fbyt_clone_vault.so"]
+CMD ["solana-test-validator", "--reset", "--bpf-program", "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais", "/workspace/target/deploy/fbyt_clone_vault.so"]

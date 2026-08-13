@@ -13,7 +13,7 @@ pub struct InitializeVault<'info> {
         init,
         payer = manager,
         space = VaultState::DISCRIMINATOR.len() + VaultState::INIT_SPACE,
-        seeds = [VAULT_SEED, manager.key().as_ref()],
+        seeds = [VAULT_SEED, manager.key().as_ref(), share_token_mint.key().as_ref()],
         bump
     )]
     pub vault: Account<'info, VaultState>,
