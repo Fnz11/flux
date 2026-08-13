@@ -12,7 +12,6 @@ import {
   createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
   TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@/lib/transactions'
 import { useTransactionStore } from '@/stores'
 
@@ -64,18 +63,22 @@ export function useDeposit() {
           throw new Error(`Invalid vault address: ${vaultAddress}`)
         }
 
+        if (!wallet.signTransaction) {
+          throw new Error('Wallet does not support transaction signing')
+        }
+
         const userPubkey = wallet.publicKey
 
         const program = await getProgram(
           {
             publicKey: userPubkey,
-            signTransaction: wallet.signTransaction as any,
-            signAllTransactions: wallet.signAllTransactions as any,
+            signTransaction: wallet.signTransaction,
+            signAllTransactions: wallet.signAllTransactions,
           },
           connection,
         )
 
-        if (!program || !(program.idl as any)?.instructions?.length) {
+        if (!program || !program.idl.instructions?.length) {
           throw new Error('Deposit program unavailable')
         }
 
@@ -88,25 +91,24 @@ export function useDeposit() {
           program.programId,
         )
 
-        const depositMintPubkey = isNative(tokenMint)
+        const [shareTokenMintPubkey] = PublicKey.findProgramAddressSync(
+          [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
+          program.programId,
+        )
+
+        const tokenMintPubkey = isNative(tokenMint)
           ? NATIVE_MINT
           : new PublicKey(tokenMint)
 
         const investorTokenAccount = getAssociatedTokenAddressSync(
-          depositMintPubkey,
+          tokenMintPubkey,
           userPubkey,
         )
 
         const vaultTokenAccount = getAssociatedTokenAddressSync(
-          depositMintPubkey,
+          tokenMintPubkey,
           vaultAuthorityPda,
           true,
-        )
-
-        // Actual share token mint PDA
-        const [shareTokenMintPubkey] = PublicKey.findProgramAddressSync(
-          [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
-          program.programId,
         )
 
         const investorShareAccount = getAssociatedTokenAddressSync(
@@ -116,22 +118,33 @@ export function useDeposit() {
 
         const ixs: TransactionInstruction[] = []
 
-        // Check and create investor ATA if missing
-        const investorAtaInfo = await connection.getAccountInfo(investorTokenAccount)
-        if (!investorAtaInfo) {
+        // If native SOL, wrap SOL into user's WSOL ATA first
+        if (isNative(tokenMint)) {
+          const wsolAtaInfo = await connection.getAccountInfo(investorTokenAccount)
+          if (!wsolAtaInfo) {
+            ixs.push(
+              createAssociatedTokenAccountInstruction(
+                userPubkey,
+                investorTokenAccount,
+                userPubkey,
+                NATIVE_MINT,
+              ),
+            )
+          }
+
           ixs.push(
-            createAssociatedTokenAccountInstruction(
-              userPubkey,
-              investorTokenAccount,
-              userPubkey,
-              depositMintPubkey,
-            ),
+            SystemProgram.transfer({
+              fromPubkey: userPubkey,
+              toPubkey: investorTokenAccount,
+              lamports,
+            }),
+            createSyncNativeInstruction(investorTokenAccount),
           )
         }
 
         // Check and create investor share ATA if missing
-        const investorShareAtaInfo = await connection.getAccountInfo(investorShareAccount)
-        if (!investorShareAtaInfo) {
+        const shareAtaInfo = await connection.getAccountInfo(investorShareAccount)
+        if (!shareAtaInfo) {
           ixs.push(
             createAssociatedTokenAccountInstruction(
               userPubkey,
@@ -142,16 +155,17 @@ export function useDeposit() {
           )
         }
 
-        // Add transfer & sync_native if native SOL
-        if (isNative(tokenMint)) {
+        // Check and create vault token ATA if missing
+        const vaultAtaInfo = await connection.getAccountInfo(vaultTokenAccount)
+        if (!vaultAtaInfo) {
           ixs.push(
-            SystemProgram.transfer({
-              fromPubkey: userPubkey,
-              toPubkey: investorTokenAccount,
-              lamports,
-            }),
+            createAssociatedTokenAccountInstruction(
+              userPubkey,
+              vaultTokenAccount,
+              vaultAuthorityPda,
+              tokenMintPubkey,
+            ),
           )
-          ixs.push(createSyncNativeInstruction(investorTokenAccount))
         }
 
         const depositIx = await program.methods
@@ -161,12 +175,11 @@ export function useDeposit() {
             vault: vaultPubkey,
             vaultAuthority: vaultAuthorityPda,
             investorTokenAccount,
+            depositMint: tokenMintPubkey,
             vaultTokenAccount,
-            depositMint: depositMintPubkey,
             shareTokenMint: shareTokenMintPubkey,
             investorShareAccount,
             tokenProgram: TOKEN_PROGRAM_ID,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
           })
@@ -178,7 +191,10 @@ export function useDeposit() {
         const signature = await sendTransaction(
           connection,
           tx,
-          wallet as any,
+          {
+            publicKey: wallet.publicKey,
+            signTransaction: wallet.signTransaction,
+          },
         )
         await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
 

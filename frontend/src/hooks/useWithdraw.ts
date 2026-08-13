@@ -56,19 +56,23 @@ export function useWithdraw() {
           throw new Error(`Invalid vault address: ${vaultAddress}`)
         }
 
+        if (!wallet.signTransaction) {
+          throw new Error('Wallet does not support transaction signing')
+        }
+
         const userPubkey = wallet.publicKey
         const shareBn = new BN(Math.round(shareAmount * 1e9))
 
         const program = await getProgram(
           {
             publicKey: userPubkey,
-            signTransaction: wallet.signTransaction as any,
-            signAllTransactions: wallet.signAllTransactions as any,
+            signTransaction: wallet.signTransaction,
+            signAllTransactions: wallet.signAllTransactions,
           },
           connection,
         )
 
-        if (!program || !(program.idl as any)?.instructions?.length) {
+        if (!program || !program.idl.instructions?.length) {
           throw new Error('Withdraw program unavailable')
         }
 
@@ -137,7 +141,10 @@ export function useWithdraw() {
         const signature = await sendTransaction(
           connection,
           tx,
-          wallet as any,
+          {
+            publicKey: wallet.publicKey,
+            signTransaction: wallet.signTransaction,
+          },
         )
         await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
 

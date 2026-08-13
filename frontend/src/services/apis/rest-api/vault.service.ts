@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import { mapApiVaultToVault } from '@/lib/mappers'
+import { mapApiVaultToVault, type RawApiVault } from '@/lib/mappers'
 import type { Vault } from '@/types'
 
 export interface GetVaultsParams {
@@ -46,9 +46,12 @@ export async function getPaginatedVaults(params?: GetVaultsParams): Promise<Pagi
 
   const queryString = queryParams.toString()
   const url = `/vaults${queryString ? `?${queryString}` : ''}`
-  const res = await api.get<any>(url)
+  const res = await api.get<
+    | RawApiVault[]
+    | { vaults?: RawApiVault[]; items?: RawApiVault[]; total?: number; data?: { items?: RawApiVault[]; total?: number } | RawApiVault[] }
+  >(url)
 
-  let rawVaults: any[] = []
+  let rawVaults: RawApiVault[] = []
   let total = 0
   const page = params?.page ?? 1
   const limit = params?.limit ?? 20
@@ -57,16 +60,18 @@ export async function getPaginatedVaults(params?: GetVaultsParams): Promise<Pagi
     rawVaults = res
     total = res.length
   } else if (res && typeof res === 'object') {
-    if (Array.isArray(res.data?.items)) {
-      rawVaults = res.data.items
-      total = res.data.total ?? rawVaults.length
-    } else if (Array.isArray(res.data)) {
-      rawVaults = res.data
-      total = res.total ?? rawVaults.length
-    } else if (Array.isArray(res.vaults)) {
+    if ('data' in res && res.data && typeof res.data === 'object') {
+      if ('items' in res.data && Array.isArray(res.data.items)) {
+        rawVaults = res.data.items
+        total = res.data.total ?? rawVaults.length
+      } else if (Array.isArray(res.data)) {
+        rawVaults = res.data
+        total = res.total ?? rawVaults.length
+      }
+    } else if ('vaults' in res && Array.isArray(res.vaults)) {
       rawVaults = res.vaults
       total = res.total ?? rawVaults.length
-    } else if (Array.isArray(res.items)) {
+    } else if ('items' in res && Array.isArray(res.items)) {
       rawVaults = res.items
       total = res.total ?? rawVaults.length
     }
@@ -90,17 +95,17 @@ export async function getVaults(params?: GetVaultsParams): Promise<Vault[]> {
 }
 
 export async function getVault(id: string): Promise<Vault> {
-  const raw = await api.get(`/vaults/${id}`)
+  const raw = await api.get<RawApiVault>(`/vaults/${id}`)
   return mapApiVaultToVault(raw)
 }
 
 export async function createVault(data: Partial<Vault>): Promise<Vault> {
-  const raw = await api.post('/vaults', data)
+  const raw = await api.post<RawApiVault>('/vaults', data)
   return mapApiVaultToVault(raw)
 }
 
 export async function updateVaultMetadata(id: string, metadata: Partial<Vault['metadata']>): Promise<Vault> {
-  const raw = await api.patch(`/vaults/${id}`, metadata)
+  const raw = await api.patch<RawApiVault>(`/vaults/${id}`, metadata)
   return mapApiVaultToVault(raw)
 }
 

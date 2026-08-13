@@ -19,7 +19,7 @@ export function PageHeader({ title, subtitle, action, backTo, onBack }: PageHead
     if (onBack) {
       onBack()
     } else if (backTo) {
-      navigate({ to: backTo as any })
+      navigate({ to: backTo as never })
     }
   }
 

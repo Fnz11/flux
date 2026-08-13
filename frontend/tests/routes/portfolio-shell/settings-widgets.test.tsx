@@ -7,14 +7,18 @@ import { WalletStatus } from '@/routes/settings/_components/WalletStatus'
 const mocks = vi.hoisted(() => ({
   config: null as null | { dustThreshold: number },
   updateConfig: vi.fn(),
-  wallet: { publicKey: null as null | { toBase58: () => string }, wallet: null as any },
+  wallet: {
+    publicKey: null as null | { toBase58: () => string },
+    wallet: null as null | { adapter: { name: string } },
+  },
 }))
 
 vi.mock('@/stores/config-store', () => ({
-  useConfigStore: (selector: any) => selector({ config: mocks.config, updateConfig: mocks.updateConfig }),
+  useConfigStore: <T,>(selector: (state: { config: typeof mocks.config; updateConfig: typeof mocks.updateConfig }) => T) =>
+    selector({ config: mocks.config, updateConfig: mocks.updateConfig }),
 }))
 vi.mock('@solana/wallet-adapter-react', () => ({ useWallet: () => mocks.wallet }))
-vi.mock('@/components/ui/AddressPill', () => ({ AddressPill: ({ address }: any) => <span>{address}</span> }))
+vi.mock('@/components/ui/AddressPill', () => ({ AddressPill: ({ address }: { address: string }) => <span>{address}</span> }))
 
 describe('settings widgets', () => {
   beforeEach(() => {

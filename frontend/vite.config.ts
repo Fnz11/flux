@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineConfig, type UserConfig } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -41,11 +41,11 @@ export default defineConfig({
     }),
     viteReact(),
     tailwindcss(),
-  ].filter(Boolean),
+  ].filter(Boolean) as UserConfig['plugins'],
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     globals: true,
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
   },
-} as any)
+} as UserConfig & { test?: unknown })

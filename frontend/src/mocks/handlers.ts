@@ -74,12 +74,15 @@ export const handlers = [
     return HttpResponse.json({ ...baseVault, id: params.id as string })
   }),
   http.post('*/api/v1/vaults', async ({ request }) => {
-    const body = await request.json()
-    return HttpResponse.json({ ...baseVault, id: 'v_created', metadata: { ...baseVault.metadata, ...(body as any)?.metadata } }, { status: 201 })
+    const body = (await request.json()) as { metadata?: Partial<typeof baseVault.metadata> } | null
+    return HttpResponse.json(
+      { ...baseVault, id: 'v_created', metadata: { ...baseVault.metadata, ...(body?.metadata ?? {}) } },
+      { status: 201 },
+    )
   }),
   http.patch('*/api/v1/vaults/:id', async ({ request }) => {
-    const body = await request.json()
-    return HttpResponse.json({ ...baseVault, metadata: { ...baseVault.metadata, ...(body as any) } })
+    const body = (await request.json()) as Partial<typeof baseVault.metadata> | null
+    return HttpResponse.json({ ...baseVault, metadata: { ...baseVault.metadata, ...(body ?? {}) } })
   }),
   http.get('*/api/v1/vaults/:id/balances', () => {
     return HttpResponse.json({

@@ -1,9 +1,16 @@
 import { Buffer } from 'buffer'
 
+declare global {
+  interface Window {
+    Buffer?: typeof Buffer
+  }
+}
+
 if (typeof window !== 'undefined') {
-  ;(window as any).Buffer = (window as any).Buffer || Buffer
+  window.Buffer = window.Buffer || Buffer
 }
 
 if (typeof globalThis !== 'undefined') {
-  ;(globalThis as any).Buffer = (globalThis as any).Buffer || Buffer
+  ;(globalThis as typeof globalThis & { Buffer?: typeof Buffer }).Buffer =
+    (globalThis as typeof globalThis & { Buffer?: typeof Buffer }).Buffer || Buffer
 }

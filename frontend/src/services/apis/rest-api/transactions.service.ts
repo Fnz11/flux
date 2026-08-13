@@ -3,6 +3,7 @@ import { api } from '@/lib/api'
 export type GlobalTransactionAction = 'deposit' | 'withdraw' | 'swap'
 
 export interface GlobalTransactionParams {
+  [key: string]: unknown
   page?: number
   limit?: number
   type?: string

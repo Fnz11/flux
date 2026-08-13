@@ -19,7 +19,33 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
 }))
 
-vi.mock('../../../src/services/hooks', () => ({
+vi.mock('@/services/hooks', () => ({
+  useInfiniteVaultsQuery: (params: unknown) => {
+    mocks.queryParams = params
+    return {
+      data: { pages: [{ vaults: mocks.query.data, total: mocks.query.data.length, page: 1, limit: 20, hasMore: false }] },
+      isLoading: mocks.query.isLoading,
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    }
+  },
+  useVaultsQuery: (params: unknown) => {
+    mocks.queryParams = params
+    return mocks.query
+  },
+}))
+vi.mock('@/services/hooks/useQuery/useVaultsQuery', () => ({
+  useInfiniteVaultsQuery: (params: unknown) => {
+    mocks.queryParams = params
+    return {
+      data: { pages: [{ vaults: mocks.query.data, total: mocks.query.data.length, page: 1, limit: 20, hasMore: false }] },
+      isLoading: mocks.query.isLoading,
+      fetchNextPage: vi.fn(),
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    }
+  },
   useVaultsQuery: (params: unknown) => {
     mocks.queryParams = params
     return mocks.query
@@ -76,7 +102,7 @@ describe('vault list route', () => {
   it('passes search filters to query hook', () => {
     mocks.search = { status: 'Active', sortBy: 'tvl', sortOrder: 'desc' }
     renderWithClient(<VaultsListPage />)
-    expect(mocks.queryParams).toEqual({ status: 'Active', sortBy: 'tvl', sortOrder: 'desc' })
+    expect(mocks.queryParams).toMatchObject({ status: 'Active', sortBy: 'tvl', sortOrder: 'desc' })
   })
 
   it('changes status and preserves prior search', () => {

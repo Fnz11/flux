@@ -29,8 +29,9 @@ export function VaultTradesTab({ vaultId }: VaultTradesTabProps) {
 
     const unsub = onMessage((msg) => {
       if ((msg.type as string) === 'trade_confirmed' || msg.type === 'TRADE_EXECUTED') {
-        const data = (msg as unknown as { data: WsTradeConfirmedData }).data
-        if (data.vault_id === vaultId) {
+        const msgObj = msg as unknown as { data?: WsTradeConfirmedData; vault_id?: string; vaultId?: string }
+        const data = msgObj?.data ?? msgObj
+        if (data?.vault_id === vaultId || (data as { vaultId?: string })?.vaultId === vaultId) {
           tradeService.getHistory(vaultId).then((res) => setTrades(res.trades))
         }
       }

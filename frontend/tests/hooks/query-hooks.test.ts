@@ -4,12 +4,12 @@ import { useFees } from '../../src/hooks/useFees'
 import { useTradeHistory } from '../../src/hooks/useTradeHistory'
 
 const mocks = vi.hoisted(() => ({
-  queryResults: [] as any[],
-  capturedQueries: [] as any[],
+  queryResults: [] as unknown[],
+  capturedQueries: [] as Array<{ queryKey?: unknown[]; enabled?: boolean }>,
 }))
 
 vi.mock('@tanstack/react-query', () => ({
-  useQueries: ({ queries }: any) => {
+  useQueries: ({ queries }: { queries: Array<{ queryKey?: unknown[]; enabled?: boolean }> }) => {
     mocks.capturedQueries = queries
     return mocks.queryResults
   },

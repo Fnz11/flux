@@ -3,9 +3,98 @@ import type {
   PortfolioPosition,
   AppConfig,
   Transaction,
+  VaultStatus,
+  TradeType,
 } from '@/types'
 
-export function mapApiVaultToVault(raw: any): Vault {
+export interface RawApiVault {
+  id?: string
+  address?: string
+  managerId?: string
+  manager_id?: string
+  managerAddress?: string
+  manager_address?: string
+  status?: VaultStatus
+  metadata?: {
+    displayName?: string
+    display_name?: string
+    description?: string
+    focusAssets?: string[]
+    focus_assets?: string[]
+  } | null
+  performanceFeeBps?: number
+  performance_fee_bps?: number
+  managementFeeBps?: number
+  management_fee_bps?: number
+  tvl?: number | string
+  createdAt?: string
+  created_at?: string
+  updatedAt?: string
+  updated_at?: string
+  pnl?: number
+  pnl_percent?: number
+  pnlPercent?: number
+  min_raise_amount?: number
+  minRaiseAmount?: number
+  lockup_period?: number
+  lockupPeriod?: number
+  investors?: number
+  investor_count?: number
+  investorCount?: number
+  sparkline?: Array<number | { value?: number; date?: string }>
+}
+
+export interface RawApiPortfolioPosition {
+  id?: string
+  vaultId?: string
+  vault_id?: string
+  vaultAddress?: string
+  vault_address?: string
+  vaultName?: string
+  vault_name?: string
+  sharesOwned?: number
+  shares_owned?: number
+  totalInvested?: number
+  total_invested_value?: number
+  averageEntryPrice?: number
+  average_entry_price?: number
+  currentValue?: number
+  current_value?: number
+  pnl?: number
+  pnlPercent?: number
+  pnl_percent?: number
+}
+
+export interface RawApiConfig {
+  dustThreshold?: number
+  dust_threshold?: number
+  focusAssetsWhitelist?: string[]
+  focus_assets_whitelist?: string[]
+  minRaiseAmount?: number
+  min_raise_amount?: number
+  lockupPeriod?: number
+  lockup_period?: number
+}
+
+export interface RawApiTrade {
+  id?: string
+  transaction_signature?: string | null
+  signature?: string | null
+  vault_id?: string | null
+  vaultId?: string | null
+  executed_at?: string | number | null
+  trade_type?: TradeType
+  input_token?: string
+  inputToken?: string
+  output_token?: string
+  outputToken?: string
+  amount_in?: number
+  amountIn?: number
+  amount_out?: number
+  amountOut?: number
+}
+
+export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
   if (!raw) return {} as Vault
   const vault: Vault = {
     id: raw.id ?? '',
@@ -29,12 +118,12 @@ export function mapApiVaultToVault(raw: any): Vault {
     investorCount: typeof raw.investor_count === 'number' ? raw.investor_count : typeof raw.investorCount === 'number' ? raw.investorCount : (raw.investors ?? 0),
   }
   if (Array.isArray(raw.sparkline)) {
-    vault.sparkline = raw.sparkline.map((p: any) => (typeof p === 'number' ? p : Number(p?.value ?? p)))
+    vault.sparkline = raw.sparkline.map((p) => (typeof p === 'number' ? p : Number(p?.value ?? p)))
   }
   return vault
 }
 
-export function mapApiPortfolioToPortfolio(raw: any): PortfolioPosition {
+export function mapApiPortfolioToPortfolio(raw: RawApiPortfolioPosition | null | undefined): PortfolioPosition {
   if (!raw) return {} as PortfolioPosition
   return {
     vaultId: raw.vaultId ?? raw.vault_id ?? '',
@@ -49,7 +138,7 @@ export function mapApiPortfolioToPortfolio(raw: any): PortfolioPosition {
   }
 }
 
-export function mapApiConfigToConfig(raw: any): AppConfig {
+export function mapApiConfigToConfig(raw: RawApiConfig | null | undefined): AppConfig {
   if (!raw) {
     return {
       dustThreshold: 0.001,
@@ -66,7 +155,18 @@ export function mapApiConfigToConfig(raw: any): AppConfig {
   }
 }
 
-export function mapApiTradeToTransaction(raw: any): Transaction {
+export function mapApiTradeToTransaction(raw: RawApiTrade | null | undefined): Transaction {
+  if (!raw) {
+    return {
+      id: '',
+      type: 'trade',
+      status: 'success',
+      signature: null,
+      vaultId: null,
+      timestamp: Date.now(),
+      errorMessage: null,
+    }
+  }
   return {
     id: raw.id ?? '',
     type: 'trade',

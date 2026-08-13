@@ -1,12 +1,34 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useVaultStore } from '../src/stores/vault-store'
 import { getVaults, getVault, updateVaultMetadata } from '../src/services/apis/rest-api/vault.service'
+import type { Vault } from '../src/types'
 
 vi.mock('../src/services/apis/rest-api/vault.service', () => ({
   getVaults: vi.fn(),
   getVault: vi.fn(),
   updateVaultMetadata: vi.fn(),
 }))
+
+function createTestVault(overrides: Partial<Vault> = {}): Vault {
+  return {
+    id: 'v_1',
+    address: 'Vault11111111111111111111111111111111111111',
+    managerAddress: 'Manager11111111111111111111111111111111111',
+    managerId: 'manager_1',
+    status: 'Active',
+    metadata: {
+      displayName: 'Test Vault',
+      description: 'Test Description',
+      focusAssets: ['SOL'],
+    },
+    performanceFeeBps: 1000,
+    managementFeeBps: 200,
+    tvl: 1000,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-02T00:00:00Z',
+    ...overrides,
+  }
+}
 
 describe('Vault Store', () => {
   beforeEach(() => {
@@ -33,7 +55,7 @@ describe('Vault Store', () => {
   })
 
   it('fetchVaults sets vaults and loading state on success', async () => {
-    const mockVaults = [{ id: 'v_1', tvl: 1000 }] as any[]
+    const mockVaults = [createTestVault({ id: 'v_1', tvl: 1000 })]
     vi.mocked(getVaults).mockResolvedValue(mockVaults)
 
     const promise = useVaultStore.getState().fetchVaults()
@@ -61,7 +83,7 @@ describe('Vault Store', () => {
   })
 
   it('fetchVaultById stores and returns the requested vault', async () => {
-    const vault = { id: 'v_1', metadata: { displayName: 'Alpha' } } as any
+    const vault = createTestVault({ id: 'v_1', metadata: { displayName: 'Alpha', description: '', focusAssets: [] } })
     vi.mocked(getVault).mockResolvedValue(vault)
 
     const result = await useVaultStore.getState().fetchVaultById('v_1')
@@ -84,8 +106,8 @@ describe('Vault Store', () => {
   })
 
   it('updateVaultMetadata updates existing vault in list and currentVault', async () => {
-    const mockVault = { id: 'v_1', metadata: { displayName: 'Old' } } as any
-    const updatedVault = { id: 'v_1', metadata: { displayName: 'New' } } as any
+    const mockVault = createTestVault({ id: 'v_1', metadata: { displayName: 'Old', description: '', focusAssets: [] } })
+    const updatedVault = createTestVault({ id: 'v_1', metadata: { displayName: 'New', description: '', focusAssets: [] } })
     
     useVaultStore.setState({ 
       vaults: [mockVault], 
@@ -101,13 +123,14 @@ describe('Vault Store', () => {
   })
 
   it('reset restores UI and request state defaults', () => {
+    const v = createTestVault({ id: 'v_1' })
     useVaultStore.setState({
       selectedVaultId: 'v_1',
       searchQuery: 'alpha',
       filterCategory: 'active',
       isCreateModalOpen: true,
-      vaults: [{ id: 'v_1' } as any],
-      currentVault: { id: 'v_1' } as any,
+      vaults: [v],
+      currentVault: v,
       isLoading: true,
       error: 'stale',
     })

@@ -41,7 +41,7 @@ client.interceptors.response.use(
 )
 
 export const api = {
-  get: <T>(url: string, params?: Record<string, any>): Promise<T> =>
+  get: <T>(url: string, params?: Record<string, unknown>): Promise<T> =>
     client.get<T>(url, { params }).then((res) => res.data),
   post: <T>(url: string, data?: unknown): Promise<T> =>
     client.post<T>(url, data).then((res) => res.data),

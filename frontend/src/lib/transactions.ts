@@ -89,7 +89,7 @@ export async function confirmTransactionHelper(
     if (res.value.err) {
       throw new Error(`Transaction failed confirmation: ${JSON.stringify(res.value.err)}`)
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     // If confirmation threw block height exceeded (e.g. user delayed in wallet popup), re-check signature status
     const recheck = await connection.getSignatureStatuses([signature])
     const recheckStatus = recheck.value[0]
@@ -103,7 +103,7 @@ export async function confirmTransactionHelper(
 export async function sendTransaction(
   connection: Connection,
   tx: Transaction,
-  signer: { publicKey?: any; signTransaction: (tx: Transaction) => Promise<Transaction> },
+  signer: { publicKey?: PublicKey | null; signTransaction: (tx: Transaction) => Promise<Transaction> },
 ): Promise<TransactionSignature> {
   if (signer.publicKey) {
     await ensureSolBalance(connection, signer.publicKey)
@@ -135,10 +135,13 @@ export async function sendTransaction(
   try {
     const signature = await connection.sendRawTransaction(rawTx)
     return signature
-  } catch (err: any) {
-    if (err?.logs) {
-      console.error('SendTransactionError logs:', err.logs)
-      err.message = `${err.message} | Simulation logs: ${JSON.stringify(err.logs)}`
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'logs' in err) {
+      const logs = (err as { logs?: unknown }).logs
+      console.error('SendTransactionError logs:', logs)
+      if (err instanceof Error) {
+        err.message = `${err.message} | Simulation logs: ${JSON.stringify(logs)}`
+      }
     }
     throw err
   }

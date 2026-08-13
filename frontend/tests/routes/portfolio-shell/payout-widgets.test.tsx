@@ -7,16 +7,32 @@ import { PayoutSummary } from '@/routes/payout/_components/PayoutSummary'
 
 vi.mock('@/components/ui/select', async () => {
   const ReactModule = await import('react')
-  const Context = ReactModule.createContext<any>(null)
+  interface SelectContextValue {
+    value?: string
+    onValueChange?: (val: string) => void
+  }
+  const Context = ReactModule.createContext<SelectContextValue>({})
   return {
-    Select: ({ value, onValueChange, children }: any) => <Context.Provider value={{ value, onValueChange }}>{children}</Context.Provider>,
+    Select: ({ value, onValueChange, children }: { value?: string; onValueChange?: (val: string) => void; children: React.ReactNode }) => (
+      <Context.Provider value={{ value, onValueChange }}>{children}</Context.Provider>
+    ),
     SelectTrigger: () => null,
     SelectValue: () => null,
-    SelectContent: ({ children }: any) => {
+    SelectContent: ({ children }: { children: React.ReactNode }) => {
       const context = ReactModule.useContext(Context)
-      return <select aria-label="vault filter" value={context.value} onChange={(event) => context.onValueChange(event.target.value)}>{children}</select>
+      return (
+        <select
+          aria-label="vault filter"
+          value={context.value}
+          onChange={(event) => context.onValueChange?.(event.target.value)}
+        >
+          {children}
+        </select>
+      )
     },
-    SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+    SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
+      <option value={value}>{children}</option>
+    ),
   }
 })
 

@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDebounce } from '../../src/hooks/useDebounce'
 import { usePortfolioPnl } from '../../src/hooks/usePortfolioPnl'
 
+import type { PortfolioPosition } from '../../src/types'
+
 const mocks = vi.hoisted(() => ({
-  portfolioData: [] as any[],
+  portfolioData: [] as PortfolioPosition[],
 }))
 
 vi.mock('../../src/services/hooks/useQuery/usePortfolioQuery', () => ({

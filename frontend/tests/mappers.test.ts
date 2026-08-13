@@ -20,7 +20,7 @@ describe('mappers', () => {
         address: 'VaultPubkey11111111111111111111111111111111',
         manager_id: 'manager_456',
         manager_address: 'ManagerPubkey1111111111111111111111111111111',
-        status: 'Active',
+        status: 'Active' as const,
         metadata: {
           display_name: 'Alpha Quant Vault',
           description: 'High frequency SOL strategy',

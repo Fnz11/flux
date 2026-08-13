@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   getLatestBlockhash: vi.fn(async () => ({ blockhash: 'blockhash' })),
   sendRawTransaction: vi.fn(async () => 'withdraw-signature'),
   confirmOnChain: vi.fn(async () => ({ value: { err: null } })),
-  signTransaction: vi.fn(async (transaction: any) => transaction),
+  signTransaction: vi.fn(async <T>(transaction: T) => transaction),
   getProgram: vi.fn(),
   sendTransaction: vi.fn(async () => 'chain-signature'),
   apiPost: vi.fn(async () => ({})),
@@ -27,7 +27,7 @@ const mocks = vi.hoisted(() => ({
 const publicKey = {
   toBase58: () => 'MockWallet111111111111111111111111111111111',
   toBuffer: () => Buffer.from('wallet'),
-  equals: (other: any) => other?.toBase58?.() === 'MockWallet111111111111111111111111111111111',
+  equals: (other: unknown) => (other as { toBase58?: () => string })?.toBase58?.() === 'MockWallet111111111111111111111111111111111',
 }
 
 const connection = {
@@ -38,7 +38,7 @@ const connection = {
 }
 
 vi.mock('../src/stores', () => ({
-  useTransactionStore: (selector: any) => selector(mocks),
+  useTransactionStore: <T>(selector: (state: typeof mocks) => T) => selector(mocks),
 }))
 
 vi.mock('@solana/wallet-adapter-react', () => ({
@@ -59,12 +59,12 @@ vi.mock('@solana/web3.js', () => {
     constructor(private key: string) {}
     toBase58() { return this.key }
     toBuffer() { return Buffer.from(this.key) }
-    equals(other: any) { return other?.toBase58?.() === this.key }
+    equals(other: unknown) { return (other as { toBase58?: () => string })?.toBase58?.() === this.key }
     static findProgramAddressSync() { return [new PublicKey('pda'), 255] }
   }
   class Transaction {
-    feePayer: any
-    recentBlockhash: any
+    feePayer: unknown
+    recentBlockhash: unknown
     add() { return this }
     serialize() { return Buffer.from('transaction') }
   }
@@ -242,7 +242,7 @@ describe('useExecuteTrade', () => {
   })
 
   it('fails when transaction submission returns no signature', async () => {
-    mocks.sendTransaction.mockResolvedValue(null as any)
+    mocks.sendTransaction.mockResolvedValue(null as unknown as string)
     const { result } = renderHook(() => useExecuteTrade())
     await expect(act(() => result.current.execute(tradeParams))).rejects.toThrow('no on-chain signature')
     expect(result.current.isLoading).toBe(false)

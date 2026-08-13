@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useVaultsQuery } from '@/services/hooks'
+import { useInfiniteVaultsQuery } from '@/services/hooks'
+import type { PaginatedVaults } from '@/services/apis/rest-api/vault.service'
 import { VaultsTable, type SortColumn } from './_components/VaultsTable'
 import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { SweepButton } from '@/components/ui/SweepButton'
@@ -60,28 +61,22 @@ function VaultsListPage() {
     return () => clearTimeout(timer)
   }, [searchInput, search.search, navigate])
 
-  const queryResult = useVaultsQuery({
-    status: currentStatus,
-    search: search.search,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
-  }) as any
-
   const {
     data: vaultsData,
     isLoading,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = queryResult
+  } = useInfiniteVaultsQuery({
+    status: currentStatus,
+    search: search.search,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+  })
 
   const vaults: Vault[] = useMemo(() => {
-    if (!vaultsData) return []
-    if (Array.isArray(vaultsData)) return vaultsData
-    if (Array.isArray(vaultsData.pages)) {
-      return vaultsData.pages.flatMap((page: any) => page.vaults ?? page)
-    }
-    return []
+    if (!vaultsData?.pages) return []
+    return vaultsData.pages.flatMap((page: PaginatedVaults) => page.vaults)
   }, [vaultsData])
 
   // IntersectionObserver for infinite scroll

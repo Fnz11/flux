@@ -66,7 +66,7 @@ export function useExecuteTrade() {
         if (wallet?.publicKey) {
           try {
             const program = await getProgram(wallet, connection)
-            if (program && (program.idl as any)?.instructions?.length) {
+            if (program && program.idl.instructions?.length) {
               if (!params.vaultId) {
                 throw new Error('Vault ID is required')
               }

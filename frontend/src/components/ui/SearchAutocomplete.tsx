@@ -60,7 +60,11 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
       e.preventDefault()
       const item = items[selectedIndex]
       if (item && results) {
-        onSelect(item as any, results.kind)
+        if (results.kind === 'pairs') {
+          onSelect(item as SearchPair, 'pairs')
+        } else {
+          onSelect(item as SearchVault, 'vaults')
+        }
       }
     }
   }

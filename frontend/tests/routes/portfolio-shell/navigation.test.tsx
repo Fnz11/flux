@@ -18,13 +18,16 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>,
+  Link: ({ children, to, ...props }: { children: React.ReactNode; to?: string; [key: string]: unknown }) => (
+    <a href={to} {...props}>{children}</a>
+  ),
   useNavigate: () => mocks.navigate,
   useLocation: () => ({ pathname: mocks.pathname }),
 }))
 vi.mock('@solana/wallet-adapter-react', () => ({ useWallet: () => mocks.wallet }))
 vi.mock('@/stores/app-store', () => ({
-  useAppStore: (selector: any) => selector({ ...mocks.app, setMode: mocks.setMode, setCurrentUser: mocks.setCurrentUser }),
+  useAppStore: <T,>(selector: (state: typeof mocks.app & { setMode: typeof mocks.setMode; setCurrentUser: typeof mocks.setCurrentUser }) => T) =>
+    selector({ ...mocks.app, setMode: mocks.setMode, setCurrentUser: mocks.setCurrentUser }),
 }))
 vi.mock('@/stores', () => ({
   usePortfolioStore: { getState: () => ({ reset: mocks.portfolioReset }) },
@@ -33,10 +36,14 @@ vi.mock('@/stores', () => ({
 vi.mock('@/lib/toast', () => ({ toastInfo: mocks.toastInfo, toastSuccess: mocks.toastSuccess }))
 vi.mock('@/components/ui/WalletConnectButton', () => ({ WalletConnectButton: () => <button>Connect Wallet</button> }))
 vi.mock('framer-motion', () => ({
-  LazyMotion: ({ children }: any) => children,
+  LazyMotion: ({ children }: { children: React.ReactNode }) => children,
   domAnimation: {},
-  AnimatePresence: ({ children }: any) => children,
-  m: new Proxy({}, { get: (_target, tag) => ({ children, whileTap: _whileTap, layout: _layout, layoutId: _layoutId, transition: _transition, initial: _initial, animate: _animate, exit: _exit, ...props }: any) => React.createElement(tag as string, props, children) }),
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
+  m: new Proxy({}, {
+    get: (_target, tag) =>
+      ({ children, whileTap: _whileTap, layout: _layout, layoutId: _layoutId, transition: _transition, initial: _initial, animate: _animate, exit: _exit, ...props }: { children?: React.ReactNode; [key: string]: unknown }) =>
+        React.createElement(tag as string, props, children),
+  }),
 }))
 
 describe('sidebar navigation', () => {

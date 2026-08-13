@@ -83,7 +83,8 @@ function defaultReply(method: string, path: string, body: unknown): Reply {
     return vault ? json(vault) : json({ error: 'Vault not found' }, 404)
   }
   if (method === 'POST' && path === '/vaults') {
-    return json({ ...vaults[0], id: 'created', metadata: { ...vaults[0].metadata, ...((body as any)?.metadata ?? {}) } }, 201)
+    const parsedBody = body as { metadata?: Record<string, unknown> } | null
+    return json({ ...vaults[0], id: 'created', metadata: { ...vaults[0].metadata, ...(parsedBody?.metadata ?? {}) } }, 201)
   }
   if (method === 'PATCH' && /\/vaults\/[^/]+\/metadata/.test(path)) {
     return json({ ...vaults[0], metadata: { ...vaults[0].metadata, ...(body as object) } })
@@ -131,7 +132,7 @@ async function fulfill(route: Route, reply: Reply) {
 
 async function installBrowserMocks(page: Page) {
   await page.addInitScript(({ walletAddress }) => {
-    const state = { accounts: [] as any[], listeners: new Set<(value: unknown) => void>() }
+    const state = { accounts: [] as readonly unknown[], listeners: new Set<(value: unknown) => void>() }
     const bytes = new Uint8Array(32)
     const account = Object.freeze({
       address: walletAddress,
@@ -142,7 +143,7 @@ async function installBrowserMocks(page: Page) {
       icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',
     })
     const emit = () => state.listeners.forEach((listener) => listener({ accounts: mockWallet.accounts }))
-    const mockWallet: any = {
+    const mockWallet = {
       version: '1.0.0',
       name: 'E2E Wallet',
       icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',
@@ -152,11 +153,11 @@ async function installBrowserMocks(page: Page) {
         'standard:events': { version: '1.0.0', on: (_event: string, listener: (value: unknown) => void) => { state.listeners.add(listener); return () => state.listeners.delete(listener) } },
         'standard:connect': { version: '1.0.0', connect: async () => { state.accounts = [account]; emit(); return { accounts: state.accounts } } },
         'standard:disconnect': { version: '1.0.0', disconnect: async () => { state.accounts = []; emit() } },
-        'solana:signTransaction': { version: '1.0.0', supportedTransactionVersions: ['legacy'], signTransaction: async (...inputs: any[]) => inputs.map((input) => ({ signedTransaction: input.transaction })) },
+        'solana:signTransaction': { version: '1.0.0', supportedTransactionVersions: ['legacy'], signTransaction: async (...inputs: Array<{ transaction: unknown }>) => inputs.map((input) => ({ signedTransaction: input.transaction })) },
       },
     }
-    const register = (api: any) => api.register(mockWallet)
-    window.addEventListener('wallet-standard:app-ready', (event: any) => register(event.detail))
+    const register = (api: { register: (wallet: unknown) => void }) => api.register(mockWallet)
+    window.addEventListener('wallet-standard:app-ready', (event: Event) => register((event as CustomEvent).detail))
     window.dispatchEvent(new CustomEvent('wallet-standard:register-wallet', { detail: register }))
 
     class FakeWebSocket extends EventTarget {
@@ -172,7 +173,8 @@ async function installBrowserMocks(page: Page) {
       onerror: ((event: Event) => void) | null = null
       constructor(public url: string) {
         super()
-        ;(window as any).__mockSockets.push(this)
+        const win = window as unknown as { __mockSockets: FakeWebSocket[] }
+        win.__mockSockets.push(this)
         queueMicrotask(() => {
           this.readyState = FakeWebSocket.OPEN
           const event = new Event('open')
@@ -193,10 +195,19 @@ async function installBrowserMocks(page: Page) {
         this.dispatchEvent(event)
       }
     }
-    ;(window as any).__mockSockets = []
-    ;(window as any).__mockWsMessage = (data: unknown) => (window as any).__mockSockets.forEach((socket: FakeWebSocket) => socket.inject(data))
-    ;(window as any).__mockWallet = mockWallet
-    ;(window as any).WebSocket = FakeWebSocket
+
+    interface MockWindowExtended {
+      __mockSockets: FakeWebSocket[]
+      __mockWsMessage: (data: unknown) => void
+      __mockWallet: typeof mockWallet
+      WebSocket: typeof FakeWebSocket
+    }
+
+    const mockWin = window as unknown as MockWindowExtended
+    mockWin.__mockSockets = []
+    mockWin.__mockWsMessage = (data: unknown) => mockWin.__mockSockets.forEach((socket: FakeWebSocket) => socket.inject(data))
+    mockWin.__mockWallet = mockWallet
+    mockWin.WebSocket = FakeWebSocket
   }, { walletAddress: WALLET_ADDRESS })
 }
 
@@ -247,8 +258,16 @@ export const test = base.extend<Fixtures>({
   },
   ws: async ({ page, api: _api }, use) => {
     await use({
-      send: (message) => page.evaluate((value) => (window as any).__mockWsMessage(value), message),
-      sent: () => page.evaluate(() => (window as any).__mockSockets.flatMap((socket: any) => socket.sent.map(JSON.parse))),
+      send: (message) =>
+        page.evaluate((value) => {
+          const win = window as unknown as { __mockWsMessage: (val: unknown) => void }
+          win.__mockWsMessage(value)
+        }, message),
+      sent: () =>
+        page.evaluate(() => {
+          const win = window as unknown as { __mockSockets: Array<{ sent: string[] }> }
+          return win.__mockSockets.flatMap((socket) => socket.sent.map((msg) => JSON.parse(msg)))
+        }),
     })
   },
 })

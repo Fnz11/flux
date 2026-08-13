@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   portfolioLoading: false,
   pnl: { totalInvested: 0, totalValue: 0, totalPnl: 0, totalPnlPercent: 0 },
   history: [] as Array<{ date: string; value: number }>,
-  activity: { data: undefined as any, isLoading: false, error: null as Error | null },
+  activity: { data: undefined as unknown, isLoading: false, error: null as Error | null },
   invalidateQueries: vi.fn(),
   subscribe: vi.fn(() => vi.fn()),
 }))
@@ -31,7 +31,9 @@ vi.mock('@/components/ui/SolscanLink', () => ({
   SolscanLink: ({ signature }: { signature: string }) => <a href={`https://solscan.io/tx/${signature}`}>{signature}</a>,
 }))
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ children, params, ...props }: any) => <a href={`/invest/vaults/${params.id}`} {...props}>{children}</a>,
+  Link: ({ children, params, ...props }: { children: ReactNode; params?: { id?: string }; [key: string]: unknown }) => (
+    <a href={`/invest/vaults/${params?.id}`} {...props}>{children}</a>
+  ),
 }))
 vi.mock('@solana/wallet-adapter-react', () => ({
   useWallet: () => ({ publicKey: { toBase58: () => 'wallet-1' }, connected: true }),
@@ -56,7 +58,8 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
 }))
 vi.mock('@/stores', () => ({
-  useWebSocketStore: (selector: any) => selector({ onMessage: mocks.subscribe }),
+  useWebSocketStore: <T,>(selector: (state: { onMessage: typeof mocks.subscribe }) => T) =>
+    selector({ onMessage: mocks.subscribe }),
 }))
 
 const vault: Vault = {

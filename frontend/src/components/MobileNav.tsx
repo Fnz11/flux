@@ -90,7 +90,7 @@ export function MobileNav() {
 
   const handleNavClick = (path: string) => {
     setDrawerType(null)
-    navigate({ to: path as any })
+    navigate({ to: path as never })
   }
 
   const handleModeSwitch = (managerMode: boolean) => {

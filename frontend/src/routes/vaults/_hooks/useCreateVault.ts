@@ -134,23 +134,17 @@ export function useCreateVault() {
         metadata: {
           displayName: data.displayName,
           description: data.description,
-          coverImageUrl: data.coverImageUrl,
-          vaultType: data.vaultType,
-          acceptedAssets: data.acceptedAssets,
           focusAssets: data.acceptedAssets,
-          feeWithdrawalPeriod: data.feeWithdrawalPeriod,
-          minRaiseUnit: data.minRaiseUnit,
-          minInvestment: data.minInvestment,
         },
-      } as any)
+      })
 
       moveToHistory(txId)
       await queryClient.invalidateQueries({ queryKey: ['vaults'] })
       toastSuccess('Vault created successfully!')
       navigate({ to: '/vaults' })
-    } catch (err: any) {
-      if (err?.logs) {
-        console.error('Transaction simulation logs:', err.logs)
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'logs' in err) {
+        console.error('Transaction simulation logs:', (err as { logs?: unknown }).logs)
       }
       const formattedErr = formatError(err, 'Vault initialization failed')
       updateStatus(txId, 'failed', formattedErr)

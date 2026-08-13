@@ -12,8 +12,8 @@ import { LeaderboardWidget } from '@/routes/portfolio/_components/LeaderboardWid
 const mocks = vi.hoisted(() => ({
   pnl: { totalValue: 12500.5, totalPnl: 250, totalPnlPercent: 2.5 },
   history: [] as Array<{ date: string; value: number }>,
-  market: { data: undefined as any, isLoading: false, isError: false },
-  leaderboard: { data: [] as any[], isLoading: false, isError: false },
+  market: { data: undefined as unknown, isLoading: false, isError: false },
+  leaderboard: { data: [] as unknown[], isLoading: false, isError: false },
   navigate: vi.fn(),
   setMode: vi.fn(),
   invalidate: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock('@solana/wallet-adapter-react', () => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ children, to, params, ...props }: any) => (
+  Link: ({ children, to, params, ...props }: { children: React.ReactNode; to?: string; params?: { id?: string }; [key: string]: unknown }) => (
     <a href={params ? `${to}/${params.id}` : to} {...props}>{children}</a>
   ),
   useNavigate: () => mocks.navigate,
@@ -47,15 +47,17 @@ vi.mock('@/services/hooks/useQuery/useLeaderboardQuery', () => ({
   useLeaderboardQuery: () => mocks.leaderboard,
 }))
 vi.mock('@/stores/app-store', () => ({
-  useAppStore: (selector: any) => selector({ setMode: mocks.setMode }),
+  useAppStore: <T,>(selector: (state: { setMode: typeof mocks.setMode }) => T) =>
+    selector({ setMode: mocks.setMode }),
 }))
 vi.mock('@/stores', () => ({
-  useWebSocketStore: (selector: any) => selector({
-    onMessage: mocks.onMessage.mockImplementation((listener: any) => {
-      mocks.wsListener = listener
-      return vi.fn()
+  useWebSocketStore: <T,>(selector: (state: { onMessage: typeof mocks.onMessage }) => T) =>
+    selector({
+      onMessage: mocks.onMessage.mockImplementation((listener: (message: { type: string }) => void) => {
+        mocks.wsListener = listener
+        return vi.fn()
+      }),
     }),
-  }),
 }))
 vi.mock('@/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -63,26 +65,30 @@ vi.mock('@/components/ui/tooltip', () => ({
 }))
 
 vi.mock('@/routes/portfolio/_components/AllocationChartInner', () => ({
-  AllocationChartInner: ({ data }: any) => <div>allocation:{data.map((item: any) => item.name).join(',')}</div>,
+  AllocationChartInner: ({ data }: { data: Array<{ name: string }> }) => <div>allocation:{data.map((item) => item.name).join(',')}</div>,
 }))
 vi.mock('@/routes/portfolio/_components/PerformanceChartInner', () => ({
-  PerformanceChartInner: ({ data }: any) => <div>points:{data.length}</div>,
+  PerformanceChartInner: ({ data }: { data: unknown[] }) => <div>points:{data.length}</div>,
 }))
 
 vi.mock('@/components/ui/select', async () => {
   const ReactModule = await import('react')
-  const Context = ReactModule.createContext<any>(null)
+  interface SelectContextValue {
+    value?: string
+    onValueChange?: (val: string) => void
+  }
+  const Context = ReactModule.createContext<SelectContextValue>({})
   return {
-    Select: ({ value, onValueChange, children }: any) => (
+    Select: ({ value, onValueChange, children }: { value?: string; onValueChange?: (val: string) => void; children: React.ReactNode }) => (
       <Context.Provider value={{ value, onValueChange }}>{children}</Context.Provider>
     ),
     SelectTrigger: () => null,
     SelectValue: () => null,
-    SelectContent: ({ children }: any) => {
+    SelectContent: ({ children }: { children: React.ReactNode }) => {
       const context = ReactModule.useContext(Context)
-      return <select aria-label="history filter" value={context.value} onChange={(event) => context.onValueChange(event.target.value)}>{children}</select>
+      return <select aria-label="history filter" value={context.value} onChange={(event) => context.onValueChange?.(event.target.value)}>{children}</select>
     },
-    SelectItem: ({ value, children }: any) => <option value={value}>{children}</option>,
+    SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => <option value={value}>{children}</option>,
   }
 })
 

@@ -34,7 +34,10 @@ vi.mock('@/services/hooks/useQuery/useVaultsQuery', () => ({
 }))
 vi.mock('@/hooks/usePythPrice', () => ({ usePythPrice: () => mocks.price }))
 vi.mock('@/hooks/useExecuteTrade', () => ({ useExecuteTrade: () => ({ execute: mocks.execute, isLoading: false }) }))
-vi.mock('@/stores', () => ({ useConfigStore: (selector: any) => selector({ config: mocks.config }) }))
+vi.mock('@/stores', () => ({
+  useConfigStore: <T,>(selector: (state: { config: typeof mocks.config }) => T) =>
+    selector({ config: mocks.config }),
+}))
 vi.mock('@/components/ui/ResponsiveDrawer', async () => {
   const React = await import('react')
   return {

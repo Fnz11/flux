@@ -43,7 +43,7 @@ export function WalletConnectButton() {
     }
   }, [address])
 
-  const handleSelectWallet = async (walletName: any) => {
+  const handleSelectWallet = async (walletName: Parameters<typeof select>[0]) => {
     try {
       select(walletName)
       setIsOpen(false)

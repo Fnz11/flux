@@ -1,10 +1,10 @@
 import { type Idl, Program } from '@coral-xyz/anchor'
-import { type Connection, type PublicKey } from '@solana/web3.js'
+import { type Connection, type PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js'
 
 export interface AnchorWalletLike {
   publicKey: PublicKey
-  signTransaction: (transaction: any) => Promise<any>
-  signAllTransactions?: (transactions: any[]) => Promise<any[]>
+  signTransaction<T extends Transaction | VersionedTransaction>(transaction: T): Promise<T>
+  signAllTransactions?<T extends Transaction | VersionedTransaction>(transactions: T[]): Promise<T[]>
 }
 
 export async function getProgram(
@@ -16,7 +16,11 @@ export async function getProgram(
       import('@/lib/idl.json'),
       import('@coral-xyz/anchor'),
     ])
-    const provider = new AnchorProvider(connection, wallet as any, { commitment: 'confirmed' })
+    const provider = new AnchorProvider(
+      connection,
+      wallet as unknown as import('@coral-xyz/anchor').Wallet,
+      { commitment: 'confirmed' },
+    )
     return new Program(idl as unknown as Idl, provider)
   } catch (err) {
     console.warn('Failed to initialize Anchor Program:', err)
