@@ -106,76 +106,75 @@ export function PortfolioPage() {
                   )
                 }
               >
-                <div className="rounded-xl border border-border-subtle/60 overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="whitespace-nowrap">ASSET / VAULT</TableHead>
-                        <TableHead className="text-right">SHARES</TableHead>
-                        <TableHead className="text-right">INVESTED</TableHead>
-                        <TableHead className="text-right">CURRENT VALUE</TableHead>
-                        <TableHead className="text-right">NET PNL</TableHead>
-                        <TableHead className="text-right">ACTION</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <TableRowSkeleton
-                          columns={6}
-                          rows={4}
-                          cellAligns={['left', 'right', 'right', 'right', 'right', 'right']}
-                          cellWidths={['w-32', 'w-16', 'w-16', 'w-20', 'w-24', 'w-6']}
-                        />
-                      ) : sortedPositions.length === 0 ? (
-                          <TableEmpty
-                            colSpan={6}
-                            title="No active positions yet"
-                            description="Deposit into a vault to start building your portfolio"
-                          />
-                        ) : (
-                          sortedPositions.map((pos) => {
-                            const symbol = pos.vaultName.split(' ')[0] || 'SOL'
-                            return (
-                              <TableRow key={pos.vaultId} className="hover:bg-bg-inset/50 transition-colors">
-                                <TableCell className="font-semibold text-text-primary">
-                                  <div className="flex items-center gap-2.5">
-                                    <TokenIcon symbol={symbol} className="size-6 shrink-0" />
-                                    <div className="flex flex-col">
-                                      <span className="text-xs font-bold text-text-primary">{pos.vaultName}</span>
-                                      <span className="text-[10px] text-text-tertiary">Active Vault</span>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-xs text-text-secondary">
-                                  {pos.sharesOwned.toFixed(2)}
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-xs text-text-secondary">
-                                  ${pos.totalInvested.toFixed(2)}
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-xs font-semibold text-text-primary">
-                                  ${pos.currentValue.toFixed(2)}
-                                </TableCell>
-                                <TableCell className="text-right font-mono text-xs font-semibold">
-                                  <span className={pos.pnl >= 0 ? 'text-status-success' : 'text-status-error'}>
-                                    {pos.pnl >= 0 ? '+' : ''}${pos.pnl.toFixed(2)} ({pos.pnlPercent.toFixed(2)}%)
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <Link
-                                    to="/invest/vaults/$id"
-                                    params={{ id: pos.vaultId }}
-                                    className="inline-flex size-6 items-center justify-center rounded-lg border border-border-medium bg-bg-inset hover:bg-bg-surface hover:border-primary-coral transition-colors text-text-primary cursor-pointer"
-                                  >
-                                    <ChevronRight className="size-3.5" />
-                                  </Link>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                </div>
+                <Table containerClassName="min-h-[480px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="whitespace-nowrap">ASSET / VAULT</TableHead>
+                      <TableHead className="text-right">SHARES</TableHead>
+                      <TableHead className="text-right">INVESTED</TableHead>
+                      <TableHead className="text-right">CURRENT VALUE</TableHead>
+                      <TableHead className="text-right">NET PNL</TableHead>
+                      <TableHead className="text-right">ACTION</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRowSkeleton
+                        columns={6}
+                        rows={6}
+                        cellAligns={['left', 'right', 'right', 'right', 'right', 'right']}
+                        cellWidths={['w-32', 'w-16', 'w-16', 'w-20', 'w-24', 'w-6']}
+                      />
+                    ) : sortedPositions.length === 0 ? (
+                      <TableEmpty
+                        colSpan={6}
+                        title="No active positions yet"
+                        description="Deposit into a vault to start building your portfolio"
+                        minHeight="min-h-[360px]"
+                      />
+                    ) : (
+                      sortedPositions.map((pos) => {
+                        const symbol = pos.vaultName.split(' ')[0] || 'SOL'
+                        return (
+                          <TableRow key={pos.vaultId} className="hover:bg-bg-inset/50 transition-colors">
+                            <TableCell className="font-semibold text-text-primary">
+                              <div className="flex items-center gap-2.5">
+                                <TokenIcon symbol={symbol} className="size-6 shrink-0" />
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold text-text-primary">{pos.vaultName}</span>
+                                  <span className="text-[10px] text-text-tertiary">Active Vault</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-xs text-text-secondary">
+                              {pos.sharesOwned.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-xs text-text-secondary">
+                              ${pos.totalInvested.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-xs font-semibold text-text-primary">
+                              ${pos.currentValue.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-xs font-semibold">
+                              <span className={pos.pnl >= 0 ? 'text-status-success' : 'text-status-error'}>
+                                {pos.pnl >= 0 ? '+' : ''}${pos.pnl.toFixed(2)} ({pos.pnlPercent.toFixed(2)}%)
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Link
+                                to="/invest/vaults/$id"
+                                params={{ id: pos.vaultId }}
+                                className="inline-flex size-6 items-center justify-center rounded-lg border border-border-medium bg-bg-inset hover:bg-bg-surface hover:border-primary-coral transition-colors text-text-primary cursor-pointer"
+                              >
+                                <ChevronRight className="size-3.5" />
+                              </Link>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })
+                    )}
+                  </TableBody>
+                </Table>
               </SectionCard>
             </div>
 

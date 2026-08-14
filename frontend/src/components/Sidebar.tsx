@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAppStore } from '../stores/app-store'
 import { toastInfo } from '@/lib/toast'
@@ -18,7 +18,6 @@ export function Sidebar() {
   const setMode = useAppStore((s) => s.setMode)
   const currentUser = useAppStore((s) => s.currentUser)
   const navigate = useNavigate()
-  const location = useLocation()
   
   const [isCollapsed, setIsCollapsed] = useState(false)
 
@@ -28,15 +27,13 @@ export function Sidebar() {
 
   const handleModeSwitch = (managerMode: boolean) => {
     setMode(managerMode)
-    if (!managerMode && location.pathname.startsWith('/trade')) {
-      navigate({ to: '/invest' })
-    }
+    navigate({ to: '/' })
   }
 
   return (
     <aside 
       className={cn(
-        "z-50 hidden md:flex flex-col border-r border-border-subtle bg-bg-surface/60 backdrop-blur-3xl overflow-y-auto transition-all duration-300 shrink-0",
+        "z-50 hidden md:flex flex-col border-r border-border-subtle/80 bg-bg-surface/60 backdrop-blur-3xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_-1px_0_0_rgba(255,255,255,0.03)] overflow-y-auto transition-all duration-300 shrink-0",
         isCollapsed ? "w-16" : "w-50"
       )}
     >
@@ -121,7 +118,7 @@ export function Sidebar() {
       </nav>
 
       {currentUser && (
-        <div className={cn("mt-auto border-t border-border-subtle", isCollapsed ? "p-1" : "p-4")}>
+        <div className={cn("mt-auto border-t border-white/10", isCollapsed ? "p-1" : "p-4")}>
           {!isCollapsed ? (
             <div>
               <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">App Mode</p>

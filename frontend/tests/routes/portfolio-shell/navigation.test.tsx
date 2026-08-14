@@ -69,13 +69,13 @@ describe('sidebar navigation', () => {
     expect(screen.getByRole('button', { name: 'Manager' })).toBeInTheDocument()
   })
 
-  it('redirects from trade when switching to investor mode', () => {
+  it('redirects to / when switching app mode', () => {
     mocks.app = { isManager: true, currentUser: 'Wallet111' }
     mocks.pathname = '/trade/advanced'
     render(<Sidebar />)
     fireEvent.click(screen.getByRole('button', { name: 'Invest' }))
     expect(mocks.setMode).toHaveBeenCalledWith(false)
-    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/invest' })
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: '/' })
   })
 
   it('collapses labels and restores them', () => {

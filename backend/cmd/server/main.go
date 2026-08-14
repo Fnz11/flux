@@ -116,6 +116,7 @@ func main() {
 
 	txIndexerWorker := jobs.NewTxIndexerWorker(db, vaultRepo, userRepo, solanaClient, eventService, logger, 5*time.Second)
 	txIndexerWorker.Start(context.Background())
+	txPrepareSvc.SetReconcileCallback(txIndexerWorker.TriggerAsyncReconcile)
 
 	mvWorker := jobs.NewMVRefreshWorker(db, logger, 0)
 	mvWorker.SetRedis(redisClient)

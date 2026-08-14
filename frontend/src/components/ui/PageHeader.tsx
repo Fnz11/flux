@@ -24,7 +24,7 @@ export function PageHeader({ title, subtitle, action, backTo, onBack }: PageHead
   }
 
   return (
-    <div className="relative md:sticky md:top-0 z-10 md:z-30 flex flex-col items-stretch justify-between gap-3 md:flex-row md:items-center bg-transparent md:bg-bg-void/30 md:backdrop-blur-2xl border-b-0 md:border-b border-border-subtle/30 py-1 md:py-2 mx-0 px-0 md:-mx-6 md:px-4 lg:-mx-8 mt-0 md:-mt-6 mb-3 md:mb-5">
+    <div className="relative md:sticky md:top-0 z-10 md:z-30 flex flex-col items-stretch justify-between gap-3 md:flex-row md:items-center bg-transparent md:bg-bg-void/40 md:backdrop-blur-2xl border-b-0 md:border-b border-border-subtle/60 md:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_24px_rgba(0,0,0,0.3)] py-1 md:py-2 mx-0 px-0 md:-mx-6 md:px-4 lg:-mx-8 mt-0 md:-mt-6 mb-3 md:mb-5">
       <div className="flex items-center gap-3">
         {(backTo || onBack) && (
           <Button

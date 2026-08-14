@@ -6,6 +6,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmp
 import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { cn } from '@/lib/utils'
+import { formatDateTime, formatNumber } from '@/lib/format'
 import { useWebSocketStore } from '@/stores'
 
 interface RecentActivityProps {
@@ -66,7 +67,7 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
       return (
         <TableRow key={item.id}>
           <TableCell className="whitespace-nowrap text-text-tertiary">
-            {new Date(item.executedAt).toLocaleString('en-US', { timeZone: 'UTC' })}
+            {formatDateTime(item.executedAt, { utc: true })}
           </TableCell>
           <TableCell>
             <span
@@ -80,7 +81,7 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
           </TableCell>
           <TableCell className="font-medium">{item.vaultName}</TableCell>
           <TableCell className="whitespace-nowrap text-right font-mono">
-            ${item.amount.toLocaleString()} {item.symbol}
+            ${formatNumber(item.amount)} {item.symbol}
           </TableCell>
           <TableCell className="text-right">
             <SolscanLink signature={item.transactionSignature} />
@@ -91,19 +92,17 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border-subtle/60 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Timestamp</TableHead>
-            <TableHead>Action</TableHead>
-            <TableHead>Vault</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="text-right">Tx</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>{content}</TableBody>
-      </Table>
-    </div>
+    <Table containerClassName="min-h-[380px]">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Timestamp</TableHead>
+          <TableHead>Action</TableHead>
+          <TableHead>Vault</TableHead>
+          <TableHead className="text-right">Amount</TableHead>
+          <TableHead className="text-right">Tx</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>{content}</TableBody>
+    </Table>
   )
 }

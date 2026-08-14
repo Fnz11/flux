@@ -1,18 +1,22 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useMemo } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useInfiniteVaultsQuery } from '@/services/hooks'
 import type { PaginatedVaults } from '@/services/apis/rest-api/vault.service'
 import { VaultsTable, type SortColumn } from './_components/VaultsTable'
 import { VaultTableHeader } from './_components/VaultTableHeader'
-import { Table, TableBody } from '@/components/ui/table'
+import { Table, TableBody, TableEmpty } from '@/components/ui/table'
 import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
-import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { SweepButton } from '@/components/ui/SweepButton'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
+import { WalletPrompt } from '@/components/ui/WalletPrompt'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Layers, Search, X, Loader2 } from 'lucide-react'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { useDebouncedSearch } from '@/hooks/useDebouncedSearch'
+import { useTableSort } from '@/hooks/useTableSort'
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 import { generateMetadata } from '@/lib/metadata'
 import { vaultsSearchSchema } from '@/validations/vault'
 import { STATUS_TABS, type StatusTab } from '@/constants/vault'
@@ -32,37 +36,37 @@ export const Route = createFileRoute('/vaults/')({
 
 function VaultsListPage() {
   useRouteWsChannel(['vaults'])
+  const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
   const navigate = useNavigate({ from: Route.fullPath })
   const search = Route.useSearch()
 
   const currentStatus = search.status ?? 'All'
-  const currentSearch = search.search ?? ''
-  const sortBy = search.sortBy
-  const sortOrder = search.sortOrder
 
-  const [searchInput, setSearchInput] = useState(currentSearch)
-  const loadMoreRef = useRef<HTMLDivElement>(null)
+  const { searchInput, setSearchInput } = useDebouncedSearch({
+    value: search.search ?? '',
+    onChange: (val) => {
+      navigate({
+        search: (prev) => ({ ...prev, search: val }),
+        replace: true,
+      })
+    },
+  })
 
-  // Sync local searchInput if URL search param changes externally
-  useEffect(() => {
-    setSearchInput(search.search ?? '')
-  }, [search.search])
-
-  // Debounce updating search param in URL
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchInput !== (search.search ?? '')) {
-        navigate({
-          search: (prev) => ({
-            ...prev,
-            search: searchInput.trim() ? searchInput.trim() : undefined,
-          }),
-          replace: true,
-        })
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchInput, search.search, navigate])
+  const { sortBy, sortOrder, handleSort } = useTableSort<SortColumn>({
+    sortBy: search.sortBy,
+    sortOrder: search.sortOrder,
+    onSortChange: (nextSortBy, nextSortOrder) => {
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          sortBy: nextSortBy,
+          sortOrder: nextSortOrder,
+        }),
+        replace: true,
+      })
+    },
+  })
 
   const {
     data: vaultsData,
@@ -70,37 +74,30 @@ function VaultsListPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteVaultsQuery({
-    status: currentStatus,
-    search: search.search,
-    sortBy: sortBy,
-    sortOrder: sortOrder,
+  } = useInfiniteVaultsQuery(
+    {
+      status: currentStatus,
+      search: search.search,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+      managerAddress: walletAddress || undefined,
+    },
+    20
+  )
+
+  const { loadMoreRef } = useInfiniteScroll({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   })
 
   const vaults: Vault[] = useMemo(() => {
-    if (!vaultsData?.pages) return []
-    return vaultsData.pages.flatMap((page: PaginatedVaults) => page.vaults)
-  }, [vaultsData])
-
-  // IntersectionObserver for infinite scroll
-  useEffect(() => {
-    if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' },
+    if (!vaultsData?.pages || !walletAddress) return []
+    const flat = vaultsData.pages.flatMap((page: PaginatedVaults) => page.vaults)
+    return flat.filter(
+      (v) => v.managerAddress && v.managerAddress.toLowerCase() === walletAddress.toLowerCase()
     )
-
-    const el = loadMoreRef.current
-    if (el) observer.observe(el)
-    return () => {
-      if (el) observer.unobserve(el)
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+  }, [vaultsData, walletAddress])
 
   const handleStatusChange = (status: (typeof STATUS_TABS)[number]) => {
     navigate({
@@ -112,48 +109,6 @@ function VaultsListPage() {
     })
   }
 
-  const handleSort = (column: SortColumn) => {
-    if (sortBy === column) {
-      if (sortOrder === 'desc') {
-        navigate({
-          search: (prev) => ({
-            ...prev,
-            sortBy: column,
-            sortOrder: 'asc',
-          }),
-          replace: true,
-        })
-      } else if (sortOrder === 'asc') {
-        navigate({
-          search: (prev) => ({
-            ...prev,
-            sortBy: undefined,
-            sortOrder: undefined,
-          }),
-          replace: true,
-        })
-      } else {
-        navigate({
-          search: (prev) => ({
-            ...prev,
-            sortBy: column,
-            sortOrder: 'desc',
-          }),
-          replace: true,
-        })
-      }
-    } else {
-      navigate({
-        search: (prev) => ({
-          ...prev,
-          sortBy: column,
-          sortOrder: 'desc',
-        }),
-        replace: true,
-      })
-    }
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -161,10 +116,13 @@ function VaultsListPage() {
         subtitle="Create and manage Solana investment vaults."
       />
 
-      <SectionCard
-        icon={<Layers className="size-4 text-primary-coral" />}
-        title="Solana Vaults"
-        description="Browse, filter, and manage non-custodial Solana investment vaults"
+      {!walletAddress ? (
+        <WalletPrompt description="Please connect your manager wallet to view and manage your vaults." />
+      ) : (
+        <SectionCard
+          icon={<Layers className="size-4 text-primary-coral" />}
+          title="Solana Vaults"
+          description="Browse, filter, and manage non-custodial Solana investment vaults"
         rightContent={
           <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
             {/* Search Input */}
@@ -204,31 +162,35 @@ function VaultsListPage() {
         }
       >
         {isLoading ? (
-          <div className="w-full overflow-x-auto">
-            <Table className="min-w-[720px]">
-              <VaultTableHeader sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
-              <TableBody>
-                <TableRowSkeleton
-                  columns={8}
-                  rows={6}
-                  cellAligns={['left', 'left', 'left', 'left', 'left', 'left', 'left', 'right']}
-                  cellWidths={['w-36', 'w-16', 'w-24', 'w-16', 'w-12', 'w-16', 'w-20', 'w-16']}
-                />
-              </TableBody>
-            </Table>
-          </div>
+          <Table className="min-w-[720px]" containerClassName="min-h-[480px]">
+            <VaultTableHeader sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
+            <TableBody>
+              <TableRowSkeleton
+                columns={8}
+                rows={7}
+                cellAligns={['left', 'left', 'left', 'left', 'left', 'left', 'left', 'right']}
+                cellWidths={['w-36', 'w-16', 'w-24', 'w-16', 'w-12', 'w-16', 'w-20', 'w-16']}
+              />
+            </TableBody>
+          </Table>
         ) : vaults.length === 0 ? (
-          <EmptyVaultsTable
-            title="No vaults found"
-            description={
-              searchInput
-                ? `No vaults matching "${searchInput}"`
-                : currentStatus === 'All'
-                  ? 'Create your first Solana investment vault to get started'
-                  : `No vaults found with status "${currentStatus}"`
-            }
-            headers={['VAULT', 'PNL', 'CREATED', 'MIN', 'INVESTORS', 'ASSET', 'PERFORMANCE', 'ACTION']}
-          />
+          <Table className="min-w-[720px]" containerClassName="min-h-[480px]">
+            <VaultTableHeader sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
+            <TableBody>
+              <TableEmpty
+                colSpan={8}
+                title="No vaults found"
+                description={
+                  searchInput
+                    ? `No vaults matching "${searchInput}"`
+                    : currentStatus === 'All'
+                      ? 'Create your first Solana investment vault to get started'
+                      : `No vaults found with status "${currentStatus}"`
+                }
+                minHeight="min-h-[400px]"
+              />
+            </TableBody>
+          </Table>
         ) : (
           <div className="space-y-4">
             <VaultsTable
@@ -250,6 +212,7 @@ function VaultsListPage() {
           </div>
         )}
       </SectionCard>
+      )}
     </div>
   )
 }

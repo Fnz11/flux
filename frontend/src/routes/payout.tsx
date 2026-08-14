@@ -46,13 +46,15 @@ export function PayoutPage() {
   const vaultIds = useMemo(() => vaults.map((v) => v.id), [vaults])
   const { fees, isLoading } = useFees(vaultIds)
 
-  const filteredFees = selectedVaultId === 'ALL'
-    ? fees
-    : fees.filter((f) => f.vault_id === selectedVaultId)
+  const filteredFees = useMemo(() => {
+    return selectedVaultId === 'ALL'
+      ? fees
+      : fees.filter((f) => f.vault_id === selectedVaultId)
+  }, [fees, selectedVaultId])
 
-  const totalFees = filteredFees.reduce((acc, f) => acc + (f.total_accrued || 0), 0)
-  const totalPerf = filteredFees.reduce((acc, f) => acc + (f.accrued_performance_fee || 0), 0)
-  const totalMgmt = filteredFees.reduce((acc, f) => acc + (f.accrued_management_fee || 0), 0)
+  const totalFees = useMemo(() => filteredFees.reduce((acc, f) => acc + (f.total_accrued || 0), 0), [filteredFees])
+  const totalPerf = useMemo(() => filteredFees.reduce((acc, f) => acc + (f.accrued_performance_fee || 0), 0), [filteredFees])
+  const totalMgmt = useMemo(() => filteredFees.reduce((acc, f) => acc + (f.accrued_management_fee || 0), 0), [filteredFees])
 
   return (
     <div className="space-y-6">

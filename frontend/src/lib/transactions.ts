@@ -43,7 +43,8 @@ export async function ensureSolBalance(
     rpcEndpoint.includes('localhost') ||
     rpcEndpoint.includes('127.0.0.1') ||
     rpcEndpoint.includes('devnet') ||
-    rpcEndpoint.includes('testnet')
+    rpcEndpoint.includes('testnet') ||
+    rpcEndpoint.includes('contracts:8899')
 
   if (!isNonMainnet) return
 
@@ -51,7 +52,7 @@ export async function ensureSolBalance(
     const balance = await connection.getBalance(publicKey)
     if (balance < minBalanceLamports) {
       const airdropSig = await connection.requestAirdrop(publicKey, airdropAmountLamports)
-      await connection.confirmTransaction(airdropSig, 'confirmed')
+      await confirmTransactionHelper(connection, airdropSig, undefined, 'confirmed', 10000)
     }
   } catch (airdropErr) {
     console.warn('Auto-airdrop failed or not supported:', airdropErr)
@@ -63,40 +64,109 @@ export async function confirmTransactionHelper(
   signature: TransactionSignature,
   blockhashInfo?: { blockhash: string; lastValidBlockHeight: number },
   commitment: 'processed' | 'confirmed' | 'finalized' = 'confirmed',
+  timeoutMs: number = 30000,
 ): Promise<void> {
-  // Enterprise DApp Strategy: 1. Check signature status first to see if transaction landed cleanly
-  const statusRes = await connection.getSignatureStatuses([signature])
-  const currentStatus = statusRes.value[0]
-
-  if (currentStatus && (currentStatus.confirmationStatus === 'confirmed' || currentStatus.confirmationStatus === 'finalized')) {
-    if (currentStatus.err) {
-      throw new Error(`Transaction failed on-chain: ${JSON.stringify(currentStatus.err)}`)
+  // 1. Immediate check: see if transaction already landed before listener setup
+  try {
+    const statusRes = await connection.getSignatureStatuses([signature])
+    const currentStatus = statusRes.value[0]
+    if (
+      currentStatus &&
+      (currentStatus.confirmationStatus === 'confirmed' || currentStatus.confirmationStatus === 'finalized' || (commitment === 'processed' && currentStatus.confirmationStatus === 'processed'))
+    ) {
+      if (currentStatus.err) {
+        throw new Error(`Transaction failed on-chain: ${JSON.stringify(currentStatus.err)}`)
+      }
+      return
     }
-    return
+  } catch (checkErr) {
+    if (checkErr instanceof Error && checkErr.message.includes('Transaction failed on-chain')) {
+      throw checkErr
+    }
   }
 
-  // 2. Fallback to confirmTransaction
-  const info = blockhashInfo ?? (await connection.getLatestBlockhash('confirmed'))
-  try {
-    const res = await connection.confirmTransaction(
-      {
+  let subId: number | null = null
+
+  // 2. WebSocket Subscription (Fast path: ~400ms)
+  const wsPromise = new Promise<void>((resolve, reject) => {
+    try {
+      subId = connection.onSignature(
         signature,
-        blockhash: info.blockhash,
-        lastValidBlockHeight: info.lastValidBlockHeight,
-      },
-      commitment,
-    )
-    if (res.value.err) {
-      throw new Error(`Transaction failed confirmation: ${JSON.stringify(res.value.err)}`)
+        (result) => {
+          if (result.err) {
+            reject(new Error(`Transaction failed on-chain: ${JSON.stringify(result.err)}`))
+          } else {
+            resolve()
+          }
+        },
+        commitment,
+      )
+    } catch (wsErr) {
+      console.warn('WebSocket signature subscription failed, falling back to polling:', wsErr)
     }
-  } catch (err: unknown) {
-    // If confirmation threw block height exceeded (e.g. user delayed in wallet popup), re-check signature status
-    const recheck = await connection.getSignatureStatuses([signature])
-    const recheckStatus = recheck.value[0]
-    if (recheckStatus && !recheckStatus.err) {
-      return // Transaction actually landed cleanly on-chain!
+  })
+
+  // 3. Polling + Expiry check (Reliability fallback & timeout guard)
+  const pollPromise = new Promise<void>((resolve, reject) => {
+    const startTime = Date.now()
+    const interval = setInterval(async () => {
+      try {
+        if (Date.now() - startTime > timeoutMs) {
+          clearInterval(interval)
+          reject(new Error(`Transaction confirmation timed out after ${timeoutMs}ms`))
+          return
+        }
+
+        // Check block height expiration if blockhashInfo is present
+        if (blockhashInfo?.lastValidBlockHeight) {
+          const currentHeight = await connection.getBlockHeight(commitment)
+          if (currentHeight > blockhashInfo.lastValidBlockHeight) {
+            clearInterval(interval)
+            // Final check on signature before declaring expired
+            const finalCheck = await connection.getSignatureStatuses([signature])
+            if (finalCheck.value[0] && !finalCheck.value[0].err && finalCheck.value[0].confirmationStatus) {
+              resolve()
+              return
+            }
+            reject(new Error('Transaction expired: block height exceeded'))
+            return
+          }
+        }
+
+        const statusRes = await connection.getSignatureStatuses([signature])
+        const status = statusRes.value[0]
+        if (status) {
+          if (status.err) {
+            clearInterval(interval)
+            reject(new Error(`Transaction failed on-chain: ${JSON.stringify(status.err)}`))
+            return
+          }
+          if (
+            status.confirmationStatus === 'confirmed' ||
+            status.confirmationStatus === 'finalized' ||
+            (commitment === 'processed' && status.confirmationStatus === 'processed')
+          ) {
+            clearInterval(interval)
+            resolve()
+            return
+          }
+        }
+      } catch (err) {
+        // Suppress transient RPC network errors during poll
+      }
+    }, 1000)
+  })
+
+  try {
+    await Promise.race([wsPromise, pollPromise])
+  } finally {
+    if (subId !== null) {
+      try {
+        connection.removeSignatureListener(subId)
+      } catch {
+        // Ignore unregister errors
+      }
     }
-    throw err
   }
 }
 

@@ -6,4 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export * from './avatar'
+export * from './format'
 

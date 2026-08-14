@@ -25,7 +25,7 @@ vi.mock('@/components/ui/modal', () => ({
     open ? <section aria-label={title}><h1>{title}</h1>{children}</section> : null,
 }))
 vi.mock('@solana/wallet-adapter-react', () => ({
-  useWallet: () => ({ connected: mocks.connected, publicKey: mocks.connected ? {} : null }),
+  useWallet: () => ({ connected: mocks.connected, publicKey: mocks.connected ? { toBase58: () => 'manager-address' } : null }),
   useConnection: () => ({ connection: { getBalance: mocks.getBalance } }),
 }))
 vi.mock('@/services/hooks/useQuery/useVaultsQuery', () => ({
@@ -65,7 +65,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.vaults = [vault]
   mocks.vaultsLoading = false
-  mocks.balances = []
+  mocks.balances = [
+    { symbol: 'SOL', mint: 'sol-mint', amount: 5.5, usdValue: 550 },
+    { symbol: 'USDC', mint: 'usdc-mint', amount: 1000, usdValue: 1000 },
+  ]
   mocks.balancesLoading = false
   mocks.connected = true
   mocks.getBalance.mockResolvedValue(2_500_000_000)
@@ -109,11 +112,17 @@ describe('SwapForm', () => {
     expect(screen.queryByText('Confirm Trade')).not.toBeInTheDocument()
   })
 
-  it('uses wallet balance for max amount', async () => {
+  it('uses active vault balance for max amount', async () => {
     render(<SwapForm preselectedVaultId={vault.id} />)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Max (2.50)' })).toBeInTheDocument())
-    fireEvent.click(screen.getByRole('button', { name: 'Max (2.50)' }))
-    expect(screen.getByPlaceholderText('0.00')).toHaveValue('2.5')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Max (5.50)' })).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'Max (5.50)' }))
+    expect(screen.getByPlaceholderText('0.00')).toHaveValue('5.5')
+  })
+
+  it('shows insufficient vault balance when input exceeds active vault balance', async () => {
+    render(<SwapForm preselectedVaultId={vault.id} />)
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '10' } })
+    expect(screen.getByRole('button', { name: 'Insufficient Vault Balance' })).toBeDisabled()
   })
 
   it('calls trade hook with confirmed swap details', async () => {
@@ -244,6 +253,7 @@ describe('VaultAssetsPanel', () => {
   })
 
   it('renders empty balances', () => {
+    mocks.balances = []
     render(<VaultAssetsPanel vaultId={vault.id} />)
     expect(screen.getByText('No balances recorded')).toBeInTheDocument()
   })

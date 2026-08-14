@@ -165,7 +165,7 @@ func TestClassifyInstructions_Withdraw(t *testing.T) {
 			},
 		},
 	}
-	tradeType, amountIn, amountOut, _ := classifyInstructions(parsedBurn, vaultAddr, decimal.NewFromInt(1000), decimal.NewFromInt(500))
+	tradeType, _, _, amountIn, amountOut, _ := classifyInstructions(parsedBurn, vaultAddr, decimal.NewFromInt(1000), decimal.NewFromInt(500))
 	if tradeType != "Withdraw" {
 		t.Fatalf("expected tradeType Withdraw, got %s", tradeType)
 	}

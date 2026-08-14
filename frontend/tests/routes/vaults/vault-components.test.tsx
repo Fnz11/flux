@@ -15,6 +15,13 @@ vi.mock('../../../src/services/hooks/useQuery/useVaultSparklineQuery', () => ({
   useVaultSparklineQuery: () => ({ data: mocks.sparkline }),
 }))
 
+vi.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: () => ({
+    publicKey: { toBase58: () => 'ManagerAddress1111222233334444' },
+    connected: true,
+  }),
+}))
+
 vi.mock('../../../src/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => children,
   Tooltip: ({ children }: { children: React.ReactNode }) => children,

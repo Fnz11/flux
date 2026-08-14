@@ -132,7 +132,7 @@ function DashboardPage() {
         <>
           {/* Top Platform / Manager KPI cards */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle bg-bg-elevated">
+            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <div className="flex items-center gap-2">
                   <Coins className="size-4 text-primary-gold" />
@@ -150,7 +150,7 @@ function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle bg-bg-elevated">
+            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <div className="flex items-center gap-2">
                   <Layers className="size-4 text-primary-coral" />
@@ -174,7 +174,7 @@ function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle bg-bg-elevated">
+            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <div className="flex items-center gap-2">
                   <Sparkles className="size-4 text-emerald-400" />

@@ -1,10 +1,9 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useConfigStore } from '@/stores'
-import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
+import { useVaultsQuery, useVaultBalancesQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { Form } from '@/components/ui/form'
 import { ArrowDownUp } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
@@ -22,16 +21,33 @@ import { SlippageField } from './SlippageField'
 import { SwapActionButton } from './SwapActionButton'
 import { RouteDetails } from './RouteDetails'
 
+import type { Vault } from '@/types'
+
 export interface SwapFormProps {
   preselectedVaultId?: string
+  vaults?: Vault[]
+  isLoadingVaults?: boolean
   onVaultChange?: (vaultId: string) => void
 }
 
-function useSwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
-  const { connection } = useConnection()
+function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults: customIsLoading, onVaultChange }: SwapFormProps) {
   const wallet = useWallet()
-  const { data: vaults = [], isLoading: isLoadingVaults } = useVaultsQuery()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
+  const { data: fetchedVaults = [], isLoading: isFetchingVaults } = useVaultsQuery()
   const config = useConfigStore((s) => s.config)
+
+  const vaults = useMemo(() => {
+    if (customVaults !== undefined) return customVaults
+    if (!walletAddress) return []
+    return fetchedVaults.filter(
+      (v) =>
+        v.managerAddress &&
+        v.managerAddress.toLowerCase() === walletAddress.toLowerCase() &&
+        v.status?.toLowerCase() === 'active'
+    )
+  }, [customVaults, fetchedVaults, walletAddress])
+
+  const isLoadingVaults = customIsLoading !== undefined ? customIsLoading : isFetchingVaults
 
   const form = useForm<SwapFormValues>({
     resolver: zodResolver(swapSchema),
@@ -45,8 +61,10 @@ function useSwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
   useEffect(() => {
     if (preselectedVaultId) {
       form.setValue('vaultId', preselectedVaultId)
+    } else if (vaults.length > 0 && !form.getValues('vaultId')) {
+      form.setValue('vaultId', vaults[0].id)
     }
-  }, [preselectedVaultId, form])
+  }, [preselectedVaultId, vaults, form])
 
   const vaultId = form.watch('vaultId')
   const inputAmount = form.watch('inputAmount')
@@ -55,32 +73,28 @@ function useSwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
   const [inputToken, setInputToken] = useState('SOL')
   const [outputToken, setOutputToken] = useState('USDC')
   const [showConfirm, setShowConfirm] = useState(false)
-  const [maxBalance, setMaxBalance] = useState<number | null>(null)
 
-  useEffect(() => {
-    let isMounted = true
-    if (!wallet.publicKey) {
-      setMaxBalance(null)
-      return
-    }
-    connection
-      .getBalance(wallet.publicKey)
-      .then((bal) => {
-        if (isMounted) setMaxBalance(bal / LAMPORTS_PER_SOL)
-      })
-      .catch(() => {
-        if (isMounted) setMaxBalance(null)
-      })
-    return () => {
-      isMounted = false
-    }
-  }, [wallet.publicKey, connection])
+  // Fetch balances of the selected active vault
+  const { data: vaultBalances = [], isLoading: isLoadingBalances } = useVaultBalancesQuery(vaultId ?? '')
+
+  const currentAsset = useMemo(() => {
+    return vaultBalances.find(
+      (b) =>
+        b.symbol?.toUpperCase() === inputToken.toUpperCase() ||
+        b.mint?.toLowerCase() === inputToken.toLowerCase()
+    )
+  }, [vaultBalances, inputToken])
+
+  const maxBalance = useMemo(() => {
+    if (!vaultId || isLoadingBalances) return null
+    return currentAsset ? currentAsset.amount : 0
+  }, [vaultId, isLoadingBalances, currentAsset])
 
   const handleSetMax = useCallback(() => {
-    if (maxBalance !== null) {
+    if (maxBalance !== null && maxBalance > 0) {
       form.setValue('inputAmount', maxBalance.toString(), { shouldValidate: true })
     } else {
-      form.setValue('inputAmount', '10.0', { shouldValidate: true })
+      form.setValue('inputAmount', '0', { shouldValidate: true })
     }
   }, [maxBalance, form])
 
@@ -95,6 +109,7 @@ function useSwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
   const rate = priceData.status === 'live' || priceData.status === 'stale' ? priceData.price : 0
   const outputAmount = inputNum * rate
   const minReceived = outputAmount * (1 - slippage / 100)
+  const isInsufficientBalance = maxBalance !== null && inputNum > maxBalance
 
   const handleVaultChange = useCallback(
     (value: string) => {
@@ -105,8 +120,15 @@ function useSwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
   )
 
   const onSubmit = useCallback(() => {
+    if (isInsufficientBalance) {
+      form.setError('inputAmount', {
+        type: 'manual',
+        message: `Amount exceeds active vault balance (${maxBalance ?? 0})`,
+      })
+      return
+    }
     setShowConfirm(true)
-  }, [])
+  }, [isInsufficientBalance, maxBalance, form])
 
   const handleConfirm = useCallback(async () => {
     if (!vaultId || !inputNum) return
@@ -149,6 +171,7 @@ function useSwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
     priceData,
     isExecuting,
     walletConnected: wallet.connected,
+    isInsufficientBalance,
     onSubmit,
     handleConfirm,
     handleVaultChange,
@@ -156,7 +179,7 @@ function useSwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
   }
 }
 
-export function SwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
+export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults: customIsLoading, onVaultChange }: SwapFormProps) {
   const {
     form,
     vaults,
@@ -179,11 +202,12 @@ export function SwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
     priceData,
     isExecuting,
     walletConnected,
+    isInsufficientBalance,
     onSubmit,
     handleConfirm,
     handleVaultChange,
     toggleDirection,
-  } = useSwapForm({ preselectedVaultId, onVaultChange })
+  } = useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults: customIsLoading, onVaultChange })
 
   return (
     <div className="grid gap-5 lg:grid-cols-5 items-start">
@@ -191,7 +215,7 @@ export function SwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
         <Form {...form}>
           <SectionCard
             icon={<ArrowDownUp className="size-4 text-primary-coral" />}
-            title="Swap Consol"
+            title="Swap Console"
             description="Execute Pyth Oracle-powered AMM swaps"
             rightContent={
               <VaultSelectField
@@ -222,9 +246,12 @@ export function SwapForm({ preselectedVaultId, onVaultChange }: SwapFormProps) {
               <SlippageField />
 
               <SwapActionButton
-                disabled={!vaultId || !inputNum || !walletConnected || isExecuting}
+                disabled={!vaultId || !inputNum || !walletConnected || isExecuting || isInsufficientBalance}
                 isExecuting={isExecuting}
                 walletConnected={walletConnected}
+                isInsufficientBalance={isInsufficientBalance}
+                hasVault={Boolean(vaultId)}
+                hasAmount={Boolean(inputNum)}
               />
             </form>
           </SectionCard>

@@ -9,7 +9,7 @@ import { useAppStore } from '@/stores/app-store'
 import { usePortfolioStore, useVaultStore } from '@/stores'
 
 export function WalletConnectButton() {
-  const { wallets, select, disconnect, connected, publicKey } = useWallet()
+  const { wallets = [], select, disconnect, connected, publicKey } = useWallet()
   const setCurrentUser = useAppStore((s) => s.setCurrentUser)
 
   const [isOpen, setIsOpen] = useState(false)

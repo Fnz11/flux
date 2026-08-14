@@ -4,8 +4,10 @@ import { cn } from '@/lib/utils'
 export interface DecimalInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value?: string | number | null
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onChange?: (value: any) => void
   onValueChange?: (stringValue: string, numericValue: number | null) => void
+  onNumberChange?: (numericValue: number | null) => void
+  valueAsNumber?: boolean
   maxDecimals?: number
   allowNegative?: boolean
 }
@@ -17,7 +19,9 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
       value,
       onChange,
       onValueChange,
+      onNumberChange,
       onBlur,
+      valueAsNumber,
       maxDecimals = 6,
       allowNegative = true,
       placeholder = '0.00',
@@ -25,6 +29,8 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
     },
     ref,
   ) => {
+    const isNumberMode = valueAsNumber || typeof value === 'number'
+
     const formatInitialValue = (val: string | number | null | undefined): string => {
       if (val === undefined || val === null || val === '') return ''
       return String(val)
@@ -65,9 +71,14 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
       if (raw === '') {
         setDisplayValue('')
         onValueChange?.('', null)
+        onNumberChange?.(null)
         if (onChange) {
-          e.target.value = ''
-          onChange(e)
+          if (isNumberMode) {
+            onChange(null)
+          } else {
+            e.target.value = ''
+            onChange(e)
+          }
         }
         return
       }
@@ -85,9 +96,14 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
       if (raw === '.' || raw === '-.' || raw === '-') {
         setDisplayValue(raw)
         onValueChange?.(raw, null)
+        onNumberChange?.(null)
         if (onChange) {
-          e.target.value = raw
-          onChange(e)
+          if (isNumberMode) {
+            onChange(null)
+          } else {
+            e.target.value = raw
+            onChange(e)
+          }
         }
         return
       }
@@ -97,9 +113,14 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
       const validNum = isNaN(parsedNum) ? null : parsedNum
 
       onValueChange?.(raw, validNum)
+      onNumberChange?.(validNum)
       if (onChange) {
-        e.target.value = raw
-        onChange(e)
+        if (isNumberMode) {
+          onChange(validNum)
+        } else {
+          e.target.value = raw
+          onChange(e)
+        }
       }
     }
 
@@ -118,13 +139,7 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
         setDisplayValue(cleaned)
         const parsedNum = cleaned === '' ? null : parseFloat(cleaned)
         onValueChange?.(cleaned, parsedNum)
-        if (onChange) {
-          const syntheticEvent = {
-            ...e,
-            target: { ...e.target, value: cleaned, name: props.name || '' },
-          } as unknown as React.ChangeEvent<HTMLInputElement>
-          onChange(syntheticEvent)
-        }
+        onNumberChange?.(parsedNum)
       }
 
       onBlur?.(e)

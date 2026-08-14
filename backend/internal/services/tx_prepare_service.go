@@ -16,10 +16,15 @@ import (
 )
 
 type TxPrepareService struct {
-	draftRepo domain.TransactionDraftRepository
-	vaultRepo domain.VaultRepository
-	client    *pkgSolana.Client
-	programID solana.PublicKey
+	draftRepo         domain.TransactionDraftRepository
+	vaultRepo         domain.VaultRepository
+	client            *pkgSolana.Client
+	programID         solana.PublicKey
+	reconcileCallback func(draftID uuid.UUID)
+}
+
+func (s *TxPrepareService) SetReconcileCallback(fn func(draftID uuid.UUID)) {
+	s.reconcileCallback = fn
 }
 
 func NewTxPrepareService(
@@ -380,5 +385,11 @@ func (s *TxPrepareService) RecordSubmission(ctx context.Context, draftID string,
 	if err != nil {
 		return fmt.Errorf("invalid draft id: %w", err)
 	}
-	return s.draftRepo.UpdateStatus(ctx, id, models.TxDraftStatusSubmitted, &signature)
+	if err := s.draftRepo.UpdateStatus(ctx, id, models.TxDraftStatusSubmitted, &signature); err != nil {
+		return err
+	}
+	if s.reconcileCallback != nil {
+		s.reconcileCallback(id)
+	}
+	return nil
 }

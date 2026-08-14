@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import { ArrowDownUp } from 'lucide-react'
 
 export interface SwapDirectionToggleProps {
@@ -7,16 +6,15 @@ export interface SwapDirectionToggleProps {
 
 export function SwapDirectionToggle({ onToggle }: SwapDirectionToggleProps) {
   return (
-    <div className="flex justify-center">
-      <Button
+    <div className="flex justify-center -my-2 relative z-10">
+      <button
         type="button"
-        variant="ghost"
-        size="icon"
         onClick={onToggle}
         aria-label="Swap direction"
+        className="flex size-8 items-center justify-center rounded-xl border border-white/10 bg-bg-elevated hover:bg-white/[0.08] hover:border-white/20 text-text-secondary hover:text-text-primary transition-all duration-150 shadow-md cursor-pointer"
       >
-        <ArrowDownUp className="size-4" />
-      </Button>
+        <ArrowDownUp className="size-3.5" />
+      </button>
     </div>
   )
 }

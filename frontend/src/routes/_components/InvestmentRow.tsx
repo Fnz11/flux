@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { useVaultSparklineQuery } from '@/services/hooks/useQuery/useVaultSparklineQuery'
 import { VaultSparkline } from '../vaults/_components/VaultSparkline'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency, formatPercent } from '@/lib/utils'
 import type { PortfolioPosition } from '@/types'
 
 export function InvestmentRow({ pos }: { pos: PortfolioPosition }) {
@@ -18,16 +18,16 @@ export function InvestmentRow({ pos }: { pos: PortfolioPosition }) {
         {pos.sharesOwned.toFixed(4)}
       </TableCell>
       <TableCell className="py-3.5 px-4 font-mono text-xs text-text-secondary whitespace-nowrap">
-        ${pos.totalInvested.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        {formatCurrency(pos.totalInvested)}
       </TableCell>
       <TableCell className="py-3.5 px-4 font-mono text-xs font-semibold text-text-primary whitespace-nowrap">
-        ${pos.currentValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        {formatCurrency(pos.currentValue)}
       </TableCell>
       <TableCell className={cn(
         'py-3.5 px-4 font-mono text-xs font-semibold whitespace-nowrap',
         isPositive ? 'text-emerald-400' : 'text-rose-400'
       )}>
-        {isPositive ? `+${pos.pnlPercent.toFixed(2)}%` : `${pos.pnlPercent.toFixed(2)}%`}
+        {formatPercent(pos.pnlPercent)}
       </TableCell>
       <TableCell className="py-3.5 px-4 whitespace-nowrap">
         <VaultSparkline data={sparkline} isPositive={isPositive} />

@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
-import { Search, CornerDownLeft, Loader2, X, ShieldCheck } from 'lucide-react'
+import { Search, CornerDownLeft, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from './dialog'
 import { TokenIcon } from './TokenIcon'
+import { Avatar, AvatarFallback } from './avatar'
 import { cn } from '@/lib/utils'
 import type { SearchResults, SearchPair, SearchVault, SearchResultKind } from '@/types'
 
@@ -13,9 +14,10 @@ interface SearchAutocompleteProps {
   loading: boolean
   results: SearchResults | null
   onSelect: (item: SearchPair | SearchVault, kind: SearchResultKind) => void
+  hideTrigger?: boolean
 }
 
-export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, results, onSelect }: SearchAutocompleteProps) {
+export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, results, onSelect, hideTrigger }: SearchAutocompleteProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [prevKey, setPrevKey] = useState({ query, results })
 
@@ -73,23 +75,25 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
   return (
     <>
       {/* Search trigger button */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex items-center rounded-full border border-border-subtle bg-bg-inset/30 px-3 py-1.5 backdrop-blur-md text-text-muted hover:border-border-medium hover:text-text-primary transition-colors group cursor-pointer"
-      >
-        <Search className="size-3.5 text-text-muted group-hover:text-text-primary transition-colors" strokeWidth={1.5} />
-        <span className="ml-2 text-[13px] text-text-muted group-hover:text-text-secondary transition-colors">
-          Search asset...
-        </span>
-        <kbd className="ml-3 rounded bg-bg-elevated/60 px-1.5 py-0.5 text-[10px] font-medium text-text-muted border border-border-subtle/50 group-hover:border-border-subtle transition-colors">
-          ⌘F
-        </kbd>
-      </button>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center rounded-full border border-border-subtle bg-bg-inset/30 px-3 py-1.5 backdrop-blur-md text-text-muted hover:border-border-medium hover:text-text-primary transition-colors group cursor-pointer"
+        >
+          <Search className="size-3.5 text-text-muted group-hover:text-text-primary transition-colors" strokeWidth={1.5} />
+          <span className="ml-2 text-[13px] text-text-muted group-hover:text-text-secondary transition-colors">
+            Search asset...
+          </span>
+          <kbd className="ml-3 rounded bg-bg-elevated/60 px-1.5 py-0.5 text-[10px] font-medium text-text-muted border border-border-subtle/50 group-hover:border-border-subtle transition-colors">
+            ⌘F
+          </kbd>
+        </button>
+      )}
 
       {/* Search Command Palette Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl p-0 overflow-hidden bg-bg-surface/95 backdrop-blur-3xl border border-white/15 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] rounded-2xl md:top-[25%] md:translate-y-0 [&>button]:hidden">
+        <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-sm:left-1/2 max-sm:top-1/2 max-sm:-translate-x-1/2 max-sm:-translate-y-1/2 max-sm:bottom-auto max-sm:right-auto bottom-auto right-auto w-[calc(100vw-2rem)] sm:w-full max-w-xl p-0 overflow-hidden bg-bg-surface/95 backdrop-blur-3xl border border-white/15 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] rounded-2xl max-sm:rounded-2xl max-h-[80vh] md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-xl md:max-h-[80vh] [&>button]:hidden [&>div:first-child]:hidden">
           <DialogTitle className="sr-only">Search Modal</DialogTitle>
 
           {/* Search Input Bar */}
@@ -122,18 +126,18 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
           </div>
 
           {/* Search Results / Content Container */}
-          <div className="max-h-[380px] overflow-y-auto p-2 space-y-1">
+          <div className="max-h-[min(50vh,360px)] overflow-y-auto p-2 space-y-1">
             {loading ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-10 text-[13px] text-text-muted">
+              <div className="flex items-center justify-center gap-2 px-4 py-6 text-[13px] text-text-muted">
                 <Loader2 className="size-4 animate-spin text-text-secondary" strokeWidth={1.5} />
                 <span>Searching ecosystem...</span>
               </div>
             ) : !query.trim() ? (
-              <div className="px-4 py-8 text-center">
+              <div className="px-4 py-5 text-center">
                 <p className="text-xs text-text-tertiary">Type a symbol (e.g., SOL, WBTC) or vault name to search</p>
               </div>
             ) : !results || results.items.length === 0 ? (
-              <div className="px-4 py-8 text-center text-xs text-text-muted">
+              <div className="px-4 py-5 text-center text-xs text-text-muted">
                 No matching assets or vaults found for "{query}"
               </div>
             ) : results.kind === 'pairs' ? (
@@ -193,16 +197,11 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div
-                          className={cn(
-                            'flex size-7 items-center justify-center rounded-full bg-bg-inset border text-text-secondary shrink-0 transition-colors',
-                            isSelected ? 'border-primary-gold/40 text-primary-gold' : 'border-border-subtle',
-                          )}
-                        >
-                          <ShieldCheck className="size-3.5" />
-                        </div>
+                        <Avatar className={cn('size-7 shrink-0 rounded-full border transition-colors', isSelected ? 'border-primary-gold/50' : 'border-border-subtle')}>
+                          <AvatarFallback seed={vault.displayName || vault.address || vault.id} />
+                        </Avatar>
                         <div className="flex flex-col min-w-0">
-                          <span className="truncate text-[13px] font-semibold">{vault.displayName}</span>
+                          <span className="truncate text-[13px] font-semibold">{vault.displayName || vault.address}</span>
                           <span className={cn('truncate text-[11px] text-text-muted')}>
                             {vault.address.length > 20 ? `${vault.address.slice(0, 8)}…${vault.address.slice(-8)}` : vault.address}
                           </span>

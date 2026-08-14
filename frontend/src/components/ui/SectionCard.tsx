@@ -31,8 +31,8 @@ export function SectionCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-white/12 bg-bg-elevated/3 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] flex flex-col overflow-hidden',
-        noPadding ? 'p-0' : 'p-5',
+        'rounded-2xl border border-white/12 bg-bg-elevated/3 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] flex flex-col',
+        noPadding ? 'p-0 overflow-hidden' : 'p-5',
         className,
       )}
     >

@@ -9,6 +9,7 @@ import {
   buildTransactionWithComputeBudget,
   sendTransaction,
   confirmTransactionHelper,
+  ensureSolBalance,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   TOKEN_PROGRAM_ID,
@@ -61,6 +62,9 @@ export function useWithdraw() {
         const shareLamports = Math.round(shareAmount * 1e9)
 
         let signature: string | null = null
+        let blockhashInfo: { blockhash: string; lastValidBlockHeight: number } | undefined
+
+        await ensureSolBalance(connection, userPubkey)
 
         try {
           // 1. Enterprise backend-prepared path
@@ -73,6 +77,13 @@ export function useWithdraw() {
 
           if (!prep?.transaction) {
             throw new Error('Prepared transaction missing')
+          }
+
+          if (prep.recent_blockhash && prep.last_valid_block_height) {
+            blockhashInfo = {
+              blockhash: prep.recent_blockhash,
+              lastValidBlockHeight: prep.last_valid_block_height,
+            }
           }
 
           const tx = Transaction.from(Buffer.from(prep.transaction, 'base64'))
@@ -178,16 +189,15 @@ export function useWithdraw() {
           throw new Error('Withdraw transaction failed: no signature')
         }
 
-        await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
+        await confirmTransactionHelper(connection, signature, blockhashInfo, 'confirmed')
 
-        try {
-          await api.post('/trades/sync', {
-            signature,
-            vault_id: vaultId || vaultPubkey.toBase58(),
-          })
-        } catch (syncErr) {
+        // Fire-and-forget sync to backend without blocking user UX
+        api.post('/trades/sync', {
+          signature,
+          vault_id: vaultId || vaultPubkey.toBase58(),
+        }).catch((syncErr) => {
           console.warn('Failed to sync withdraw transaction to backend:', syncErr)
-        }
+        })
 
         updateStatus(txId, 'success')
         return signature

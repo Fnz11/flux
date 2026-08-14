@@ -9,6 +9,7 @@ import {
   buildTransactionWithComputeBudget,
   sendTransaction,
   confirmTransactionHelper,
+  ensureSolBalance,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
@@ -75,6 +76,9 @@ export function useDeposit() {
           : Math.round(amount * 10 ** USDC_DECIMALS)
 
         let signature: string | null = null
+        let blockhashInfo: { blockhash: string; lastValidBlockHeight: number } | undefined
+
+        await ensureSolBalance(connection, userPubkey)
 
         try {
           // 1. Enterprise path: request backend to prepare tx
@@ -87,6 +91,13 @@ export function useDeposit() {
 
           if (!prep?.transaction) {
             throw new Error('Prepared transaction missing')
+          }
+
+          if (prep.recent_blockhash && prep.last_valid_block_height) {
+            blockhashInfo = {
+              blockhash: prep.recent_blockhash,
+              lastValidBlockHeight: prep.last_valid_block_height,
+            }
           }
 
           const tx = Transaction.from(Buffer.from(prep.transaction, 'base64'))
@@ -230,16 +241,15 @@ export function useDeposit() {
           throw new Error('Deposit transaction failed: no signature')
         }
 
-        await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
+        await confirmTransactionHelper(connection, signature, blockhashInfo, 'confirmed')
 
-        try {
-          await api.post('/trades/sync', {
-            signature,
-            vault_id: vaultId || vaultPubkey.toBase58(),
-          })
-        } catch (syncErr) {
+        // Fire-and-forget sync to backend without blocking user UX
+        api.post('/trades/sync', {
+          signature,
+          vault_id: vaultId || vaultPubkey.toBase58(),
+        }).catch((syncErr) => {
           console.warn('Failed to sync deposit transaction to backend:', syncErr)
-        }
+        })
 
         updateStatus(txId, 'success')
         return signature

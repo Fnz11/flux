@@ -77,7 +77,7 @@ services:
     container_name: fbyt-timescaledb
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "${TIMESCALEDB_PORT:-5433}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}

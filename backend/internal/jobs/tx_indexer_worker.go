@@ -66,6 +66,44 @@ func (w *TxIndexerWorker) Stop() {
 	})
 }
 
+// ReconcileDraftByID immediately reconciles a draft by ID
+func (w *TxIndexerWorker) ReconcileDraftByID(ctx context.Context, draftID uuid.UUID) error {
+	var draft models.TransactionDraft
+	if err := w.db.WithContext(ctx).First(&draft, "id = ?", draftID).Error; err != nil {
+		return err
+	}
+	if draft.Signature == nil || *draft.Signature == "" {
+		return nil
+	}
+	w.reconcileDraft(ctx, &draft)
+	return nil
+}
+
+// TriggerAsyncReconcile triggers non-blocking fast reconciliation with quick retries
+func (w *TxIndexerWorker) TriggerAsyncReconcile(draftID uuid.UUID) {
+	go func() {
+		delays := []time.Duration{100 * time.Millisecond, 400 * time.Millisecond, 1000 * time.Millisecond, 2500 * time.Millisecond}
+		for _, delay := range delays {
+			time.Sleep(delay)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			var draft models.TransactionDraft
+			err := w.db.WithContext(ctx).First(&draft, "id = ?", draftID).Error
+			if err != nil {
+				cancel()
+				return
+			}
+			if draft.Status == models.TxDraftStatusConfirmed || draft.Status == models.TxDraftStatusFailed {
+				cancel()
+				return
+			}
+			if draft.Signature != nil && *draft.Signature != "" {
+				w.reconcileDraft(ctx, &draft)
+			}
+			cancel()
+		}
+	}()
+}
+
 func (w *TxIndexerWorker) run(ctx context.Context) {
 	ticker := time.NewTicker(w.interval)
 	defer ticker.Stop()

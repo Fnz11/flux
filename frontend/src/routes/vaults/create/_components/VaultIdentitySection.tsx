@@ -93,6 +93,7 @@ export function VaultIdentitySection({
       icon={<Layers className="size-4 text-primary-coral" />}
       title="02. Vault Identity & Metadata"
       description="Define your vault's public title, strategy narrative, focus assets, tags, and branding banner."
+      className={cn(comboboxOpen ? 'relative z-30' : 'relative z-10')}
     >
       <div className="space-y-5">
         {/* Display Name */}
@@ -196,7 +197,7 @@ export function VaultIdentitySection({
         </div>
 
         {/* Focus Assets Multi-Select Combobox */}
-        <div ref={comboboxRef} className="space-y-1.5 relative">
+        <div ref={comboboxRef} className="space-y-1.5 relative z-40">
           <FormLabel className="flex items-center gap-1.5 text-xs font-medium text-text-primary">
             <Layers className="size-3.5 text-status-success" />
             Focus Assets (Multi-Select)
@@ -254,9 +255,9 @@ export function VaultIdentitySection({
 
           {/* Combobox Dropdown Menu */}
           {comboboxOpen && (
-            <div className="absolute z-50 mt-1 w-full rounded-xl border border-white/10 bg-bg-surface/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95">
+            <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-xl border border-border-medium bg-bg-elevated shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95">
               {/* Search Bar inside Combobox */}
-              <div className="flex items-center border-b border-white/10 px-3 py-2 bg-bg-inset/40">
+              <div className="flex items-center border-b border-white/10 px-3 py-2 bg-bg-inset">
                 <Search className="size-3.5 text-text-tertiary mr-2 shrink-0" />
                 <input
                   type="text"

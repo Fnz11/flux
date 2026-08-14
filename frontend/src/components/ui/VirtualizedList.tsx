@@ -25,14 +25,14 @@ export function VirtualizedList<T>({
 }: VirtualizedListProps<T>) {
   const [currentPage, setCurrentPage] = useState(0)
 
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const totalPages = Math.max(1, Math.ceil((items?.length || 0) / Math.max(1, pageSize)))
 
   // Ensure current page stays within valid range when items filter changes
-  const safePage = Math.min(currentPage, totalPages - 1)
+  const safePage = Math.max(0, Math.min(currentPage, totalPages - 1))
 
   const paginatedItems = useMemo(() => {
     const start = safePage * pageSize
-    return items.slice(start, start + pageSize)
+    return (items || []).slice(start, start + pageSize)
   }, [items, safePage, pageSize])
 
   const isVirtualized = items.length >= virtualizeThreshold

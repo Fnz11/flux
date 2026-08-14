@@ -91,8 +91,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Playfair Display for Titles, Headers & Page Headings */
-h1, h2, h3, h4, .font-serif, .font-heading, .heading-playfair {
+/* Optional Playfair Display for explicit serif styling */
+.font-serif, .font-heading, .heading-playfair {
   font-family: var(--font-serif);
   letter-spacing: 0.04em !important;
   text-transform: capitalize !important;

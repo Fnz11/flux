@@ -25,7 +25,7 @@ func NewSearchRepository(db *gorm.DB) domain.SearchRepository {
 const maxSearchScanRows = 500
 
 const searchVaultsQuery = `
-SELECT id, address, metadata, tvl
+SELECT CAST(id AS TEXT) AS id, address, metadata, tvl
 FROM vaults
 WHERE deleted_at IS NULL
 ORDER BY tvl DESC, id ASC
@@ -62,9 +62,11 @@ func (r *searchRepo) SearchVaults(ctx context.Context, q string, limit int) ([]d
 		if len(matches) >= limit {
 			break
 		}
-		name := vaultSearchName(row.Metadata)
-		if strings.Contains(strings.ToLower(row.Address), needle) ||
-			(name != "" && strings.Contains(strings.ToLower(name), needle)) {
+		matched, name := vaultMatches(row, needle)
+		if matched {
+			if name == "" {
+				name = row.Address
+			}
 			matches = append(matches, domain.SearchVaultMatch{
 				ID:          row.ID,
 				Address:     row.Address,
@@ -74,6 +76,39 @@ func (r *searchRepo) SearchVaults(ctx context.Context, q string, limit int) ([]d
 		}
 	}
 	return matches, nil
+}
+
+func vaultMatches(row searchVaultRow, needle string) (bool, string) {
+	name := vaultSearchName(row.Metadata)
+	if strings.Contains(strings.ToLower(row.Address), needle) {
+		return true, name
+	}
+	if name != "" && strings.Contains(strings.ToLower(name), needle) {
+		return true, name
+	}
+	if len(row.Metadata) > 0 {
+		var m map[string]interface{}
+		if err := json.Unmarshal(row.Metadata, &m); err == nil {
+			if fa, ok := m["focusAssets"].([]interface{}); ok {
+				for _, asset := range fa {
+					if str, ok := asset.(string); ok && strings.Contains(strings.ToLower(str), needle) {
+						return true, name
+					}
+				}
+			}
+			if fa, ok := m["focus_assets"].([]interface{}); ok {
+				for _, asset := range fa {
+					if str, ok := asset.(string); ok && strings.Contains(strings.ToLower(str), needle) {
+						return true, name
+					}
+				}
+			}
+			if desc, ok := m["description"].(string); ok && strings.Contains(strings.ToLower(desc), needle) {
+				return true, name
+			}
+		}
+	}
+	return false, name
 }
 
 func vaultSearchName(meta datatypes.JSON) string {

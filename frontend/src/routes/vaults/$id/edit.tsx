@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useConfigStore } from '@/stores'
@@ -22,6 +23,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { HeroAmbient } from '@/components/ui/HeroAmbient'
 import { SweepButton } from '@/components/ui/SweepButton'
+import { AddressPill } from '@/components/ui/AddressPill'
 import { editVaultSchema, type EditVaultForm } from '@/validations/vault'
 import {
   Edit3,
@@ -35,6 +37,8 @@ import {
   CheckCircle2,
   X,
   ImageIcon,
+  Shield,
+  ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -50,10 +54,13 @@ export const Route = createFileRoute('/vaults/$id/edit')({
   component: EditVaultPage,
 })
 
-function EditVaultPage() {
+export function EditVaultPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
-  const { data: currentVault } = useVaultDetailQuery(id)
+  const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
+
+  const { data: currentVault, isLoading, isError } = useVaultDetailQuery(id)
   const updateMetadataMutation = useUpdateVaultMetadataMutation()
   const config = useConfigStore((s) => s.config)
   const fetchConfig = useConfigStore((s) => s.fetchConfig)
@@ -83,7 +90,7 @@ function EditVaultPage() {
   }, [fetchConfig])
 
   useEffect(() => {
-    if (currentVault?.id === id) {
+    if (currentVault?.id === id && currentVault.metadata) {
       setValue('displayName', currentVault.metadata.displayName || '')
       setValue('description', currentVault.metadata.description || '')
       setValue('focusAssets', currentVault.metadata.focusAssets || [])
@@ -152,6 +159,109 @@ function EditVaultPage() {
     } catch {
       // error handled by mutation
     }
+  }
+
+  const isOwner = Boolean(
+    walletAddress &&
+    currentVault?.managerAddress &&
+    walletAddress.toLowerCase() === currentVault.managerAddress.toLowerCase()
+  )
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 relative w-full">
+        <HeroAmbient />
+        <PageHeader
+          title="Edit Vault"
+          subtitle="Loading vault details..."
+          backTo={`/vaults/${id}`}
+        />
+        <SectionCard
+          icon={<Edit3 className="size-4 text-primary-coral" />}
+          title="Vault Metadata & Configuration"
+          description="Loading vault details..."
+        >
+          <div className="space-y-4 py-6">
+            <div className="h-10 w-full animate-pulse rounded-xl bg-bg-inset" />
+            <div className="h-24 w-full animate-pulse rounded-xl bg-bg-inset" />
+            <div className="h-10 w-full animate-pulse rounded-xl bg-bg-inset" />
+          </div>
+        </SectionCard>
+      </div>
+    )
+  }
+
+  if (isError || !currentVault || !currentVault.id) {
+    return (
+      <div className="space-y-6 relative w-full">
+        <HeroAmbient />
+        <PageHeader
+          title="Vault Not Found"
+          subtitle={`Vault ${id} could not be loaded.`}
+          backTo="/vaults"
+        />
+        <SectionCard
+          icon={<Layers className="size-4 text-primary-coral" />}
+          title="Vault Unavailable"
+          description="The requested vault could not be found."
+        >
+          <div className="flex h-48 flex-col items-center justify-center text-center space-y-3">
+            <p className="text-sm text-text-secondary">This vault does not exist or network connection is offline.</p>
+            <Link to="/vaults">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <ArrowLeft className="size-3.5" /> Back to All Vaults
+              </Button>
+            </Link>
+          </div>
+        </SectionCard>
+      </div>
+    )
+  }
+
+  if (!isOwner) {
+    return (
+      <div className="space-y-6 relative w-full">
+        <HeroAmbient />
+        <PageHeader
+          title="Access Denied"
+          subtitle="Only the vault manager is authorized to edit vault settings."
+          backTo={`/vaults/${id}`}
+        />
+        <SectionCard
+          icon={<Shield className="size-4 text-status-error" />}
+          title="Unauthorized Access"
+          description="You do not have permission to configure this vault."
+        >
+          <div className="flex flex-col items-center justify-center text-center space-y-4 py-8">
+            <div className="rounded-full bg-status-error/10 p-4 border border-status-error/20">
+              <Shield className="size-8 text-status-error" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-base font-semibold text-text-primary">Manager Wallet Required</h3>
+              <p className="text-xs text-text-secondary max-w-md">
+                This vault is managed by{' '}
+                <span className="font-mono text-text-primary font-semibold">
+                  {currentVault.managerAddress ? (
+                    <AddressPill address={currentVault.managerAddress} />
+                  ) : (
+                    'Unknown Manager'
+                  )}
+                </span>
+                .
+                {!walletAddress
+                  ? ' Please connect your manager wallet to continue.'
+                  : ' Your connected wallet is not the designated manager of this vault.'}
+              </p>
+            </div>
+            <Link to="/vaults/$id" params={{ id }}>
+              <Button variant="outline" className="gap-2">
+                <ArrowLeft className="size-4" /> Back to Vault Overview
+              </Button>
+            </Link>
+          </div>
+        </SectionCard>
+      </div>
+    )
   }
 
   const displayNameValue = watch('displayName') || currentVault?.metadata?.displayName || `Vault ${id.slice(0, 8)}`

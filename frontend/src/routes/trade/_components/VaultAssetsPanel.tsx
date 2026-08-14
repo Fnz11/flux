@@ -3,7 +3,6 @@ import { Wallet, Layers } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { TokenIcon } from '@/components/ui/TokenIcon'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Vault } from '@/types'
 

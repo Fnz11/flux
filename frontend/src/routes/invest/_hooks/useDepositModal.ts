@@ -1,21 +1,44 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useDeposit } from '@/hooks/useDeposit'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
-import { TOKENS as ALL_TOKENS } from '@/constants/tokens'
+import { TOKENS as ALL_TOKENS, getTokenMeta, type TokenInfo } from '@/constants/tokens'
+import type { Vault } from '@/types'
 
-const DEPOSIT_SYMBOLS = new Set(['SOL', 'USDC'])
-export const TOKENS = ALL_TOKENS.filter((t) => DEPOSIT_SYMBOLS.has(t.symbol))
+export const TOKENS = ALL_TOKENS
+
+export function getSupportedDepositTokens(vault?: Vault): TokenInfo[] {
+  const focus = vault?.metadata?.focusAssets || []
+  if (focus.length > 0 && !focus.includes('All')) {
+    const matched = focus
+      .map((sym) => getTokenMeta(sym))
+      .filter((t) => Boolean(t.mint))
+    if (matched.length > 0) return matched
+  }
+  return ALL_TOKENS
+}
 
 export function useDepositModal(vaultId: string) {
   const { execute } = useDeposit()
   const { data: vaults = [] } = useVaultsQuery()
   const vault = vaults.find((v) => v.id === vaultId)
 
+  const availableTokens = useMemo(() => getSupportedDepositTokens(vault), [vault])
+
   const [step, setStep] = useState(0)
-  const [selectedToken, setSelectedToken] = useState(TOKENS[0])
+  const [selectedToken, setSelectedToken] = useState<TokenInfo>(availableTokens[0] || ALL_TOKENS[0])
   const [amount, setAmount] = useState('')
   const [signature, setSignature] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // Keep selectedToken in sync with availableTokens when vault loads/changes
+  useEffect(() => {
+    if (availableTokens.length > 0) {
+      setSelectedToken((current) => {
+        const stillValid = availableTokens.some((t) => t.symbol === current.symbol || t.mint === current.mint)
+        return stillValid ? current : availableTokens[0]
+      })
+    }
+  }, [availableTokens])
 
   const handleConfirm = async () => {
     if (!vault || !amount) return
@@ -42,5 +65,18 @@ export function useDepositModal(vaultId: string) {
     setSignature(null)
   }
 
-  return { step, selectedToken, amount, signature, loading, handleConfirm, handleClose, setStep, setSelectedToken, setAmount, vault }
+  return {
+    step,
+    selectedToken,
+    amount,
+    signature,
+    loading,
+    availableTokens,
+    handleConfirm,
+    handleClose,
+    setStep,
+    setSelectedToken,
+    setAmount,
+    vault,
+  }
 }

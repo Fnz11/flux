@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useSyncExternalStore } from 'react'
+import { useState, useSyncExternalStore, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
@@ -32,6 +32,10 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SOLSCAN_CLUSTER } from '@/constants'
 import { managerLinks, investLinks } from '@/constants/navigation'
+import { SearchAutocomplete } from '@/components/ui/SearchAutocomplete'
+import { search } from '@/services/apis/rest-api/search.service'
+import { useDebounce } from '@/hooks/useDebounce'
+import type { SearchResults, SearchPair, SearchVault, SearchResultKind } from '@/types'
 
 const campaignLinks = [
   { label: 'Learn & Earn', icon: BookOpen },
@@ -325,8 +329,12 @@ export function MobileNav() {
     () => false
   )
   const [drawerType, setDrawerType] = useState<'menu' | 'profile' | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [_searchOpen, setSearchOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(null)
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -336,7 +344,46 @@ export function MobileNav() {
   const currentUser = useAppStore((s) => s.currentUser)
   const setCurrentUser = useAppStore((s) => s.setCurrentUser)
 
+  useEffect(() => {
+    const q = debouncedSearchQuery.trim()
+    if (q.length < 1) {
+      setSearchResults(null)
+      setSearchLoading(false)
+      return
+    }
+    let cancelled = false
+    setSearchLoading(true)
+    search({ q, role: isManager ? 'manager' : 'investor', limit: 8 })
+      .then((res) => {
+        if (!cancelled) setSearchResults(res)
+      })
+      .catch(() => {
+        if (!cancelled) setSearchResults(null)
+      })
+      .finally(() => {
+        if (!cancelled) setSearchLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedSearchQuery, isManager])
+
+  const handleSelectSearch = useCallback(
+    (item: SearchPair | SearchVault, kind: SearchResultKind) => {
+      if (kind === 'pairs') {
+        navigate({ to: '/trade' })
+      } else {
+        navigate({ to: '/vaults/$id', params: { id: (item as SearchVault).id } })
+      }
+      setSearchQuery('')
+      setSearchResults(null)
+      setSearchOpen(false)
+    },
+    [navigate],
+  )
+
   const { publicKey, connected, disconnect } = useWallet()
+  const [copied, setCopied] = useState(false)
 
   const links = isManager ? managerLinks : investLinks
   const address = publicKey?.toBase58() || currentUser || ''
@@ -540,6 +587,17 @@ export function MobileNav() {
           document.body
         )}
       </AnimatePresence>
+
+      <SearchAutocomplete
+        query={searchQuery}
+        setQuery={setSearchQuery}
+        open={searchOpen}
+        setOpen={setSearchOpen}
+        loading={searchLoading}
+        results={searchResults}
+        onSelect={handleSelectSearch}
+        hideTrigger
+      />
     </LazyMotion>
   )
 }

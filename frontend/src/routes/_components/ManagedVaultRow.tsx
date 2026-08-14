@@ -6,26 +6,7 @@ import { VaultSparkline } from '../vaults/_components/VaultSparkline'
 import { cn } from '@/lib/utils'
 import type { Vault } from '@/types'
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'UTC',
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-})
-
-function formatCurrency(amount: number): string {
-  return currencyFormatter.format(amount)
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '' : dateFormatter.format(d)
-}
+import { formatCurrency, formatDate } from '@/lib/format'
 
 export function ManagedVaultRow({ vault }: { vault: Vault }) {
   const sparkline = vault.sparkline ?? []
@@ -41,7 +22,7 @@ export function ManagedVaultRow({ vault }: { vault: Vault }) {
         <StatusBadge status={vault.status} />
       </TableCell>
       <TableCell className="py-3.5 px-4 font-mono whitespace-nowrap text-xs text-text-primary">
-        ${formatCurrency(vault.tvl)}
+        {formatCurrency(vault.tvl)}
       </TableCell>
       <TableCell className={cn(
         'py-3.5 px-4 font-mono font-semibold whitespace-nowrap text-xs',

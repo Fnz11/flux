@@ -122,8 +122,8 @@ describe('vault detail route', () => {
 })
 
 describe('VaultOverview', () => {
-  it('renders metadata, fees, assets, and description', () => {
-    render(<VaultOverview vault={makeVault()} />)
+  it('renders metadata, fees, assets, and description with edit link when manager', () => {
+    render(<VaultOverview vault={makeVault()} isManager={true} />)
     expect(screen.getByRole('heading', { name: 'Investment Strategy' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Protocol Parameters' })).toBeInTheDocument()
     expect(screen.getByText('15.00% Perf / 2.00% Mgmt')).toBeInTheDocument()
@@ -132,8 +132,13 @@ describe('VaultOverview', () => {
     expect(screen.getByRole('link', { name: /Edit/i })).toHaveAttribute('href', '/vaults/vault-1/edit')
   })
 
-  it('renders empty assets state and edit link', () => {
-    render(<VaultOverview vault={makeVault({ metadata: { displayName: '', description: '', focusAssets: [] } })} />)
+  it('does not render edit link when non-manager', () => {
+    render(<VaultOverview vault={makeVault()} isManager={false} />)
+    expect(screen.queryByRole('link', { name: /Edit/i })).not.toBeInTheDocument()
+  })
+
+  it('renders empty assets state and edit link when manager', () => {
+    render(<VaultOverview vault={makeVault({ metadata: { displayName: '', description: '', focusAssets: [] } })} isManager={true} />)
     expect(screen.getByText('All whitelisted ecosystem tokens allowed.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Edit/i })).toHaveAttribute('href', '/vaults/vault-1/edit')
   })

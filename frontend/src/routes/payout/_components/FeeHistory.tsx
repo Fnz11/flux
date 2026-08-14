@@ -45,7 +45,7 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
         </Select>
       }
     >
-      <Table>
+      <Table containerClassName="min-h-[380px]">
         <TableHeader>
           <TableRow>
             <TableHead>VAULT</TableHead>
@@ -68,6 +68,7 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
               colSpan={5}
               title="No accrued fees recorded yet"
               description="Fees accrued on active vaults will appear here"
+              minHeight="min-h-[300px]"
             />
           ) : (
               filteredFees.map((fee) => {

@@ -488,12 +488,40 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 			return nil, err
 		}
 
+		normalizeToken := func(tok string) string {
+			switch strings.ToUpper(strings.TrimSpace(tok)) {
+			case "SOL", solMint:
+				return solMint
+			case "USDC", usdcMint:
+				return usdcMint
+			default:
+				return tok
+			}
+		}
+
+		initialSol := decimal.Zero
+		if !solPrice.IsZero() && v.TVL.IsPositive() {
+			hasDepositTrades := false
+			for _, t := range trades {
+				if t.TradeType == "Deposit" {
+					hasDepositTrades = true
+					break
+				}
+			}
+			if !hasDepositTrades {
+				initialSol = v.TVL.Div(solPrice)
+			}
+		}
+		if initialSol.IsPositive() {
+			holdings[solMint] = holdings[solMint].Add(initialSol)
+		}
+
 		for _, t := range trades {
-			inTok := t.InputToken
+			inTok := normalizeToken(t.InputToken)
 			if inTok == "" {
 				inTok = solMint
 			}
-			outTok := t.OutputToken
+			outTok := normalizeToken(t.OutputToken)
 			if outTok == "" {
 				outTok = solMint
 			}
@@ -516,17 +544,11 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 		}
 	}
 
-	solAmt := holdings[solMint]
-	if solAmt.IsZero() && holdings["SOL"].IsPositive() {
-		solAmt = holdings["SOL"]
-	}
-	usdcAmt := holdings[usdcMint]
-	if usdcAmt.IsZero() && holdings["USDC"].IsPositive() {
-		usdcAmt = holdings["USDC"]
-	}
+	solAmt := holdings[solMint].Add(holdings["SOL"])
+	usdcAmt := holdings[usdcMint].Add(holdings["USDC"])
 
 	// If no trades exist yet, default 100% of TVL to SOL as base deposit
-	if (!hasBalancesMV && len(trades) == 0) || (solAmt.IsZero() && usdcAmt.IsZero()) {
+	if !hasBalancesMV && len(trades) == 0 {
 		if !solPrice.IsZero() {
 			solAmt = v.TVL.Div(solPrice)
 		}

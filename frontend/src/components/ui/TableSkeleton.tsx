@@ -80,16 +80,18 @@ export interface TableSkeletonProps {
   cellWidths?: (string | undefined)[]
   className?: string
   tableClassName?: string
+  containerClassName?: string
 }
 
 export function TableSkeleton({
   headers,
   columns,
-  rows = 5,
+  rows = 7,
   cellAligns,
   cellWidths,
   className,
   tableClassName,
+  containerClassName,
 }: TableSkeletonProps) {
   const colCount = headers?.length || columns || 5
 
@@ -108,36 +110,34 @@ export function TableSkeleton({
     (parsedHeaders.length > 0 ? parsedHeaders.map((h) => h.width) : [])
 
   return (
-    <div className={cn('w-full overflow-x-auto rounded-xl border border-border-subtle/60 overflow-hidden bg-bg-surface/40', className)}>
-      <Table className={tableClassName}>
-        {parsedHeaders.length > 0 && (
-          <TableHeader>
-            <TableRow className="border-b border-border-subtle/50 bg-bg-inset/60 select-none">
-              {parsedHeaders.map((h, i) => (
-                <TableHead
-                  key={i}
-                  className={cn(
-                    'py-3.5 px-4 text-xs font-semibold uppercase tracking-wider text-text-tertiary',
-                    h.align === 'right' && 'text-right',
-                    h.align === 'center' && 'text-center',
-                    h.className,
-                  )}
-                >
-                  {h.label}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-        )}
-        <TableBody>
-          <TableRowSkeleton
-            columns={colCount}
-            rows={rows}
-            cellAligns={computedAligns}
-            cellWidths={computedWidths}
-          />
-        </TableBody>
-      </Table>
-    </div>
+    <Table className={tableClassName} containerClassName={cn('min-h-[480px]', containerClassName, className)}>
+      {parsedHeaders.length > 0 && (
+        <TableHeader>
+          <TableRow className="border-b border-border-subtle/50 select-none">
+            {parsedHeaders.map((h, i) => (
+              <TableHead
+                key={i}
+                className={cn(
+                  'py-3.5 px-4 text-xs font-semibold uppercase tracking-wider text-text-tertiary',
+                  h.align === 'right' && 'text-right',
+                  h.align === 'center' && 'text-center',
+                  h.className,
+                )}
+              >
+                {h.label}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+      )}
+      <TableBody>
+        <TableRowSkeleton
+          columns={colCount}
+          rows={rows}
+          cellAligns={computedAligns}
+          cellWidths={computedWidths}
+        />
+      </TableBody>
+    </Table>
   )
 }

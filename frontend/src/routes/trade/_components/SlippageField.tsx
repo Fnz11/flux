@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { DecimalInput } from '@/components/ui/DecimalInput'
 import { SLIPPAGE_PRESETS } from '@/constants/ui'
+import { cn } from '@/lib/utils'
 import type { SwapFormValues } from '@/validations/trade'
 
 export function SlippageField() {
@@ -10,20 +11,21 @@ export function SlippageField() {
     <FormField
       name="slippage"
       render={({ field }) => (
-        <FormItem className="pt-1">
+        <FormItem className="pt-2">
           <FormLabel className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Slippage Tolerance</FormLabel>
           <FormControl>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 mt-1.5">
               {SLIPPAGE_PRESETS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setValue('slippage', s, { shouldValidate: true })}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  className={cn(
+                    'rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-150 cursor-pointer',
                     field.value === s
-                      ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-black font-bold shadow-xs'
-                      : 'border border-border-subtle bg-bg-inset text-text-tertiary hover:text-text-primary'
-                  }`}
+                      ? 'bg-primary-coral text-white font-bold shadow-xs'
+                      : 'border border-white/10 bg-white/[0.03] text-text-secondary hover:text-text-primary hover:bg-white/[0.06] hover:border-white/20'
+                  )}
                 >
                   {s}%
                 </button>
@@ -35,9 +37,9 @@ export function SlippageField() {
                   onValueChange={(_, num) => field.onChange(num ?? 0)}
                   maxDecimals={2}
                   placeholder="0.5"
-                  className="w-16 px-2 py-1 text-xs h-7 rounded-lg border-border-subtle bg-bg-inset text-center font-mono font-semibold"
+                  className="w-16 px-2 py-1 text-xs h-8 rounded-xl border border-white/10 bg-white/[0.03] text-center font-mono font-semibold text-text-primary focus-visible:border-primary-coral/50"
                 />
-                <span className="ml-1 text-xs text-text-tertiary">%</span>
+                <span className="ml-1.5 text-xs text-text-tertiary font-mono">%</span>
               </div>
             </div>
           </FormControl>

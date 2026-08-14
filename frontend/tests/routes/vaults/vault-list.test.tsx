@@ -7,6 +7,15 @@ const mocks = vi.hoisted(() => ({
   search: {} as Record<string, string | undefined>,
   query: { data: [] as ReturnType<typeof makeVault>[], isLoading: false },
   queryParams: undefined as unknown,
+  wallet: {
+    connected: true,
+    publicKey: { toBase58: () => 'ManagerAddress1111222233334444' } as { toBase58: () => string } | null,
+  },
+}))
+
+vi.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: () => mocks.wallet,
+  useConnection: () => ({ connection: {} }),
 }))
 
 vi.mock('@tanstack/react-router', () => ({
@@ -71,6 +80,17 @@ describe('vault list route', () => {
     mocks.search = {}
     mocks.query = { data: [], isLoading: false }
     mocks.queryParams = undefined
+    mocks.wallet = {
+      connected: true,
+      publicKey: { toBase58: () => 'ManagerAddress1111222233334444' },
+    }
+  })
+
+  it('renders wallet prompt when wallet is not connected', () => {
+    mocks.wallet = { connected: false, publicKey: null }
+    renderWithClient(<VaultsListPage />)
+    expect(screen.getAllByText('Connect Wallet')[0]).toBeInTheDocument()
+    expect(screen.getByText(/Please connect your manager wallet to view and manage your vaults/)).toBeInTheDocument()
   })
 
   it('renders loading state without empty copy', () => {

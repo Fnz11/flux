@@ -8,7 +8,7 @@ import { VaultSparkline } from './VaultSparkline'
 import { cn } from '@/lib/utils'
 import { TokenIcon } from '@/components/ui/TokenIcon'
 import { AddressPill } from '@/components/ui/AddressPill'
-import { formatDate, formatMinRaise } from './vaultTableUtils'
+import { formatDate, formatMinRaise, formatPercent } from '@/lib/format'
 
 export interface VaultRowProps {
   vault: Vault
@@ -64,7 +64,7 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
         isPositivePnl ? 'text-emerald-400' : 'text-rose-400',
         sortBy === 'pnl' && 'bg-primary-coral/5'
       )}>
-        {isPositivePnl ? `+${pnl.toFixed(2)}%` : `${pnl.toFixed(2)}%`}
+        {formatPercent(pnl)}
       </TableCell>
 
       {/* CREATED */}

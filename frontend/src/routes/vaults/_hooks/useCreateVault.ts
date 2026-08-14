@@ -5,7 +5,7 @@ import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react'
 import { Transaction } from '@solana/web3.js'
 import { useTransactionStore } from '@/stores'
 import { prepareCreateVault, submitTx } from '@/services/apis/rest-api/tx.service'
-import { confirmTransactionHelper } from '@/lib/transactions'
+import { confirmTransactionHelper, ensureSolBalance } from '@/lib/transactions'
 import { formatError } from '@/lib/errors'
 import { toastSuccess, toastInfo } from '@/lib/toast'
 
@@ -63,6 +63,9 @@ export function useCreateVault() {
     const minRaiseLamports = Math.round(data.minRaiseAmount * 1e9)
 
     try {
+      // 0. Ensure wallet has SOL for fees/rent on non-mainnet
+      await ensureSolBalance(connection, wallet.publicKey)
+
       // 1. Ask backend to build and simulate transaction
       const prep = await prepareCreateVault({
         managerAddress: wallet.publicKey.toBase58(),
@@ -100,8 +103,16 @@ export function useCreateVault() {
         submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
       }
 
-      // 6. Await on-chain confirmation
-      await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
+      // 6. Await on-chain confirmation via enterprise hybrid watcher
+      const blockhashInfo =
+        prep.recent_blockhash && prep.last_valid_block_height
+          ? {
+              blockhash: prep.recent_blockhash,
+              lastValidBlockHeight: prep.last_valid_block_height,
+            }
+          : undefined
+
+      await confirmTransactionHelper(connection, signature, blockhashInfo, 'confirmed')
 
       confirmTransaction(txId, signature)
       moveToHistory(txId)

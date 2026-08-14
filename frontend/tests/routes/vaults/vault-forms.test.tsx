@@ -120,6 +120,22 @@ describe('edit vault form', () => {
     mocks.update.mockReset()
     mocks.fetchConfig.mockReset()
     mocks.vault = makeVault()
+    mocks.wallet = {
+      connected: true,
+      publicKey: { toBase58: () => 'ManagerAddress1111222233334444' },
+      wallets: [],
+    }
+  })
+
+  it('shows access denied when user is not the manager', async () => {
+    mocks.wallet = {
+      connected: true,
+      publicKey: { toBase58: () => 'other-wallet-address' },
+      wallets: [],
+    }
+    render(<EditVaultPage />)
+    expect(await screen.findByText('Manager Wallet Required')).toBeInTheDocument()
+    expect(screen.getByText(/Your connected wallet is not the designated manager/)).toBeInTheDocument()
   })
 
   it('loads current metadata and configured assets', async () => {

@@ -40,27 +40,25 @@ export function VaultsTable({ vaults, sortBy, sortOrder, onSort }: VaultsTablePr
       : 0
 
   return (
-    <div ref={tableContainerRef} className="w-full overflow-x-auto">
-      <Table className="min-w-[720px]">
-        <VaultTableHeader sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
-        <TableBody>
-          {paddingTop > 0 && (
-            <tr style={{ height: `${paddingTop}px` }} aria-hidden="true">
-              <td colSpan={8} />
-            </tr>
-          )}
-          {itemsToRender.map((virtualRow) => {
-            const vault = vaults[virtualRow.index]
-            if (!vault) return null
-            return <VaultRow key={vault.id} vault={vault} sortBy={sortBy} />
-          })}
-          {paddingBottom > 0 && (
-            <tr style={{ height: `${paddingBottom}px` }} aria-hidden="true">
-              <td colSpan={8} />
-            </tr>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <Table containerRef={tableContainerRef} className="min-w-[720px]" containerClassName="min-h-[480px]">
+      <VaultTableHeader sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+      <TableBody>
+        {paddingTop > 0 && (
+          <tr style={{ height: `${paddingTop}px` }} aria-hidden="true">
+            <td colSpan={8} />
+          </tr>
+        )}
+        {itemsToRender.map((virtualRow) => {
+          const vault = vaults[virtualRow.index]
+          if (!vault) return null
+          return <VaultRow key={vault.id} vault={vault} sortBy={sortBy} />
+        })}
+        {paddingBottom > 0 && (
+          <tr style={{ height: `${paddingBottom}px` }} aria-hidden="true">
+            <td colSpan={8} />
+          </tr>
+        )}
+      </TableBody>
+    </Table>
   )
 }

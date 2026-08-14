@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { AddressPill } from '@/components/ui/AddressPill'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { TokenAmount } from '@/components/ui/TokenAmount'
@@ -9,6 +10,14 @@ interface VaultCardProps {
 }
 
 export function VaultCard({ vault }: VaultCardProps) {
+  const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
+  const isManager = Boolean(
+    walletAddress &&
+    vault.managerAddress &&
+    walletAddress.toLowerCase() === vault.managerAddress.toLowerCase()
+  )
+
   const totalFeesBps = vault.performanceFeeBps + vault.managementFeeBps
 
   return (
@@ -40,21 +49,25 @@ export function VaultCard({ vault }: VaultCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 flex gap-2">
-        <Link
-          to="/vaults/$id/edit"
-          params={{ id: vault.id }}
-          className="rounded-xl border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
-        >
-          Edit
-        </Link>
-        <Link
-          to="/trade"
-          search={{ vaultId: vault.id }}
-          className="rounded-xl border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
-        >
-          Trade
-        </Link>
+      <div className="mt-4 flex items-center gap-2">
+        {isManager && (
+          <>
+            <Link
+              to="/vaults/$id/edit"
+              params={{ id: vault.id }}
+              className="rounded-xl border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
+            >
+              Edit
+            </Link>
+            <Link
+              to="/trade"
+              search={{ vaultId: vault.id }}
+              className="rounded-xl border border-border-medium px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-bg-inset"
+            >
+              Trade
+            </Link>
+          </>
+        )}
         <Link
           to="/vaults/$id"
           params={{ id: vault.id }}

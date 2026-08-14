@@ -15,9 +15,9 @@ export function ReceiveSection({
   onOutputTokenChange,
 }: ReceiveSectionProps) {
   return (
-    <div className="rounded-xl border border-border-subtle/50 bg-bg-inset p-4 hover:border-border-medium transition-colors">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-150 hover:border-white/20">
       <FormLabel className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">You receive</FormLabel>
-      <div className="mt-1 flex items-center justify-between gap-3">
+      <div className="mt-2 flex items-center justify-between gap-3">
         <p className="flex-1 font-mono text-2xl font-bold tracking-tight text-text-primary">
           {outputAmount > 0 ? outputAmount.toFixed(6) : '0.00'}
         </p>
