@@ -1,11 +1,15 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form } from '@/components/ui/form'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { WalletPrompt } from '@/components/ui/WalletPrompt'
+import { HeroAmbient } from '@/components/ui/HeroAmbient'
 import { useCreateVault, type CreateVaultParams } from './_hooks/useCreateVault'
 import { usePythPrice } from '@/hooks/usePythPrice'
+import { useConfigStore } from '@/stores'
 import { generateMetadata } from '@/lib/metadata'
 import { createVaultSchema, type CreateVaultFormValues } from '@/validations/vault'
 import { VaultTypeSection } from './create/_components/VaultTypeSection'
@@ -28,9 +32,18 @@ export const Route = createFileRoute('/vaults/create')({
 })
 
 export function CreateVaultPage() {
+  const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58() ?? ''
   const { handleSubmit: submitVault, isPending } = useCreateVault()
   const solPriceState = usePythPrice('SOL/USD')
   const solPrice = solPriceState.status === 'live' || solPriceState.status === 'stale' ? solPriceState.price : 150
+
+  const config = useConfigStore((s) => s.config)
+  const fetchConfig = useConfigStore((s) => s.fetchConfig)
+
+  useEffect(() => {
+    fetchConfig()
+  }, [fetchConfig])
 
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageName, setImageName] = useState<string | null>(null)
@@ -42,6 +55,8 @@ export function CreateVaultPage() {
       displayName: '',
       description: '',
       coverImageUrl: '',
+      focusAssets: ['SOL', 'USDC'],
+      tags: [],
       minRaiseAmount: 10,
       minRaiseUnit: 'SOL',
       acceptedAssets: ['SOL', 'USDC', 'USDT'],
@@ -59,6 +74,8 @@ export function CreateVaultPage() {
 
   const vaultType = watch('vaultType')
   const description = watch('description') || ''
+  const focusAssets = watch('focusAssets') || []
+  const tags = watch('tags') || []
   const minRaiseAmount = watch('minRaiseAmount') || 0
   const minRaiseUnit = watch('minRaiseUnit')
   const acceptedAssets = watch('acceptedAssets') || []
@@ -90,7 +107,7 @@ export function CreateVaultPage() {
       reader.onloadend = () => {
         const base64 = reader.result as string
         setImagePreview(base64)
-        setValue('coverImageUrl', base64)
+        setValue('coverImageUrl', base64, { shouldDirty: true })
       }
       reader.readAsDataURL(file)
     }
@@ -99,10 +116,10 @@ export function CreateVaultPage() {
   const handleRemoveImage = () => {
     setImagePreview(null)
     setImageName(null)
-    setValue('coverImageUrl', '')
+    setValue('coverImageUrl', '', { shouldDirty: true })
   }
 
-  const toggleAsset = (asset: string) => {
+  const toggleAcceptedAsset = (asset: string) => {
     const current = [...acceptedAssets]
     if (current.includes(asset)) {
       if (current.length === 1) return // Prevent removing last asset
@@ -112,62 +129,99 @@ export function CreateVaultPage() {
     }
   }
 
+  const toggleFocusAsset = (asset: string) => {
+    const current = [...focusAssets]
+    if (current.includes(asset)) {
+      setValue('focusAssets', current.filter((a) => a !== asset), { shouldValidate: true, shouldDirty: true })
+    } else {
+      setValue('focusAssets', [...current, asset], { shouldValidate: true, shouldDirty: true })
+    }
+  }
+
+  const handleAddTag = (newTag: string) => {
+    const trimmed = newTag.trim().toLowerCase()
+    if (!trimmed) return
+    if (!tags.some((t) => t.toLowerCase() === trimmed)) {
+      setValue('tags', [...tags, trimmed], { shouldValidate: true, shouldDirty: true })
+    }
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setValue(
+      'tags',
+      tags.filter((t) => t.toLowerCase() !== tagToRemove.toLowerCase()),
+      { shouldValidate: true, shouldDirty: true }
+    )
+  }
+
   const onSubmit = async (data: CreateVaultFormValues) => {
     await submitVault(data as CreateVaultParams)
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full">
+    <div className="space-y-6 pb-12 w-full relative">
+      <HeroAmbient />
+
       <PageHeader
         title="Create Vault"
         subtitle="Configure a new Solana investment vault with custom parameters."
         backTo="/vaults"
       />
 
-      <div className="max-w-4xl mx-auto space-y-4">
-        <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* SECTION 1 — VAULT TYPE */}
-            <VaultTypeSection value={vaultType} onSelect={(type) => setValue('vaultType', type)} />
+      {!walletAddress ? (
+        <WalletPrompt description="Please connect your wallet to create and manage investment vaults." />
+      ) : (
+        <div className="max-w-4xl mx-auto space-y-4">
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* SECTION 1 — VAULT TYPE */}
+              <VaultTypeSection value={vaultType} onSelect={(type) => setValue('vaultType', type)} />
 
-            {/* SECTION 2 — VAULT IDENTITY */}
-            <VaultIdentitySection
-              control={control}
-              description={description}
-              imagePreview={imagePreview}
-              imageName={imageName}
-              onImageUpload={handleImageUpload}
-              onRemoveImage={handleRemoveImage}
-            />
+              {/* SECTION 2 — VAULT IDENTITY & METADATA (with Focus Assets Combobox & Tags Badges) */}
+              <VaultIdentitySection
+                control={control}
+                description={description}
+                imagePreview={imagePreview}
+                imageName={imageName}
+                onImageUpload={handleImageUpload}
+                onRemoveImage={handleRemoveImage}
+                focusAssetsWhitelist={config?.focusAssetsWhitelist || ['SOL', 'USDC', 'USDT', 'ETH', 'BTC']}
+                focusAssets={focusAssets}
+                onToggleFocusAsset={toggleFocusAsset}
+                tags={tags}
+                onAddTag={handleAddTag}
+                onRemoveTag={handleRemoveTag}
+              />
 
-            {/* SECTION 3 — BASIC CONFIGURATION */}
-            <BasicConfigSection
-              control={control}
-              minRaiseUnit={minRaiseUnit}
-              acceptedAssets={acceptedAssets}
-              solPrice={solPrice}
-              minRaiseUsd={minRaiseUsd}
-              onSetMinRaiseUnit={(unit) => setValue('minRaiseUnit', unit)}
-              onToggleAsset={toggleAsset}
-            />
+              {/* SECTION 3 — BASIC CONFIGURATION */}
+              <BasicConfigSection
+                control={control}
+                minRaiseUnit={minRaiseUnit}
+                acceptedAssets={acceptedAssets}
+                solPrice={solPrice}
+                minRaiseUsd={minRaiseUsd}
+                onSetMinRaiseUnit={(unit) => setValue('minRaiseUnit', unit)}
+                onToggleAsset={toggleAcceptedAsset}
+              />
 
-            {/* SECTION 4 — ADVANCED SETTINGS */}
-            <AdvancedSettingsSection
-              control={control}
-              lockupPeriodUnit={lockupPeriodUnit}
-              feeWithdrawalPeriod={feeWithdrawalPeriod}
-              onLockupPeriodUnitChange={(unit) => setValue('lockupPeriodUnit', unit)}
-              onSetFeeWithdrawalPeriod={(period) => setValue('feeWithdrawalPeriod', period)}
-            />
+              {/* SECTION 4 — ADVANCED SETTINGS */}
+              <AdvancedSettingsSection
+                control={control}
+                lockupPeriodUnit={lockupPeriodUnit}
+                feeWithdrawalPeriod={feeWithdrawalPeriod}
+                onLockupPeriodUnitChange={(unit) => setValue('lockupPeriodUnit', unit)}
+                onSetFeeWithdrawalPeriod={(period) => setValue('feeWithdrawalPeriod', period)}
+              />
 
-            {/* SECTION 5 — AGREEMENT */}
-            <AgreementSection control={control} />
+              {/* SECTION 5 — AGREEMENT */}
+              <AgreementSection control={control} />
 
-            {/* CREATE VAULT CTA */}
-            <CreateVaultSubmit isPending={isPending} agreedToTerms={agreedToTerms} />
-          </form>
-        </Form>
-      </div>
+              {/* CREATE VAULT CTA */}
+              <CreateVaultSubmit isPending={isPending} agreedToTerms={agreedToTerms} />
+            </form>
+          </Form>
+        </div>
+      )}
     </div>
   )
 }

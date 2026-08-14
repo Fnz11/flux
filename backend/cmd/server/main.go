@@ -110,6 +110,13 @@ func main() {
 	searchHandler := handlers.NewSearchHandler(searchSvc)
 	feeHandler := handlers.NewFeeHandler(vaultRepo)
 
+	draftRepo := repository.NewGormTransactionDraftRepository(db)
+	txPrepareSvc := services.NewTxPrepareService(draftRepo, vaultRepo, solanaClient)
+	txPrepareHandler := handlers.NewTxPrepareHandler(txPrepareSvc)
+
+	txIndexerWorker := jobs.NewTxIndexerWorker(db, vaultRepo, userRepo, solanaClient, eventService, logger, 5*time.Second)
+	txIndexerWorker.Start(context.Background())
+
 	mvWorker := jobs.NewMVRefreshWorker(db, logger, 0)
 	mvWorker.SetRedis(redisClient)
 	mvWorker.SetNotifier(func() {
@@ -150,6 +157,7 @@ func main() {
 		Notification: notificationHandler,
 		Search:       searchHandler,
 		Fee:          feeHandler,
+		TxPrepare:    txPrepareHandler,
 		JWTSecret:    cfg.JWTSecret,
 		Redis:        redisClient,
 	})

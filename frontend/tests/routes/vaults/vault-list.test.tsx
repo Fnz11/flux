@@ -114,13 +114,31 @@ describe('vault list route', () => {
     expect(call.search(mocks.search)).toEqual({ ...mocks.search, status: 'Active' })
   })
 
-  it('toggles current sort direction', () => {
+  it('toggles current sort direction through desc -> asc -> none', () => {
     mocks.search = { sortBy: 'pnl', sortOrder: 'desc' }
     mocks.query.data = [makeVault()]
     renderWithClient(<VaultsListPage />)
     fireEvent.click(screen.getByRole('columnheader', { name: /PNL/ }))
+    const call1 = mocks.navigate.mock.calls[0][0]
+    expect(call1.search(mocks.search)).toMatchObject({ sortBy: 'pnl', sortOrder: 'asc' })
+  })
+
+  it('resets sort to undefined when clicking header a 3rd time (from asc to none)', () => {
+    mocks.search = { sortBy: 'pnl', sortOrder: 'asc' }
+    mocks.query.data = [makeVault()]
+    renderWithClient(<VaultsListPage />)
+    fireEvent.click(screen.getByRole('columnheader', { name: /PNL/ }))
     const call = mocks.navigate.mock.calls[0][0]
-    expect(call.search(mocks.search)).toMatchObject({ sortBy: 'pnl', sortOrder: 'asc' })
+    expect(call.search(mocks.search)).toEqual({ sortBy: undefined, sortOrder: undefined })
+  })
+
+  it('initiates sorting as desc on first click', () => {
+    mocks.search = {}
+    mocks.query.data = [makeVault()]
+    renderWithClient(<VaultsListPage />)
+    fireEvent.click(screen.getByRole('columnheader', { name: /PNL/ }))
+    const call = mocks.navigate.mock.calls[0][0]
+    expect(call.search(mocks.search)).toMatchObject({ sortBy: 'pnl', sortOrder: 'desc' })
   })
 
   it('links to vault creation', () => {

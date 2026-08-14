@@ -118,10 +118,10 @@ export function WalletConnectButton() {
       <Button
         variant="sweep"
         size="sm"
+        icon={<Wallet className="size-3.5" />}
         onClick={() => setIsOpen(true)}
-        className="h-8 px-3.5 text-xs gap-1.5"
+        className="h-8 text-xs pl-10 pr-4"
       >
-        <Wallet className="size-3.5" />
         <span>Connect Wallet</span>
       </Button>
 

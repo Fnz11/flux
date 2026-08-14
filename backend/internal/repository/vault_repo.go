@@ -26,7 +26,12 @@ func NewVaultRepository(db *gorm.DB) domain.VaultRepository {
 func (r *vaultRepo) GetByAddress(ctx context.Context, address string) (*domain.VaultDetail, error) {
 	db := getDB(ctx, r.db)
 	var v models.Vault
-	err := db.Preload("Manager").Where("address = ?", address).First(&v).Error
+	var err error
+	if uid, parseErr := uuid.Parse(address); parseErr == nil {
+		err = db.Preload("Manager").Where("id = ? OR address = ?", uid, address).First(&v).Error
+	} else {
+		err = db.Preload("Manager").Where("address = ?", address).First(&v).Error
+	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -93,6 +98,28 @@ func (r *vaultRepo) Create(ctx context.Context, vault *domain.VaultDetail) error
 	}
 	vault.Status = status
 	vault.VaultType = vaultType
+
+	var existing models.Vault
+	db := getDB(ctx, r.db)
+	if err := db.Where("address = ?", vault.Address).First(&existing).Error; err == nil {
+		// Vault already exists (e.g. registered by indexer/draft flow) -> update metadata & fields
+		existing.ManagerID = managerID
+		existing.Status = status
+		existing.Metadata = vault.Metadata
+		existing.PerformanceFeeBps = vault.PerformanceFeeBps
+		existing.ManagementFeeBps = vault.ManagementFeeBps
+		existing.MinRaiseAmount = vault.MinRaiseAmount
+		existing.LockupPeriod = vault.LockupPeriod
+		existing.VaultType = vaultType
+		if err := db.Save(&existing).Error; err != nil {
+			return err
+		}
+		vault.ID = existing.ID.String()
+		vault.CreatedAt = existing.CreatedAt
+		vault.UpdatedAt = existing.UpdatedAt
+		return nil
+	}
+
 	m := models.Vault{
 		Address:           vault.Address,
 		ManagerID:         managerID,
@@ -113,7 +140,7 @@ func (r *vaultRepo) Create(ctx context.Context, vault *domain.VaultDetail) error
 	if m.ID == uuid.Nil {
 		m.ID = uuid.New()
 	}
-	if err := getDB(ctx, r.db).Create(&m).Error; err != nil {
+	if err := db.Create(&m).Error; err != nil {
 		return err
 	}
 	vault.ID = m.ID.String()
@@ -126,6 +153,9 @@ func (r *vaultRepo) UpdateMetadata(ctx context.Context, address string, metadata
 	metaBytes, err := json.Marshal(metadata)
 	if err != nil {
 		return err
+	}
+	if uid, parseErr := uuid.Parse(address); parseErr == nil {
+		return getDB(ctx, r.db).Model(&models.Vault{}).Where("id = ? OR address = ?", uid, address).Update("metadata", metaBytes).Error
 	}
 	return getDB(ctx, r.db).Model(&models.Vault{}).Where("address = ?", address).Update("metadata", metaBytes).Error
 }
@@ -243,6 +273,31 @@ func (r *vaultRepo) fetchVaultCounts(db *gorm.DB, ids []uuid.UUID) (map[uuid.UUI
 	if len(ids) == 0 {
 		return result, nil
 	}
+
+	if db.Migrator().HasTable("portfolio_summary") {
+		type psRow struct {
+			VaultID        uuid.UUID `gorm:"column:vault_id"`
+			TradeCount     int64     `gorm:"column:trade_count"`
+			PortfolioCount int64     `gorm:"column:share_holders_count"`
+		}
+		var rows []psRow
+		if err := db.Table("portfolio_summary").
+			Select("vault_id, trade_count, share_holders_count").
+			Where("vault_id IN ?", ids).
+			Scan(&rows).Error; err == nil && len(rows) > 0 {
+			for _, row := range rows {
+				result[row.VaultID] = vaultCount{
+					VaultID:        row.VaultID,
+					TradeCount:     row.TradeCount,
+					PortfolioCount: row.PortfolioCount,
+				}
+			}
+			if len(result) == len(ids) {
+				return result, nil
+			}
+		}
+	}
+
 	var rows []vaultCount
 	if err := db.Raw(vaultCountsQuery, ids).Scan(&rows).Error; err != nil {
 		return nil, err
@@ -269,6 +324,28 @@ func (r *vaultRepo) fetchBatchSparklines(db *gorm.DB, ids []uuid.UUID) map[uuid.
 		VaultID string          `gorm:"column:vault_id"`
 		Bucket  interface{}     `gorm:"column:bucket"`
 		Val     decimal.Decimal `gorm:"column:val"`
+	}
+
+	if db.Migrator().HasTable("vault_daily_sparkline_mv") {
+		var rows []metricRow
+		err := db.Table("vault_daily_sparkline_mv").
+			Select("vault_id, bucket, val").
+			Where("bucket >= ? AND bucket <= ? AND vault_id IN ?", from, to, ids).
+			Order("bucket ASC").Scan(&rows).Error
+		if err == nil && len(rows) > 0 {
+			for _, row := range rows {
+				if uid, parseErr := uuid.Parse(row.VaultID); parseErr == nil {
+					ts, err := parseHistoryBucketTime(row.Bucket)
+					if err == nil {
+						result[uid] = append(result[uid], domain.HistoryPoint{
+							Date:  ts.UTC().Format(time.RFC3339),
+							Value: row.Val,
+						})
+					}
+				}
+			}
+			return result
+		}
 	}
 
 	if db.Migrator().HasTable("vault_metrics") {
@@ -387,31 +464,49 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 		}
 	}
 
-	// Fetch trades to calculate actual on-chain asset balances
-	var trades []models.TradeHistory
-	if err := db.Where("vault_id = ?", v.ID).Order("executed_at ASC").Find(&trades).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
+	holdings := make(map[string]decimal.Decimal)
+	hasBalancesMV := false
+
+	if db.Migrator().HasTable("vault_balances_summary") {
+		type balRow struct {
+			Token  string          `gorm:"column:token"`
+			Amount decimal.Decimal `gorm:"column:amount"`
+		}
+		var rows []balRow
+		if err := db.Table("vault_balances_summary").Where("vault_id = ?", v.ID).Scan(&rows).Error; err == nil && len(rows) > 0 {
+			for _, row := range rows {
+				holdings[row.Token] = row.Amount
+			}
+			hasBalancesMV = true
+		}
 	}
 
-	holdings := make(map[string]decimal.Decimal)
-	for _, t := range trades {
-		inTok := t.InputToken
-		if inTok == "" {
-			inTok = solMint
-		}
-		outTok := t.OutputToken
-		if outTok == "" {
-			outTok = solMint
+	var trades []models.TradeHistory
+	if !hasBalancesMV {
+		// Fetch trades to calculate actual on-chain asset balances if MV not present
+		if err := db.Where("vault_id = ?", v.ID).Order("executed_at ASC").Find(&trades).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
 		}
 
-		switch t.TradeType {
-		case "Deposit":
-			holdings[inTok] = holdings[inTok].Add(t.AmountIn)
-		case "Withdraw":
-			holdings[outTok] = holdings[outTok].Sub(t.AmountOut)
-		case "Buy", "Sell":
-			holdings[inTok] = holdings[inTok].Sub(t.AmountIn)
-			holdings[outTok] = holdings[outTok].Add(t.AmountOut)
+		for _, t := range trades {
+			inTok := t.InputToken
+			if inTok == "" {
+				inTok = solMint
+			}
+			outTok := t.OutputToken
+			if outTok == "" {
+				outTok = solMint
+			}
+
+			switch t.TradeType {
+			case "Deposit":
+				holdings[inTok] = holdings[inTok].Add(t.AmountIn)
+			case "Withdraw":
+				holdings[outTok] = holdings[outTok].Sub(t.AmountOut)
+			case "Buy", "Sell":
+				holdings[inTok] = holdings[inTok].Sub(t.AmountIn)
+				holdings[outTok] = holdings[outTok].Add(t.AmountOut)
+			}
 		}
 	}
 
@@ -431,7 +526,7 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 	}
 
 	// If no trades exist yet, default 100% of TVL to SOL as base deposit
-	if len(trades) == 0 || (solAmt.IsZero() && usdcAmt.IsZero()) {
+	if (!hasBalancesMV && len(trades) == 0) || (solAmt.IsZero() && usdcAmt.IsZero()) {
 		if !solPrice.IsZero() {
 			solAmt = v.TVL.Div(solPrice)
 		}

@@ -8,6 +8,7 @@ import { ToggleGroup } from '@/components/ui/toggle-group'
 import { VaultInvestCard } from '../_components/VaultInvestCard'
 import { VaultInvestCardSkeleton } from '../_components/VaultInvestCardSkeleton'
 import { VirtualizedList } from '@/components/ui/VirtualizedList'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import { FOCUS_ASSETS } from '@/constants/vault'
 import { generateMetadata } from '@/lib/metadata'
 
@@ -59,7 +60,11 @@ function VaultInvestListPage() {
         />
 
         <ToggleGroup
-          options={FOCUS_ASSETS.map((a) => ({ label: a, value: a }))}
+          options={FOCUS_ASSETS.map((a) => ({
+            label: a,
+            value: a,
+            icon: a !== 'All' ? <TokenIcon symbol={a} className="size-3.5" /> : undefined,
+          }))}
           value={focusFilter}
           onChange={setFocusFilter}
           size="sm"

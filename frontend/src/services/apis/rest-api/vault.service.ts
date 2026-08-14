@@ -95,18 +95,56 @@ export async function getVaults(params?: GetVaultsParams): Promise<Vault[]> {
 }
 
 export async function getVault(id: string): Promise<Vault> {
-  const raw = await api.get<RawApiVault>(`/vaults/${id}`)
-  return mapApiVaultToVault(raw)
+  const raw = await api.get<RawApiVault | { data?: { vault?: RawApiVault } | RawApiVault; vault?: RawApiVault }>(`/vaults/${id}`)
+  let vaultObj: RawApiVault | undefined
+  if (raw && typeof raw === 'object') {
+    if ('data' in raw && raw.data) {
+      if (typeof raw.data === 'object' && 'vault' in raw.data && raw.data.vault) {
+        vaultObj = raw.data.vault as RawApiVault
+      } else {
+        vaultObj = raw.data as RawApiVault
+      }
+    } else if ('vault' in raw && raw.vault) {
+      vaultObj = raw.vault
+    } else {
+      vaultObj = raw as RawApiVault
+    }
+  }
+  return mapApiVaultToVault(vaultObj)
 }
 
 export async function createVault(data: Partial<Vault>): Promise<Vault> {
-  const raw = await api.post<RawApiVault>('/vaults', data)
-  return mapApiVaultToVault(raw)
+  const raw = await api.post<RawApiVault | { data?: RawApiVault } | { vault?: RawApiVault }>('/vaults', data)
+  let vaultObj: RawApiVault | undefined
+  if (raw && typeof raw === 'object') {
+    if ('data' in raw && raw.data) {
+      vaultObj = raw.data as RawApiVault
+    } else if ('vault' in raw && raw.vault) {
+      vaultObj = raw.vault
+    } else {
+      vaultObj = raw as RawApiVault
+    }
+  }
+  return mapApiVaultToVault(vaultObj)
 }
 
 export async function updateVaultMetadata(id: string, metadata: Partial<Vault['metadata']>): Promise<Vault> {
-  const raw = await api.patch<RawApiVault>(`/vaults/${id}`, metadata)
-  return mapApiVaultToVault(raw)
+  const raw = await api.patch<RawApiVault | { data?: { vault?: RawApiVault } | RawApiVault; vault?: RawApiVault }>(`/vaults/${id}`, metadata)
+  let vaultObj: RawApiVault | undefined
+  if (raw && typeof raw === 'object') {
+    if ('data' in raw && raw.data) {
+      if (typeof raw.data === 'object' && 'vault' in raw.data && raw.data.vault) {
+        vaultObj = raw.data.vault as RawApiVault
+      } else {
+        vaultObj = raw.data as RawApiVault
+      }
+    } else if ('vault' in raw && raw.vault) {
+      vaultObj = raw.vault
+    } else {
+      vaultObj = raw as RawApiVault
+    }
+  }
+  return mapApiVaultToVault(vaultObj)
 }
 
 export interface VaultBalance {

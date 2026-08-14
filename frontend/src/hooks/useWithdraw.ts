@@ -1,9 +1,10 @@
 import { useCallback } from 'react'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js'
+import { PublicKey, SystemProgram, TransactionInstruction, Transaction } from '@solana/web3.js'
 import { BN } from 'bn.js'
 import { api } from '@/lib/api'
 import { getProgram } from '@/lib/anchor'
+import { prepareWithdraw, submitTx } from '@/services/apis/rest-api/tx.service'
 import {
   buildTransactionWithComputeBudget,
   sendTransaction,
@@ -33,9 +34,9 @@ export function useWithdraw() {
     async ({ vaultAddress, shareAmount, vaultId, withdrawMint }: WithdrawParams) => {
       const txId = addTransaction({
         type: 'withdraw',
-        signature: null,
         vaultId,
         amountIn: shareAmount,
+        signature: null,
         errorMessage: null,
       })
 
@@ -56,96 +57,127 @@ export function useWithdraw() {
           throw new Error(`Invalid vault address: ${vaultAddress}`)
         }
 
-        if (!wallet.signTransaction) {
-          throw new Error('Wallet does not support transaction signing')
-        }
-
         const userPubkey = wallet.publicKey
-        const shareBn = new BN(Math.round(shareAmount * 1e9))
+        const shareLamports = Math.round(shareAmount * 1e9)
 
-        const program = await getProgram(
-          {
-            publicKey: userPubkey,
-            signTransaction: wallet.signTransaction,
-            signAllTransactions: wallet.signAllTransactions,
-          },
-          connection,
-        )
+        let signature: string | null = null
 
-        if (!program || !program.idl.instructions?.length) {
-          throw new Error('Withdraw program unavailable')
-        }
+        try {
+          // 1. Enterprise backend-prepared path
+          const prep = await prepareWithdraw({
+            investorAddress: userPubkey.toBase58(),
+            vaultAddress: vaultPubkey.toBase58(),
+            sharesToBurn: shareLamports,
+            withdrawMint,
+          })
 
-        const withdrawMintPubkey = withdrawMint ? new PublicKey(withdrawMint) : NATIVE_MINT
+          if (!prep?.transaction) {
+            throw new Error('Prepared transaction missing')
+          }
 
-        const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from('vault_authority'), vaultPubkey.toBuffer()],
-          program.programId,
-        )
+          const tx = Transaction.from(Buffer.from(prep.transaction, 'base64'))
+          const signedTx = await wallet.signTransaction(tx)
+          signature = await connection.sendRawTransaction(signedTx.serialize(), {
+            skipPreflight: false,
+            preflightCommitment: 'confirmed',
+          })
 
-        const [shareTokenMintPubkey] = PublicKey.findProgramAddressSync(
-          [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
-          program.programId,
-        )
+          if (prep.draft_id) {
+            submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
+          }
+        } catch {
+          // 2. Client-side fallback if backend prepare is unavailable
+          const shareBn = new BN(shareLamports)
 
-        const investorTokenAccount = getAssociatedTokenAddressSync(
-          withdrawMintPubkey,
-          userPubkey,
-        )
+          const program = await getProgram(
+            {
+              publicKey: userPubkey,
+              signTransaction: wallet.signTransaction,
+              signAllTransactions: wallet.signAllTransactions,
+            },
+            connection,
+          )
 
-        const vaultTokenAccount = getAssociatedTokenAddressSync(
-          withdrawMintPubkey,
-          vaultAuthorityPda,
-          true,
-        )
+          if (!program || !program.idl.instructions?.length) {
+            throw new Error('Withdraw program unavailable')
+          }
 
-        const investorShareAccount = getAssociatedTokenAddressSync(
-          shareTokenMintPubkey,
-          userPubkey,
-        )
+          const withdrawMintPubkey = withdrawMint ? new PublicKey(withdrawMint) : NATIVE_MINT
 
-        const ixs: TransactionInstruction[] = []
+          const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
+            [Buffer.from('vault_authority'), vaultPubkey.toBuffer()],
+            program.programId,
+          )
 
-        // Check and create investor token ATA if missing
-        const investorAtaInfo = await connection.getAccountInfo(investorTokenAccount)
-        if (!investorAtaInfo) {
-          ixs.push(
-            createAssociatedTokenAccountInstruction(
-              userPubkey,
+          const [shareTokenMintPubkey] = PublicKey.findProgramAddressSync(
+            [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
+            program.programId,
+          )
+
+          const investorTokenAccount = getAssociatedTokenAddressSync(
+            withdrawMintPubkey,
+            userPubkey,
+          )
+
+          const vaultTokenAccount = getAssociatedTokenAddressSync(
+            withdrawMintPubkey,
+            vaultAuthorityPda,
+            true,
+          )
+
+          const investorShareAccount = getAssociatedTokenAddressSync(
+            shareTokenMintPubkey,
+            userPubkey,
+          )
+
+          const ixs: TransactionInstruction[] = []
+
+          // Check and create investor token ATA if missing
+          const investorAtaInfo = await connection.getAccountInfo(investorTokenAccount)
+          if (!investorAtaInfo) {
+            ixs.push(
+              createAssociatedTokenAccountInstruction(
+                userPubkey,
+                investorTokenAccount,
+                userPubkey,
+                withdrawMintPubkey,
+              ),
+            )
+          }
+
+          const withdrawIx = await program.methods
+            .withdraw(shareBn)
+            .accounts({
+              investor: userPubkey,
+              vault: vaultPubkey,
+              vaultAuthority: vaultAuthorityPda,
               investorTokenAccount,
-              userPubkey,
-              withdrawMintPubkey,
-            ),
+              withdrawMint: withdrawMintPubkey,
+              vaultTokenAccount,
+              shareTokenMint: shareTokenMintPubkey,
+              investorShareAccount,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+            })
+            .instruction()
+
+          ixs.push(withdrawIx)
+
+          const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
+          signature = await sendTransaction(
+            connection,
+            tx,
+            {
+              publicKey: wallet.publicKey,
+              signTransaction: wallet.signTransaction,
+            },
           )
         }
 
-        const withdrawIx = await program.methods
-          .withdraw(shareBn)
-          .accounts({
-            investor: userPubkey,
-            vault: vaultPubkey,
-            vaultAuthority: vaultAuthorityPda,
-            investorTokenAccount,
-            withdrawMint: withdrawMintPubkey,
-            vaultTokenAccount,
-            shareTokenMint: shareTokenMintPubkey,
-            investorShareAccount,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-          })
-          .instruction()
+        if (!signature) {
+          throw new Error('Withdraw transaction failed: no signature')
+        }
 
-        ixs.push(withdrawIx)
-
-        const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
-        const signature = await sendTransaction(
-          connection,
-          tx,
-          {
-            publicKey: wallet.publicKey,
-            signTransaction: wallet.signTransaction,
-          },
-        )
         await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
 
         try {
@@ -160,7 +192,7 @@ export function useWithdraw() {
         updateStatus(txId, 'success')
         return signature
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Withdraw failed'
+        const message = err instanceof Error ? err.message : 'Withdrawal failed'
         updateStatus(txId, 'failed', message)
         throw err
       }

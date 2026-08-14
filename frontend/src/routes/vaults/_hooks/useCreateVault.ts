@@ -2,38 +2,33 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react'
-import { PublicKey, Keypair, SystemProgram } from '@solana/web3.js'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { BN } from 'bn.js'
+import { Transaction } from '@solana/web3.js'
 import { useTransactionStore } from '@/stores'
-import { createVault } from '@/services/apis/rest-api/vault.service'
-import { getProgram } from '@/lib/anchor'
-import { buildTransactionWithComputeBudget, sendTransaction, confirmTransactionHelper } from '@/lib/transactions'
+import { prepareCreateVault, submitTx } from '@/services/apis/rest-api/tx.service'
+import { confirmTransactionHelper } from '@/lib/transactions'
 import { formatError } from '@/lib/errors'
-import { toastSuccess, toastError, toastInfo } from '@/lib/toast'
+import { toastSuccess, toastInfo } from '@/lib/toast'
 
 export interface CreateVaultParams {
   vaultType: 'open' | 'closed'
   displayName: string
   description: string
   coverImageUrl?: string
+  focusAssets?: string[]
+  tags?: string[]
   minRaiseAmount: number
-  minRaiseUnit: string
-  acceptedAssets: string[]
-  minInvestment: number
+  performanceFeePercent: number
+  managementFeePercent: number
   lockupPeriodValue: number
   lockupPeriodUnit: 'hours' | 'days'
-  managementFeePercent: number
-  feeWithdrawalPeriod: string
-  performanceFeePercent: number
-  agreedToTerms: boolean
+  acceptedAssets?: string[]
 }
 
 export function useCreateVault() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const wallet = useAnchorWallet()
   const { connection } = useConnection()
+  const wallet = useAnchorWallet()
   const addTransaction = useTransactionStore((s) => s.addTransaction)
   const updateStatus = useTransactionStore((s) => s.updateStatus)
   const confirmTransaction = useTransactionStore((s) => s.confirmTransaction)
@@ -65,79 +60,50 @@ export function useCreateVault() {
 
     const performanceFeeBps = Math.round(data.performanceFeePercent * 100)
     const managementFeeBps = Math.round(data.managementFeePercent * 100)
-    const minRaiseLamports = new BN(Math.round(data.minRaiseAmount * 1e9))
-    const lockupPeriodSec = new BN(lockupPeriodSeconds)
+    const minRaiseLamports = Math.round(data.minRaiseAmount * 1e9)
 
     try {
-      const shareTokenMintKeypair = Keypair.generate()
-      let signature: string | null = null
-      let createdVaultPda: PublicKey | null = null
-
-      const program = await getProgram(wallet, connection)
-      if (program) {
-        const [vaultPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from('vault'), wallet.publicKey.toBuffer(), shareTokenMintKeypair.publicKey.toBuffer()],
-          program.programId,
-        )
-        createdVaultPda = vaultPda
-
-        const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from('vault_authority'), vaultPda.toBuffer()],
-          program.programId,
-        )
-
-        const NATIVE_MINT = new PublicKey('So11111111111111111111111111111111111111112')
-
-        const ix = await program.methods
-          .initializeVault(
-            minRaiseLamports,
-            performanceFeeBps,
-            managementFeeBps,
-            lockupPeriodSec,
-            [NATIVE_MINT, PublicKey.default, PublicKey.default, PublicKey.default],
-          )
-          .accounts({
-            manager: wallet.publicKey,
-            vault: vaultPda,
-            depositMint: NATIVE_MINT,
-            shareTokenMint: shareTokenMintKeypair.publicKey,
-            vaultAuthority: vaultAuthorityPda,
-            systemProgram: SystemProgram.programId,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          })
-          .instruction()
-
-        const tx = buildTransactionWithComputeBudget([ix], 1000, 200000)
-        tx.feePayer = wallet.publicKey
-        const { blockhash } = await connection.getLatestBlockhash()
-        tx.recentBlockhash = blockhash
-
-        tx.partialSign(shareTokenMintKeypair)
-
-        signature = await sendTransaction(connection, tx, wallet)
-        await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
-      }
-
-      if (!signature) {
-        throw new Error('Vault initialization failed: no on-chain signature returned')
-      }
-
-      confirmTransaction(txId, signature)
-
-      await createVault({
-        address: createdVaultPda ? createdVaultPda.toBase58() : wallet.publicKey.toBase58(),
+      // 1. Ask backend to build and simulate transaction
+      const prep = await prepareCreateVault({
         managerAddress: wallet.publicKey.toBase58(),
+        displayName: data.displayName,
+        description: data.description,
+        coverImageUrl: data.coverImageUrl,
+        focusAssets: data.focusAssets,
+        tags: data.tags,
+        minRaiseAmount: minRaiseLamports,
         performanceFeeBps,
         managementFeeBps,
-        minRaiseAmount: data.minRaiseAmount,
-        lockupPeriod: lockupPeriodSeconds,
-        metadata: {
-          displayName: data.displayName,
-          description: data.description,
-          focusAssets: data.acceptedAssets,
-        },
+        lockupPeriodSec: lockupPeriodSeconds,
+        vaultType: data.vaultType,
       })
 
+      if (!prep?.transaction) {
+        throw new Error('Backend did not return prepared transaction')
+      }
+
+      // 2. Deserialize partially signed transaction
+      const tx = Transaction.from(Buffer.from(prep.transaction, 'base64'))
+
+      // 3. User signs with wallet adapter
+      const signedTx = await wallet.signTransaction(tx)
+
+      // 4. Broadcast raw transaction to Solana cluster
+      const rawTx = signedTx.serialize()
+      const signature = await connection.sendRawTransaction(rawTx, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      })
+
+      // 5. Submit signature to backend draft reconciler
+      if (prep.draft_id) {
+        submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
+      }
+
+      // 6. Await on-chain confirmation
+      await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
+
+      confirmTransaction(txId, signature)
       moveToHistory(txId)
       await queryClient.invalidateQueries({ queryKey: ['vaults'] })
       toastSuccess('Vault created successfully!')
@@ -148,7 +114,6 @@ export function useCreateVault() {
       }
       const formattedErr = formatError(err, 'Vault initialization failed')
       updateStatus(txId, 'failed', formattedErr)
-      toastError(formattedErr)
     } finally {
       setIsPending(false)
     }

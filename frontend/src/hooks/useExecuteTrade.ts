@@ -27,7 +27,7 @@ interface ExecuteTradeParams {
 }
 
 const NATIVE_MINT = new PublicKey('So11111111111111111111111111111111111111112')
-const PYTH_RECEIVER_PROGRAM_ID = new PublicKey('recV279B92B27D6x6s7hPj75CLL62p6z2yC4T1uY2')
+const PYTH_RECEIVER_PROGRAM_ID = new PublicKey('rec5EKMGg6MxZYaMdyBfgwp4d5rCZzfKUCrfmss5EBn')
 const SOL_USD_FEED_ID = 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d'
 
 function isNativeMint(mintStr: string): boolean {

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/DecimalInput'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { TokenSelector } from './TokenSelector'
 
@@ -37,12 +37,12 @@ export function PayInputField({
           </div>
           <div className="mt-1 flex items-center gap-3">
             <FormControl>
-              <Input
+              <DecimalInput
                 {...field}
                 id="pay-amount"
-                type="number"
                 placeholder="0.00"
-                className="flex-1 bg-transparent font-mono text-xl border-0 h-auto p-0 focus-visible:ring-0"
+                maxDecimals={9}
+                className="flex-1 bg-transparent font-mono text-xl border-0 h-auto p-0 focus-visible:ring-0 rounded-none shadow-none"
               />
             </FormControl>
             <TokenSelector

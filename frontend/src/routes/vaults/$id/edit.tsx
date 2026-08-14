@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,7 +17,26 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { generateMetadata } from '@/lib/metadata'
+import { TokenIcon } from '@/components/ui/TokenIcon'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { SectionCard } from '@/components/ui/SectionCard'
+import { HeroAmbient } from '@/components/ui/HeroAmbient'
+import { SweepButton } from '@/components/ui/SweepButton'
 import { editVaultSchema, type EditVaultForm } from '@/validations/vault'
+import {
+  Edit3,
+  Check,
+  Loader2,
+  Sparkles,
+  Tag,
+  Layers,
+  AlignLeft,
+  Upload,
+  CheckCircle2,
+  X,
+  ImageIcon,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/vaults/$id/edit')({
   head: ({ params }) => ({
@@ -39,11 +58,15 @@ function EditVaultPage() {
   const config = useConfigStore((s) => s.config)
   const fetchConfig = useConfigStore((s) => s.fetchConfig)
 
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageName, setImageName] = useState<string | null>(null)
+
   const form = useForm<EditVaultForm>({
     resolver: zodResolver(editVaultSchema),
     defaultValues: {
       displayName: '',
       description: '',
+      coverImageUrl: '',
       focusAssets: [],
       tags: '',
     },
@@ -53,6 +76,7 @@ function EditVaultPage() {
 
   const selectedAssets = watch('focusAssets')
   const selectedAssetsSet = useMemo(() => new Set(selectedAssets ?? []), [selectedAssets])
+  const description = watch('description') || ''
 
   useEffect(() => {
     fetchConfig()
@@ -60,11 +84,42 @@ function EditVaultPage() {
 
   useEffect(() => {
     if (currentVault?.id === id) {
-      setValue('displayName', currentVault.metadata.displayName)
-      setValue('description', currentVault.metadata.description)
-      setValue('focusAssets', currentVault.metadata.focusAssets)
+      setValue('displayName', currentVault.metadata.displayName || '')
+      setValue('description', currentVault.metadata.description || '')
+      setValue('focusAssets', currentVault.metadata.focusAssets || [])
+      if (currentVault.metadata.coverImageUrl) {
+        setImagePreview(currentVault.metadata.coverImageUrl)
+        setValue('coverImageUrl', currentVault.metadata.coverImageUrl)
+      }
+      if (currentVault.metadata.tags && Array.isArray(currentVault.metadata.tags)) {
+        setValue('tags', currentVault.metadata.tags.join(', '))
+      }
     }
   }, [currentVault, id, setValue])
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit')
+        return
+      }
+      setImageName(file.name)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64 = reader.result as string
+        setImagePreview(base64)
+        setValue('coverImageUrl', base64, { shouldDirty: true })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setImagePreview(null)
+    setImageName(null)
+    setValue('coverImageUrl', '', { shouldDirty: true })
+  }
 
   const toggleAsset = (asset: string) => {
     const current = selectedAssets || []
@@ -81,7 +136,16 @@ function EditVaultPage() {
         metadata: {
           displayName: data.displayName,
           description: data.description ?? '',
+          ...(data.coverImageUrl ? { coverImageUrl: data.coverImageUrl } : {}),
           focusAssets: data.focusAssets,
+          ...(data.tags
+            ? {
+                tags: data.tags
+                  .split(',')
+                  .map((t) => t.trim())
+                  .filter(Boolean),
+              }
+            : {}),
         },
       })
       navigate({ to: '/vaults/$id', params: { id } })
@@ -90,106 +154,224 @@ function EditVaultPage() {
     }
   }
 
+  const displayNameValue = watch('displayName') || currentVault?.metadata?.displayName || `Vault ${id.slice(0, 8)}`
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">Edit Vault {id.slice(0, 8)}</h1>
-        <p className="mt-2 text-text-secondary">Modify vault configuration and parameters.</p>
-      </div>
+    <div className="space-y-6 relative w-full">
+      <HeroAmbient />
+
+      <PageHeader
+        title={`Edit ${displayNameValue}`}
+        subtitle="Modify display metadata, investment strategy, branding, and whitelist focus assets."
+        backTo={`/vaults/${id}`}
+      />
 
       <Form {...form}>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-5 rounded-xl border border-border-subtle bg-bg-elevated p-6"
-        >
-          <FormField
-            control={form.control}
-            name="displayName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Display Name</FormLabel>
-                <FormControl>
-                  <Input type="text" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <SectionCard
+            icon={<Edit3 className="size-4 text-primary-coral" />}
+            title="Vault Metadata & Configuration"
+            description="Custom branding, strategy narrative, tags, and tradable asset universe."
+          >
+            <div className="space-y-5">
+              {/* Display Name Field */}
+              <FormField
+                control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5 text-xs font-medium text-text-primary">
+                      <Sparkles className="size-3.5 text-primary-coral" />
+                      Display Name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="e.g. Solana High Yield Alpha"
+                        className="bg-bg-inset/60 border-border-subtle focus:border-primary-coral/60 transition-colors font-medium"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-[11px] text-text-tertiary">
+                      The public name shown across the vault leaderboard and discovery directory.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea rows={3} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              {/* Description Field */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="flex items-center gap-1.5 text-xs font-medium text-text-primary">
+                        <AlignLeft className="size-3.5 text-primary-gold" />
+                        Description
+                      </FormLabel>
+                      <span className="text-[11px] font-mono text-text-tertiary">
+                        {description.length} / 500
+                      </span>
+                    </div>
+                    <FormControl>
+                      <Textarea
+                        rows={3}
+                        maxLength={500}
+                        placeholder="Detail your trading thesis, rebalancing frequency, and risk management parameters..."
+                        className="bg-bg-inset/60 border-border-subtle focus:border-primary-coral/60 transition-colors resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-[11px] text-text-tertiary">
+                      Explain your fund strategy to potential investors.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="focusAssets"
-            render={() => (
-              <FormItem>
-                <FormLabel>Focus Assets</FormLabel>
-                <FormDescription>Select from the configured whitelist.</FormDescription>
-                <FormControl>
-                  <div role="group" aria-label="Focus Assets" className="mt-2 flex flex-wrap gap-2">
-                    {(config?.focusAssetsWhitelist ?? []).map((asset) => {
-                      const selected = selectedAssetsSet.has(asset)
-                      return (
-                        <Button
-                          key={asset}
-                          type="button"
-                          variant={selected ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => toggleAsset(asset)}
-                        >
-                          {asset}
-                        </Button>
-                      )
-                    })}
+              {/* Cover Image Upload / Preview */}
+              <div>
+                <FormLabel className="flex items-center gap-1.5 text-xs font-medium text-text-primary mb-2">
+                  <ImageIcon className="size-3.5 text-status-info" />
+                  Cover Image
+                </FormLabel>
+                {imagePreview ? (
+                  <div className="relative rounded-xl border border-border-subtle overflow-hidden bg-bg-inset/50 p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={imagePreview}
+                        alt="Cover preview"
+                        className="size-14 rounded-lg object-cover border border-border-subtle shadow-sm"
+                      />
+                      <div>
+                        <p className="text-xs font-medium text-text-primary truncate max-w-xs">
+                          {imageName || 'Current cover image'}
+                        </p>
+                        <p className="text-[10px] text-status-success flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 className="size-3" /> Image active
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                      className="text-xs text-status-error hover:bg-status-error/10 hover:text-status-error gap-1 font-semibold cursor-pointer"
+                    >
+                      <X className="size-3.5" />
+                      Remove
+                    </Button>
                   </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                ) : (
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-border-subtle hover:border-primary-coral/50 bg-bg-inset/30 hover:bg-bg-inset/60 rounded-xl p-6 cursor-pointer transition-colors group">
+                    <div className="flex size-10 items-center justify-center rounded-full bg-bg-elevated text-text-tertiary group-hover:text-primary-coral mb-2 transition-colors">
+                      <Upload className="size-5" />
+                    </div>
+                    <p className="text-xs font-medium text-text-primary">Click to upload cover image</p>
+                    <p className="text-[10px] text-text-tertiary mt-1">PNG, JPG or WebP (max 5MB)</p>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                )}
+              </div>
 
-          <FormField
-            control={form.control}
-            name="tags"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tags (comma-separated)</FormLabel>
-                <FormControl>
-                  <Input type="text" placeholder="e.g. defi, stablecoin, yield" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              {/* Focus Assets Selector */}
+              <FormField
+                control={form.control}
+                name="focusAssets"
+                render={() => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5 text-xs font-medium text-text-primary">
+                      <Layers className="size-3.5 text-status-success" />
+                      Focus Assets
+                    </FormLabel>
+                    <FormDescription className="text-[11px] text-text-tertiary">
+                      Select target trading assets from the configured Solana whitelist.
+                    </FormDescription>
+                    <FormControl>
+                      <div role="group" aria-label="Focus Assets" className="mt-2 flex flex-wrap gap-2.5">
+                        {(config?.focusAssetsWhitelist ?? []).map((asset) => {
+                          const selected = selectedAssetsSet.has(asset)
+                          return (
+                            <button
+                              key={asset}
+                              type="button"
+                              onClick={() => toggleAsset(asset)}
+                              className={cn(
+                                'inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium font-mono transition-all border select-none',
+                                selected
+                                  ? 'bg-primary-coral/20 text-text-primary border-primary-coral/50 shadow-[0_0_12px_rgba(255,107,53,0.25)]'
+                                  : 'bg-bg-inset/60 text-text-secondary border-white/8 hover:border-white/20 hover:text-text-primary'
+                              )}
+                            >
+                              <TokenIcon symbol={asset} alt="" className="size-4" />
+                              <span className="font-semibold">{asset}</span>
+                              {selected && <Check className="size-3.5 text-primary-coral" />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate({ to: '/vaults/$id', params: { id } })}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="default"
-              disabled={isSubmitting || !isDirty}
-            >
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
+              {/* Tags Field */}
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5 text-xs font-medium text-text-primary">
+                      <Tag className="size-3.5 text-status-info" />
+                      Tags (comma-separated)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="e.g. defi, yield, momentum, algorithmic"
+                        className="bg-bg-inset/60 border-border-subtle focus:border-primary-coral/60 transition-colors font-mono text-xs"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-[11px] text-text-tertiary">
+                      Add relevant keywords for search filtering and categorization.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Action Buttons Footer */}
+            <div className="flex items-center justify-end gap-3 pt-4 mt-6 border-t border-border-subtle/50">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate({ to: '/vaults/$id', params: { id } })}
+                className="h-9 px-4 text-xs font-medium"
+              >
+                Cancel
+              </Button>
+              <SweepButton
+                type="submit"
+                disabled={isSubmitting || !isDirty}
+                className="h-9 text-xs font-semibold"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-1.5">
+                    <Loader2 className="size-3.5 animate-spin" /> Saving...
+                  </span>
+                ) : (
+                  'Save Changes'
+                )}
+              </SweepButton>
+            </div>
+          </SectionCard>
         </form>
       </Form>
     </div>

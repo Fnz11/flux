@@ -116,11 +116,18 @@ func (r *tradeRepo) ListByVault(ctx context.Context, vaultID string, tradeType s
 	var where string
 	var args []interface{}
 	if vaultID != "" {
-		where = "vault_id = ?"
 		if vid, err := uuid.Parse(vaultID); err == nil {
+			where = "vault_id = ?"
 			args = append(args, vid)
 		} else {
-			args = append(args, vaultID)
+			var v models.Vault
+			if err := db.Select("id").Where("address = ?", vaultID).First(&v).Error; err == nil {
+				where = "vault_id = ?"
+				args = append(args, v.ID)
+			} else {
+				where = "vault_id = ?"
+				args = append(args, vaultID)
+			}
 		}
 	}
 	if tradeType != "" {

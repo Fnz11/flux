@@ -24,6 +24,8 @@ export interface VaultMetadata {
   focusAssets: string[]
   description: string
   displayName: string
+  coverImageUrl?: string
+  tags?: string[]
 }
 
 // ── Vault (frontend display) ──

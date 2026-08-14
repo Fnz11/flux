@@ -146,7 +146,12 @@ func (r *historyRepo) queryVaultMetricsSeries(db *gorm.DB, vaultID string, from,
 		if vid, err := uuid.Parse(vaultID); err == nil {
 			q = q.Where("vault_id = ?", vid)
 		} else {
-			q = q.Where("vault_id = ?", vaultID)
+			var v models.Vault
+			if err := db.Select("id").Where("address = ?", vaultID).First(&v).Error; err == nil {
+				q = q.Where("vault_id = ?", v.ID)
+			} else {
+				q = q.Where("vault_id = ?", vaultID)
+			}
 		}
 	}
 	if err := q.Group("bucket").Order("bucket ASC").Scan(&results).Error; err != nil {
@@ -164,7 +169,12 @@ func (r *historyRepo) queryPriceHistorySeries(db *gorm.DB, vaultID string, from,
 		if vid, err := uuid.Parse(vaultID); err == nil {
 			q = q.Where("vault_id = ?", vid)
 		} else {
-			q = q.Where("vault_id = ?", vaultID)
+			var v models.Vault
+			if err := db.Select("id").Where("address = ?", vaultID).First(&v).Error; err == nil {
+				q = q.Where("vault_id = ?", v.ID)
+			} else {
+				q = q.Where("vault_id = ?", vaultID)
+			}
 		}
 	}
 	if err := q.Group("bucket").Order("bucket ASC").Scan(&results).Error; err != nil {

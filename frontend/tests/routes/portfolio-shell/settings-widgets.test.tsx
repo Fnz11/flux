@@ -40,14 +40,14 @@ describe('settings widgets', () => {
   it('loads persisted dust threshold into preferences', () => {
     mocks.config = { dustThreshold: 0.025 }
     render(<TradePreferences />)
-    expect(screen.getByLabelText('Dust Asset Threshold (SOL)')).toHaveValue(0.025)
-    expect(screen.getByLabelText('Max Slippage Tolerance (BPS)')).toHaveValue(50)
+    expect(screen.getByLabelText('Dust Asset Threshold (SOL)')).toHaveValue('0.025')
+    expect(screen.getByLabelText('Max Slippage Tolerance (BPS)')).toHaveValue('50')
   })
 
   it('selects a slippage preset', () => {
     render(<TradePreferences />)
     fireEvent.click(screen.getByRole('button', { name: '1.0%' }))
-    expect(screen.getByLabelText('Max Slippage Tolerance (BPS)')).toHaveValue(100)
+    expect(screen.getByLabelText('Max Slippage Tolerance (BPS)')).toHaveValue('100')
   })
 
   it('validates slippage boundaries and negative dust', async () => {

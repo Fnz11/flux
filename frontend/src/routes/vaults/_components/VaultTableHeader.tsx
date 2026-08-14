@@ -11,7 +11,7 @@ export interface VaultTableHeaderProps {
 }
 
 function renderSortIcon(column: SortColumn, sortBy?: string, sortOrder?: 'asc' | 'desc') {
-  if (sortBy !== column) {
+  if (sortBy !== column || !sortOrder) {
     return <ArrowUpDown className="ml-1 inline-block h-3.5 w-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
   }
   return sortOrder === 'asc' ? (
@@ -26,7 +26,7 @@ export function VaultTableHeader({ sortBy, sortOrder, onSort }: VaultTableHeader
     <TableHeader>
       <TableRow>
         <TableHead
-          aria-sort={sortBy === 'displayName' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
+          aria-sort={sortBy === 'displayName' && sortOrder ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
           onClick={() => onSort('displayName')}
           onKeyDown={(e) => handleSortKeyDown(e, () => onSort('displayName'))}
           className="group cursor-pointer py-4 px-6 select-none hover:text-text-primary transition-colors"
@@ -36,12 +36,12 @@ export function VaultTableHeader({ sortBy, sortOrder, onSort }: VaultTableHeader
           </div>
         </TableHead>
         <TableHead
-          aria-sort={sortBy === 'pnl' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
+          aria-sort={sortBy === 'pnl' && sortOrder ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
           onClick={() => onSort('pnl')}
           onKeyDown={(e) => handleSortKeyDown(e, () => onSort('pnl'))}
           className={cn(
             'group cursor-pointer py-4 px-4 select-none transition-colors',
-            sortBy === 'pnl' ? 'text-primary-coral font-bold' : 'hover:text-text-primary'
+            sortBy === 'pnl' && sortOrder ? 'text-primary-coral font-bold' : 'hover:text-text-primary'
           )}
         >
           <div className="flex items-center">
@@ -49,7 +49,7 @@ export function VaultTableHeader({ sortBy, sortOrder, onSort }: VaultTableHeader
           </div>
         </TableHead>
         <TableHead
-          aria-sort={sortBy === 'created_at' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
+          aria-sort={sortBy === 'created_at' && sortOrder ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
           onClick={() => onSort('created_at')}
           onKeyDown={(e) => handleSortKeyDown(e, () => onSort('created_at'))}
           className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors"
@@ -59,7 +59,7 @@ export function VaultTableHeader({ sortBy, sortOrder, onSort }: VaultTableHeader
           </div>
         </TableHead>
         <TableHead
-          aria-sort={sortBy === 'min_raise_amount' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
+          aria-sort={sortBy === 'min_raise_amount' && sortOrder ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
           onClick={() => onSort('min_raise_amount')}
           onKeyDown={(e) => handleSortKeyDown(e, () => onSort('min_raise_amount'))}
           className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors"
@@ -69,7 +69,7 @@ export function VaultTableHeader({ sortBy, sortOrder, onSort }: VaultTableHeader
           </div>
         </TableHead>
         <TableHead
-          aria-sort={sortBy === 'investors' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
+          aria-sort={sortBy === 'investors' && sortOrder ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
           onClick={() => onSort('investors')}
           onKeyDown={(e) => handleSortKeyDown(e, () => onSort('investors'))}
           className="group cursor-pointer py-4 px-4 select-none hover:text-text-primary transition-colors"

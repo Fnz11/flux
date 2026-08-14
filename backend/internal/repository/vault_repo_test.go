@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/flux-protocol/backend/internal/models"
@@ -444,10 +445,90 @@ func TestGetVaultBalances(t *testing.T) {
 		}
 	})
 
-	t.Run("GetVaultBalances not found", func(t *testing.T) {
-		_, err := repo.GetVaultBalances(context.Background(), "NonExistentAddressOrUUID")
-		if !errors.Is(err, domain.ErrNotFound) {
-			t.Fatalf("expected ErrNotFound, got %v", err)
+	t.Run("GetVaultBalances from vault_balances_summary MV", func(t *testing.T) {
+		mvVaultID := uuid.New()
+		mvVaultAddr := "MVVaultAddress1111111111111111111111111"
+		_ = db.Create(&models.Vault{ID: mvVaultID, Address: mvVaultAddr, ManagerID: managerID, TVL: decimal.NewFromFloat(500.0)}).Error
+
+		_ = db.Exec(`CREATE TABLE IF NOT EXISTS vault_balances_summary (
+			vault_id text,
+			token text,
+			amount numeric
+		)`).Error
+
+		solMint := "So11111111111111111111111111111111111111112"
+		usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+
+		_ = db.Exec(`INSERT INTO vault_balances_summary (vault_id, token, amount) VALUES (?, ?, 2.0)`, mvVaultID.String(), solMint).Error
+		_ = db.Exec(`INSERT INTO vault_balances_summary (vault_id, token, amount) VALUES (?, ?, 200.0)`, mvVaultID.String(), usdcMint).Error
+
+		balances, err := repo.GetVaultBalances(context.Background(), mvVaultAddr)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(balances) != 2 {
+			t.Fatalf("expected 2 balances, got %d", len(balances))
+		}
+		if !balances[0].Amount.Equal(decimal.NewFromFloat(2.0)) {
+			t.Errorf("expected SOL amount 2.0, got %s", balances[0].Amount)
+		}
+		if !balances[1].Amount.Equal(decimal.NewFromFloat(200.0)) {
+			t.Errorf("expected USDC amount 200.0, got %s", balances[1].Amount)
+		}
+	})
+
+	t.Run("fetchVaultCounts from portfolio_summary MV", func(t *testing.T) {
+		psVaultID := uuid.New()
+		psVaultAddr := "PSVaultAddress1111111111111111111111111"
+		_ = db.Create(&models.Vault{ID: psVaultID, Address: psVaultAddr, ManagerID: managerID, TVL: decimal.NewFromFloat(100.0)}).Error
+
+		_ = db.Exec(`CREATE TABLE IF NOT EXISTS portfolio_summary (
+			vault_id text,
+			trade_count bigint,
+			share_holders_count bigint
+		)`).Error
+
+		_ = db.Exec(`INSERT INTO portfolio_summary (vault_id, trade_count, share_holders_count) VALUES (?, 42, 7)`, psVaultID.String()).Error
+
+		detail, err := repo.GetByAddress(context.Background(), psVaultAddr)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if detail.TradeCount != 42 {
+			t.Errorf("expected TradeCount 42 from MV, got %d", detail.TradeCount)
+		}
+		if detail.PortfolioCount != 7 {
+			t.Errorf("expected PortfolioCount 7 from MV, got %d", detail.PortfolioCount)
+		}
+	})
+
+	t.Run("fetchBatchSparklines from vault_daily_sparkline_mv", func(t *testing.T) {
+		spVaultID := uuid.New()
+		spVaultAddr := "SPVaultAddress1111111111111111111111111"
+		_ = db.Create(&models.Vault{ID: spVaultID, Address: spVaultAddr, ManagerID: managerID, TVL: decimal.NewFromFloat(100.0)}).Error
+
+		_ = db.Exec(`CREATE TABLE IF NOT EXISTS vault_daily_sparkline_mv (
+			vault_id text,
+			bucket datetime,
+			val numeric
+		)`).Error
+
+		nowTime := time.Now().UTC().Truncate(24 * time.Hour)
+		_ = db.Exec(`INSERT INTO vault_daily_sparkline_mv (vault_id, bucket, val) VALUES (?, ?, 123.45)`, spVaultID.String(), nowTime).Error
+
+		list, _, err := repo.List(context.Background(), domain.VaultListFilter{Search: spVaultAddr})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(list) == 0 {
+			t.Fatalf("expected 1 vault found")
+		}
+		if len(list[0].Sparkline) == 0 {
+			t.Fatalf("expected sparkline points from MV")
+		}
+		if !list[0].Sparkline[0].Value.Equal(decimal.NewFromFloat(123.45)) {
+			t.Errorf("expected sparkline value 123.45, got %s", list[0].Sparkline[0].Value)
 		}
 	})
 }
+

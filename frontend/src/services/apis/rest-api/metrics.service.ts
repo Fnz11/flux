@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { SeriesPoint } from '@/components/ui/progress-metric-card'
+import type { SeriesPoint } from '@/components/ui/metric-chart'
 
 export interface MetricsResponse {
   metric: string

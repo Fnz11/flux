@@ -1,7 +1,7 @@
 import type { Control } from 'react-hook-form'
 import { Percent, Clock } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/DecimalInput'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { cn } from '@/lib/utils'
 import { FEE_WITHDRAWAL_PERIODS, type LockupPeriodUnit, type FeeWithdrawalPeriod } from '@/constants/vault'
@@ -44,11 +44,12 @@ export function AdvancedSettingsSection({
                   <FormLabel className="text-xs text-text-secondary">Min. Investment</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="any"
+                      <DecimalInput
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        value={field.value ?? ''}
+                        onValueChange={(_, num) => field.onChange(num ?? 0)}
+                        maxDecimals={4}
+                        placeholder="0.001"
                         className="bg-bg-inset border-border-subtle font-mono pr-14"
                       />
                     </FormControl>
@@ -68,10 +69,12 @@ export function AdvancedSettingsSection({
                   <FormLabel className="text-xs text-text-secondary">Lockup Period</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
-                      <Input
-                        type="number"
+                      <DecimalInput
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        value={field.value ?? ''}
+                        onValueChange={(_, num) => field.onChange(num ?? 0)}
+                        maxDecimals={0}
+                        placeholder="0"
                         className="bg-bg-inset border-border-subtle font-mono flex-1"
                       />
                     </FormControl>
@@ -111,11 +114,12 @@ export function AdvancedSettingsSection({
                   </div>
                   <div className="relative">
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.1"
+                      <DecimalInput
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        value={field.value ?? ''}
+                        onValueChange={(_, num) => field.onChange(num ?? 0)}
+                        maxDecimals={2}
+                        placeholder="0.0"
                         className="bg-bg-inset border-border-subtle font-mono pr-16"
                       />
                     </FormControl>
@@ -137,11 +141,12 @@ export function AdvancedSettingsSection({
                   </div>
                   <div className="relative">
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.5"
+                      <DecimalInput
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        value={field.value ?? ''}
+                        onValueChange={(_, num) => field.onChange(num ?? 0)}
+                        maxDecimals={2}
+                        placeholder="0.0"
                         className="bg-bg-inset border-border-subtle font-mono pr-20"
                       />
                     </FormControl>

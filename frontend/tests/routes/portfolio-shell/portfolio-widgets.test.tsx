@@ -314,7 +314,7 @@ describe('leaderboard widget', () => {
     expect(screen.getByText('Solana')).toBeInTheDocument()
     expect(screen.getByText('$1.25M')).toBeInTheDocument()
     expect(screen.getByText('-3.50%')).toHaveClass('text-status-error')
-    expect(screen.getByText('S')).toBeInTheDocument()
+    expect(screen.getByAltText('S')).toBeInTheDocument()
   })
 
   it('changes tabs and invalidates leaderboard after websocket update', () => {

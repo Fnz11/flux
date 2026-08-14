@@ -48,6 +48,8 @@ function formatSupply(value: string): string {
 
 import { ChangeBadge, ChangeText } from './ChangeIndicators'
 
+import { Skeleton } from '@/components/ui/skeleton'
+
 export function PerformanceChart({ data, isLoading }: PerformanceChartProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>('1M')
   const [selectedAsset, _setSelectedAsset] = useState('SOL / USDC')
@@ -56,9 +58,61 @@ export function PerformanceChart({ data, isLoading }: PerformanceChartProps) {
 
   if (isLoading || marketLoading) {
     return (
-      <div className="rounded-2xl border border-border-subtle bg-bg-elevated p-5">
-        <div className="animate-pulse h-[340px] rounded-xl bg-bg-inset" />
-      </div>
+      <SectionCard
+        icon={<TrendingUp className="size-4 text-primary-coral" />}
+        title="Performance"
+        description="Historical NAV and portfolio asset growth tracking"
+        rightContent={
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <Skeleton className="h-6 w-28 rounded-xl" />
+            <div className="flex items-center gap-1 rounded-xl bg-bg-inset p-0.5">
+              {TIMEFRAMES.map((tf) => (
+                <Skeleton key={tf} className="h-5 w-6 rounded-lg" />
+              ))}
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="flex items-baseline gap-2">
+                <Skeleton className="h-9 w-32 rounded-md" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-28 rounded" />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <Skeleton className="h-2.5 w-16 rounded" />
+                  <Skeleton className="h-4 w-20 rounded" />
+                  <Skeleton className="h-2.5 w-12 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-[220px] w-full rounded-xl bg-bg-inset/40 p-4 flex items-center justify-center">
+            <div className="w-full space-y-4 opacity-50">
+              <div className="flex justify-between">
+                <Skeleton className="h-2 w-12" />
+                <Skeleton className="h-2 w-12" />
+                <Skeleton className="h-2 w-12" />
+                <Skeleton className="h-2 w-12" />
+              </div>
+              <div className="h-28 w-full rounded-xl border border-dashed border-border-subtle" />
+              <div className="flex justify-between">
+                <Skeleton className="h-2 w-8" />
+                <Skeleton className="h-2 w-8" />
+                <Skeleton className="h-2 w-8" />
+                <Skeleton className="h-2 w-8" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
     )
   }
 

@@ -244,3 +244,69 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_user_pnl_summary_user_vault
 -- Non-unique: supports vault-scoped reads (holder list per vault, agent 7).
 CREATE INDEX IF NOT EXISTS idx_user_pnl_summary_vault
     ON user_pnl_summary (vault_id);
+
+
+-- ============================================================================
+-- vault_daily_sparkline_mv
+-- Grain: one row per (vault_id, bucket).
+-- Pre-aggregates daily TVL average for 30-day sparklines.
+-- ============================================================================
+DO $do$
+BEGIN
+    IF to_regclass('public.vault_daily_sparkline_mv') IS NULL THEN
+        CREATE MATERIALIZED VIEW vault_daily_sparkline_mv AS
+        SELECT
+            vault_id,
+            DATE_TRUNC('day', timestamp) AS bucket,
+            AVG(value)::numeric(36,18)   AS val
+        FROM vault_metrics
+        WHERE metric = 'tvl'
+        GROUP BY vault_id, DATE_TRUNC('day', timestamp);
+    END IF;
+END $do$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_vault_daily_sparkline_mv_vault_bucket
+    ON vault_daily_sparkline_mv (vault_id, bucket);
+
+
+-- ============================================================================
+-- vault_balances_summary
+-- Grain: one row per (vault_id, token).
+-- Pre-aggregates token balances from trade histories.
+-- ============================================================================
+DO $do$
+BEGIN
+    IF to_regclass('public.vault_balances_summary') IS NULL THEN
+        CREATE MATERIALIZED VIEW vault_balances_summary AS
+        SELECT
+            vault_id,
+            token,
+            GREATEST(0, SUM(delta))::numeric(36,18) AS amount
+        FROM (
+            SELECT 
+                vault_id,
+                COALESCE(NULLIF(input_token, ''), 'So11111111111111111111111111111111111111112') AS token,
+                CASE 
+                    WHEN trade_type = 'Deposit' THEN amount_in
+                    WHEN trade_type IN ('Buy', 'Sell') THEN -amount_in
+                    ELSE 0
+                END AS delta
+            FROM trade_histories
+            UNION ALL
+            SELECT
+                vault_id,
+                COALESCE(NULLIF(output_token, ''), 'So11111111111111111111111111111111111111112') AS token,
+                CASE
+                    WHEN trade_type = 'Withdraw' THEN -amount_out
+                    WHEN trade_type IN ('Buy', 'Sell') THEN amount_out
+                    ELSE 0
+                END AS delta
+            FROM trade_histories
+        ) sub
+        GROUP BY vault_id, token;
+    END IF;
+END $do$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_vault_balances_summary_vault_token
+    ON vault_balances_summary (vault_id, token);
+

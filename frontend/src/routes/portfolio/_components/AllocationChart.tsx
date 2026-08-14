@@ -8,11 +8,32 @@ interface AllocationChartProps {
   isLoading?: boolean
 }
 
+import { Skeleton } from '@/components/ui/skeleton'
+
 export function AllocationChart({ data, isLoading }: AllocationChartProps) {
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5">
-        <div className="animate-pulse h-[300px] rounded-xl bg-bg-inset" />
+      <div className="h-full flex flex-col justify-between rounded-xl border border-border-subtle bg-bg-elevated/40 p-5 min-h-[360px]">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-24 rounded-md" />
+          <Skeleton className="h-4 w-16 rounded-full" />
+        </div>
+        <div className="flex flex-1 items-center justify-center gap-8 py-6">
+          {/* Circular Donut Skeleton Ring */}
+          <div className="relative size-36 rounded-full border-8 border-bg-inset animate-pulse flex items-center justify-center">
+            <Skeleton className="size-16 rounded-full" />
+          </div>
+          {/* Legend Items Skeleton */}
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Skeleton className="size-2.5 rounded-full" />
+                <Skeleton className="h-3.5 w-14 rounded" />
+                <Skeleton className="h-3.5 w-10 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }

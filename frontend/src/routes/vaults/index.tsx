@@ -3,6 +3,9 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useInfiniteVaultsQuery } from '@/services/hooks'
 import type { PaginatedVaults } from '@/services/apis/rest-api/vault.service'
 import { VaultsTable, type SortColumn } from './_components/VaultsTable'
+import { VaultTableHeader } from './_components/VaultTableHeader'
+import { Table, TableBody } from '@/components/ui/table'
+import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { SweepButton } from '@/components/ui/SweepButton'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -110,21 +113,45 @@ function VaultsListPage() {
   }
 
   const handleSort = (column: SortColumn) => {
-    let nextOrder: 'asc' | 'desc' = 'desc'
     if (sortBy === column) {
-      nextOrder = sortOrder === 'desc' ? 'asc' : 'desc'
-    } else if (column === 'displayName' || column === 'created_at') {
-      nextOrder = 'asc'
+      if (sortOrder === 'desc') {
+        navigate({
+          search: (prev) => ({
+            ...prev,
+            sortBy: column,
+            sortOrder: 'asc',
+          }),
+          replace: true,
+        })
+      } else if (sortOrder === 'asc') {
+        navigate({
+          search: (prev) => ({
+            ...prev,
+            sortBy: undefined,
+            sortOrder: undefined,
+          }),
+          replace: true,
+        })
+      } else {
+        navigate({
+          search: (prev) => ({
+            ...prev,
+            sortBy: column,
+            sortOrder: 'desc',
+          }),
+          replace: true,
+        })
+      }
+    } else {
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          sortBy: column,
+          sortOrder: 'desc',
+        }),
+        replace: true,
+      })
     }
-
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        sortBy: column,
-        sortOrder: nextOrder,
-      }),
-      replace: true,
-    })
   }
 
   return (
@@ -177,7 +204,19 @@ function VaultsListPage() {
         }
       >
         {isLoading ? (
-          <div className="w-full h-64 animate-pulse rounded-xl bg-bg-inset p-5" />
+          <div className="w-full overflow-x-auto">
+            <Table className="min-w-[720px]">
+              <VaultTableHeader sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
+              <TableBody>
+                <TableRowSkeleton
+                  columns={8}
+                  rows={6}
+                  cellAligns={['left', 'left', 'left', 'left', 'left', 'left', 'left', 'right']}
+                  cellWidths={['w-36', 'w-16', 'w-24', 'w-16', 'w-12', 'w-16', 'w-20', 'w-16']}
+                />
+              </TableBody>
+            </Table>
+          </div>
         ) : vaults.length === 0 ? (
           <EmptyVaultsTable
             title="No vaults found"

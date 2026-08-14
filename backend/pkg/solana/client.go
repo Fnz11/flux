@@ -135,3 +135,52 @@ func (c *Client) GetRecentBlockhash(ctx context.Context) (string, error) {
 	val, _ := result.(string)
 	return val, nil
 }
+
+type BlockhashDetails struct {
+	Blockhash            solana.Hash
+	LastValidBlockHeight uint64
+}
+
+func (c *Client) GetLatestBlockhashDetails(ctx context.Context) (*BlockhashDetails, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	result, err := c.execute(func() (any, error) {
+		res, err := c.rpcClient.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
+		if err != nil {
+			return nil, err
+		}
+		return &BlockhashDetails{
+			Blockhash:            res.Value.Blockhash,
+			LastValidBlockHeight: res.Value.LastValidBlockHeight,
+		}, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get latest blockhash details: %w", err)
+	}
+
+	val, _ := result.(*BlockhashDetails)
+	return val, nil
+}
+
+func (c *Client) SendRawTransaction(ctx context.Context, tx *solana.Transaction) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	result, err := c.execute(func() (any, error) {
+		sig, err := c.rpcClient.SendTransactionWithOpts(ctx, tx, rpc.TransactionOpts{
+			PreflightCommitment: rpc.CommitmentConfirmed,
+		})
+		if err != nil {
+			return "", err
+		}
+		return sig.String(), nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("send transaction: %w", err)
+	}
+
+	sig, _ := result.(string)
+	return sig, nil
+}
+

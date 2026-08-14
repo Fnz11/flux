@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useConfigStore } from '@/stores/config-store'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/DecimalInput'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Sliders } from 'lucide-react'
 import { tradePreferencesSchema, type TradePreferencesFormValues } from '@/validations/trade'
@@ -65,9 +65,9 @@ export function TradePreferences() {
                           {(parseInt(bps) / 100).toFixed(1)}%
                         </Button>
                       ))}
-                      <Input
+                      <DecimalInput
                         id="slippage"
-                        type="number"
+                        maxDecimals={0}
                         {...field}
                         className="w-24 font-mono text-xs"
                       />
@@ -86,10 +86,10 @@ export function TradePreferences() {
                 <FormItem>
                   <FormLabel htmlFor="dust">Dust Asset Threshold (SOL)</FormLabel>
                   <FormControl>
-                    <Input
+                    <DecimalInput
                       id="dust"
-                      type="number"
-                      step="0.001"
+                      maxDecimals={4}
+                      placeholder="0.001"
                       {...field}
                       className="font-mono text-xs"
                     />

@@ -4,9 +4,10 @@ import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useDepositModal, TOKENS } from '../_hooks/useDepositModal'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/DecimalInput'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import { depositSchema, type DepositFormValues } from '@/validations/invest'
 
 interface DepositModalProps {
@@ -59,15 +60,17 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
             <div className="mt-4 space-y-3">
               <div>
                 <p className="mb-1.5 text-xs font-medium text-text-muted">Token</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {TOKENS.map((t) => (
                     <Button
                       key={t.mint}
                       type="button"
                       variant={selectedToken.mint === t.mint ? 'default' : 'outline'}
                       onClick={() => setSelectedToken(t)}
+                      className="flex items-center gap-1.5"
                     >
-                      {t.symbol}
+                      <TokenIcon symbol={t.symbol} alt="" className="size-4" />
+                      <span>{t.symbol}</span>
                     </Button>
                   ))}
                 </div>
@@ -80,12 +83,11 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
                   <FormItem>
                     <FormLabel className="mb-1.5 text-xs font-medium">Amount</FormLabel>
                     <FormControl>
-                      <Input
+                      <DecimalInput
                         id="deposit-amount"
-                        type="number"
-                        step="any"
                         placeholder="0.00"
                         className="text-lg font-mono"
+                        maxDecimals={9}
                         {...field}
                       />
                     </FormControl>
@@ -119,8 +121,9 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
             <p className="text-center text-3xl font-semibold text-primary-coral font-mono">
               {estimatedShares.toFixed(6)}
             </p>
-            <p className="mt-1 text-center text-sm text-text-muted">
-              share tokens for {amountWatch} {selectedToken.symbol}
+            <p className="mt-1 text-center text-sm text-text-muted flex items-center justify-center gap-1.5">
+              <span>share tokens for {amountWatch} {selectedToken.symbol}</span>
+              <TokenIcon symbol={selectedToken.symbol} alt="" className="size-3.5" />
             </p>
           </div>
 

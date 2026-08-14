@@ -3,13 +3,14 @@ import { cn } from '@/lib/utils'
 
 export interface SectionCardProps {
   icon?: ReactNode
-  title: ReactNode | string
+  title?: ReactNode | string
   description?: ReactNode | string
   rightContent?: ReactNode
   children: ReactNode
   className?: string
   headerClassName?: string
   contentClassName?: string
+  iconWrapperClassName?: string
   noPadding?: boolean
 }
 
@@ -22,9 +23,10 @@ export function SectionCard({
   className,
   headerClassName,
   contentClassName,
+  iconWrapperClassName,
   noPadding = false,
 }: SectionCardProps) {
-  const hasHeader = title || icon || description || rightContent
+  const hasHeader = Boolean(title || icon || description || rightContent)
 
   return (
     <div
@@ -44,18 +46,31 @@ export function SectionCard({
         >
           <div className="flex items-center gap-3 min-w-0">
             {icon && (
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary-coral/10 text-primary-coral border border-primary-coral/20 shrink-0">
+              <div
+                className={cn(
+                  'flex size-9 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-text-primary shrink-0',
+                  iconWrapperClassName,
+                )}
+              >
                 {icon}
               </div>
             )}
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold tracking-tight text-text-primary flex items-center gap-2">
-                {title}
-              </h2>
-              {description && (
-                <p className="text-xs text-text-tertiary mt-0.5 line-clamp-1">{description}</p>
-              )}
-            </div>
+            {(title || description) && (
+              <div className="min-w-0">
+                {title && (
+                  <h2 className="text-sm font-bold tracking-tight text-text-primary flex items-center gap-2">
+                    {title}
+                  </h2>
+                )}
+                {description && (
+                  typeof description === 'string' ? (
+                    <p className="text-xs text-text-tertiary mt-0.5 line-clamp-1">{description}</p>
+                  ) : (
+                    <div className="text-xs text-text-tertiary mt-0.5">{description}</div>
+                  )
+                )}
+              </div>
+            )}
           </div>
 
           {rightContent && (

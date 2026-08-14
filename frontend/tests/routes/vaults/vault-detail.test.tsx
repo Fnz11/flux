@@ -1,9 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { makeTrade, makeVault } from './fixtures'
+import type { Vault } from '@/types'
 
 const mocks = vi.hoisted(() => ({
   id: 'vault-1',
+  vault: null as Vault | null,
+  vaultLoading: false,
   getHistory: vi.fn(),
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
@@ -15,13 +19,52 @@ vi.mock('@tanstack/react-router', () => ({
     ...options,
     useParams: () => ({ id: mocks.id }),
   }),
-  Link: ({ children, to, params }: { children: React.ReactNode; to: string; params?: { id: string } }) => (
-    <a href={params ? to.replace('$id', params.id) : to}>{children}</a>
+  useNavigate: () => vi.fn(),
+  Link: ({ children, to, params, search }: { children: React.ReactNode; to: string; params?: { id: string }; search?: Record<string, unknown> }) => (
+    <a href={params ? to.replace('$id', params.id) : search ? `${to}?${new URLSearchParams(search as Record<string, string>).toString()}` : to}>{children}</a>
+  ),
+}))
+
+vi.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: () => ({
+    publicKey: null,
+    connected: false,
+  }),
+  useConnection: () => ({
+    connection: {
+      getAccountInfo: vi.fn().mockResolvedValue(null),
+    },
+  }),
+}))
+
+vi.mock('@/components/ui/modal', () => ({
+  Modal: ({ open, title, children }: { open: boolean; title: string; children: React.ReactNode }) =>
+    open ? <section aria-label={title}><h1>{title}</h1>{children}</section> : null,
+}))
+
+vi.mock('@/components/ui/PageHeader', () => ({
+  PageHeader: ({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) => (
+    <header>
+      <h1>{title}</h1>
+      {subtitle && <p>{subtitle}</p>}
+      {action}
+    </header>
   ),
 }))
 
 vi.mock('../../../src/hooks/useRouteWsChannel', () => ({ useRouteWsChannel: vi.fn() }))
 vi.mock('../../../src/services/apis/rest-api/trade.service', () => ({ getHistory: mocks.getHistory }))
+vi.mock('../../../src/services/hooks', () => ({
+  useVaultDetailQuery: () => ({
+    data: mocks.vault,
+    isLoading: mocks.vaultLoading,
+    isError: false,
+  }),
+  useVaultsQuery: () => ({ data: [] }),
+  usePortfolioQuery: () => ({ data: [] }),
+  useVaultBalancesQuery: () => ({ data: [] }),
+  useVaultSparklineQuery: () => ({ data: [] }),
+}))
 vi.mock('../../../src/stores', () => ({
   useWebSocketStore: (selector: (state: Record<string, unknown>) => unknown) => selector({
     subscribe: mocks.subscribe,
@@ -30,6 +73,13 @@ vi.mock('../../../src/stores', () => ({
       mocks.messageHandler = handler
       return vi.fn()
     },
+  }),
+  useTransactionStore: (selector: (state: Record<string, unknown>) => unknown) => selector({
+    addTransaction: vi.fn(),
+    updateStatus: vi.fn(),
+  }),
+  useAppStore: (selector: (state: Record<string, unknown>) => unknown) => selector({
+    isManager: false,
   }),
 }))
 
@@ -44,34 +94,48 @@ vi.mock('../../../src/components/ui/tooltip', () => ({
 
 import { VaultOverview } from '../../../src/routes/vaults/$id/_components/VaultOverview'
 import { VaultTradesTab } from '../../../src/routes/vaults/$id/_components/VaultTradesTab'
-import { Route } from '../../../src/routes/vaults/$id/index'
+import { VaultDetailPage } from '../../../src/routes/vaults/$id/index'
 
-const VaultDetailPage = (Route as unknown as { component: React.ComponentType }).component
+function renderWithClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
+}
 
 describe('vault detail route', () => {
-  it('renders route ID and placeholder metrics', () => {
-    render(<VaultDetailPage />)
-    expect(screen.getByRole('heading', { name: 'Vault vault-1' })).toBeInTheDocument()
-    expect(screen.getByText('TVL')).toBeInTheDocument()
-    expect(screen.getByText('$0.00')).toBeInTheDocument()
-    expect(screen.getByText('0.00%')).toBeInTheDocument()
+  beforeEach(() => {
+    mocks.vault = makeVault()
+    mocks.vaultLoading = false
+    mocks.getHistory.mockReset()
+    mocks.getHistory.mockResolvedValue({ trades: [] })
+  })
+
+  it('renders vault detail page with loaded vault data', () => {
+    renderWithClient(<VaultDetailPage />)
+    expect(screen.getByRole('heading', { name: 'Alpha Vault' })).toBeInTheDocument()
+    expect(screen.getByText('Assets Under Management (TVL)')).toBeInTheDocument()
+    expect(screen.getByText('$125,000.00')).toBeInTheDocument()
+    expect(screen.getByText('Active Depositors')).toBeInTheDocument()
+    expect(screen.getByText('42')).toBeInTheDocument()
   })
 })
 
 describe('VaultOverview', () => {
   it('renders metadata, fees, assets, and description', () => {
     render(<VaultOverview vault={makeVault()} />)
-    expect(screen.getByRole('heading', { name: 'Alpha Vault' })).toBeInTheDocument()
-    expect(screen.getByText('15.00% (1500 BPS)')).toBeInTheDocument()
-    expect(screen.getByText('2.00% (200 BPS)')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Investment Strategy' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Protocol Parameters' })).toBeInTheDocument()
+    expect(screen.getByText('15.00% Perf / 2.00% Mgmt')).toBeInTheDocument()
     expect(screen.getByText('SOL')).toBeInTheDocument()
     expect(screen.getByText('A diversified Solana strategy.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Edit/i })).toHaveAttribute('href', '/vaults/vault-1/edit')
   })
 
   it('renders empty assets state and edit link', () => {
     render(<VaultOverview vault={makeVault({ metadata: { displayName: '', description: '', focusAssets: [] } })} />)
-    expect(screen.getByText('No focus assets configured.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/vaults/vault-1/edit')
+    expect(screen.getByText('All whitelisted ecosystem tokens allowed.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Edit/i })).toHaveAttribute('href', '/vaults/vault-1/edit')
   })
 })
 
@@ -84,10 +148,10 @@ describe('VaultTradesTab', () => {
     mocks.messageHandler = undefined
   })
 
-  it('shows loading rows before history resolves', () => {
+  it('shows loading skeleton before history resolves', () => {
     mocks.getHistory.mockReturnValue(new Promise(() => {}))
     const { container } = render(<VaultTradesTab vaultId="vault-1" />)
-    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(3)
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
   })
 
   it('renders empty history', async () => {

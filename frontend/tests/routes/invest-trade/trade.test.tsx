@@ -113,7 +113,7 @@ describe('SwapForm', () => {
     render(<SwapForm preselectedVaultId={vault.id} />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Max (2.50)' })).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: 'Max (2.50)' }))
-    expect(screen.getByPlaceholderText('0.00')).toHaveValue(2.5)
+    expect(screen.getByPlaceholderText('0.00')).toHaveValue('2.5')
   })
 
   it('calls trade hook with confirmed swap details', async () => {

@@ -4,6 +4,7 @@ import { SweepButton } from '@/components/ui/SweepButton'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Table, TableHeader, TableBody, TableRow, TableHead } from '@/components/ui/table'
+import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { Shield, PlusCircle } from 'lucide-react'
 import { ManagedVaultRow } from './ManagedVaultRow'
 
@@ -30,7 +31,27 @@ export function ManagerVaultsList({ walletAddress }: { walletAddress?: string })
       }
     >
       {isLoading ? (
-        <div className="h-40 animate-pulse rounded-xl bg-bg-inset p-4" />
+        <Table className="min-w-[640px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="py-3 px-5">VAULT NAME</TableHead>
+              <TableHead className="py-3 px-4">STATUS</TableHead>
+              <TableHead className="py-3 px-4">TVL</TableHead>
+              <TableHead className="py-3 px-4">PNL</TableHead>
+              <TableHead className="py-3 px-4">CREATED</TableHead>
+              <TableHead className="py-3 px-4">PERFORMANCE</TableHead>
+              <TableHead className="py-3 px-5 text-right">ACTION</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRowSkeleton
+              columns={7}
+              rows={4}
+              cellAligns={['left', 'left', 'right', 'right', 'right', 'right', 'right']}
+              cellWidths={['w-36', 'w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16']}
+            />
+          </TableBody>
+        </Table>
       ) : vaults.length === 0 ? (
         <div className="rounded-xl border border-border-subtle/50 bg-bg-inset/40 p-4">
           <EmptyState

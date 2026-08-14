@@ -10,6 +10,8 @@ import { DotMatrix } from './DotMatrix'
 
 export const SweepButton = React.forwardRef<HTMLButtonElement, SweepButtonProps>(
   ({ className, children, icon, showDots = true, disabled, type = 'button', ...props }, ref) => {
+    const hasLeadingIcon = Boolean(icon || showDots)
+
     return (
       <button
         ref={ref}
@@ -17,14 +19,17 @@ export const SweepButton = React.forwardRef<HTMLButtonElement, SweepButtonProps>
         disabled={disabled}
         className={cn(
           'group relative inline-flex items-center justify-center gap-2 rounded-xl border border-border-medium bg-bg-surface py-2 pr-5 pl-11 text-sm font-medium text-white transition-[box-shadow,opacity] duration-300 ease-out overflow-hidden shadow-[0_0_20px_rgba(255,107,53,0.20)] hover:shadow-[0_0_30px_rgba(255,107,53,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-coral disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none',
+          !hasLeadingIcon && 'px-4',
           className
         )}
         {...props}
       >
         {/* Sliding Icon / Dot Grid Box */}
-        <div className="absolute inset-y-1 left-1 my-auto flex h-7 w-7 items-center justify-center rounded-[5px] bg-gradient-to-br from-primary-coral to-primary-gold text-black shadow-md transition-[left,transform] duration-300 ease-out group-hover:left-[calc(100%-2.15rem)] group-hover:rotate-180 z-20">
-          {icon ? icon : showDots ? <DotMatrix /> : null}
-        </div>
+        {hasLeadingIcon && (
+          <div className="absolute inset-y-1 left-1 my-auto flex size-6 items-center justify-center rounded-lg bg-gradient-to-br from-primary-coral to-primary-gold text-black shadow-md transition-[left,transform,background-color,color] duration-300 ease-out group-hover:left-[calc(100%-1.75rem)] group-hover:rotate-180 group-hover:bg-none group-hover:bg-black group-hover:text-white z-20">
+            {icon ? icon : showDots ? <DotMatrix /> : null}
+          </div>
+        )}
 
         {/* Clip-path sweep layer */}
         <div

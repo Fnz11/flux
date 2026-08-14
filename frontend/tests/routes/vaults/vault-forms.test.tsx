@@ -10,6 +10,11 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   vault: undefined as ReturnType<typeof makeVault> | undefined,
   fetchConfig: vi.fn(),
+  wallet: {
+    connected: true,
+    publicKey: { toBase58: () => 'mock-wallet' } as { toBase58: () => string } | null,
+    wallets: [],
+  },
 }))
 
 vi.mock('@tanstack/react-router', () => ({
@@ -19,6 +24,11 @@ vi.mock('@tanstack/react-router', () => ({
   }),
   useNavigate: () => mocks.navigate,
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
+}))
+
+vi.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: () => mocks.wallet,
+  useConnection: () => ({ connection: {} }),
 }))
 
 vi.mock('../../../src/routes/vaults/_hooks/useCreateVault', () => ({
@@ -44,7 +54,7 @@ vi.mock('../../../src/stores', () => ({
   ),
 }))
 
-import { CreateVaultPage } from '../../../src/routes/vaults/create'
+import { CreateVaultPage } from '../../../src/routes/vaults/create.tsx'
 import { Route as EditRoute } from '../../../src/routes/vaults/$id/edit'
 
 const EditVaultPage = (EditRoute as unknown as { component: React.ComponentType }).component
@@ -53,6 +63,19 @@ describe('create vault form', () => {
   beforeEach(() => {
     mocks.create.mockReset()
     mocks.createPending = false
+    mocks.wallet = {
+      connected: true,
+      publicKey: { toBase58: () => 'mock-wallet' },
+      wallets: [],
+    }
+  })
+
+  it('shows connect wallet prompt when wallet is not connected', () => {
+    mocks.wallet = { connected: false, publicKey: null, wallets: [] }
+    render(<CreateVaultPage />)
+    expect(screen.getByText('Connect Your Wallet')).toBeInTheDocument()
+    expect(screen.getByText('Please connect your wallet to create and manage investment vaults.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /CREATE VAULT/ })).not.toBeInTheDocument()
   })
 
   it('starts with submit disabled until terms accepted', () => {
@@ -65,7 +88,6 @@ describe('create vault form', () => {
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: /CREATE VAULT/ }))
     expect(await screen.findByText('Display name must be at least 2 characters')).toBeInTheDocument()
-    expect(screen.getByText('Description must be at least 10 characters')).toBeInTheDocument()
     expect(mocks.create).not.toHaveBeenCalled()
   })
 
@@ -73,7 +95,7 @@ describe('create vault form', () => {
     mocks.create.mockResolvedValue(undefined)
     render(<CreateVaultPage />)
     fireEvent.change(screen.getByLabelText('Display Name'), { target: { value: 'Yield Vault' } })
-    fireEvent.change(screen.getByLabelText('Strategy Description'), { target: { value: 'A valid strategy description.' } })
+    fireEvent.change(screen.getByLabelText(/Strategy Description/), { target: { value: 'A valid strategy description.' } })
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: /CREATE VAULT/ }))
     await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(1))

@@ -1,10 +1,11 @@
 import type { Control } from 'react-hook-form'
 import { Activity, CheckCircle2 } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/DecimalInput'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { cn } from '@/lib/utils'
 import { RAISE_UNITS, type RaiseUnit } from '@/constants/vault'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import type { CreateVaultFormValues } from '@/validations/vault'
 
 export interface BasicConfigSectionProps {
@@ -42,28 +43,30 @@ export function BasicConfigSection({
                 <FormLabel className="text-xs text-text-secondary">Min. Raise Amount</FormLabel>
                 <div className="flex items-center gap-2">
                   <FormControl>
-                    <Input
-                      type="number"
-                      step="any"
+                    <DecimalInput
                       {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      value={field.value ?? ''}
+                      onValueChange={(_, num) => field.onChange(num ?? 0)}
+                      maxDecimals={4}
+                      placeholder="0.00"
                       className="bg-bg-inset border-border-subtle font-mono text-base"
                     />
                   </FormControl>
 
-                  <div className="flex rounded-lg bg-bg-inset p-1 border border-border-subtle">
+                  <div className="flex rounded-lg bg-bg-inset p-1 border border-border-subtle gap-1">
                     {RAISE_UNITS.map((unit) => (
                       <button
                         key={unit}
                         type="button"
                         onClick={() => onSetMinRaiseUnit(unit)}
                         className={cn(
-                          'px-2.5 py-1 text-xs font-mono font-medium rounded-md transition-colors cursor-pointer',
+                          'flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-md transition-colors cursor-pointer',
                           minRaiseUnit === unit
                             ? 'bg-primary-coral text-white'
                             : 'text-text-tertiary hover:text-text-primary'
                         )}
                       >
+                        <TokenIcon symbol={unit} alt="" className="size-3.5" />
                         {unit}
                       </button>
                     ))}
@@ -88,14 +91,15 @@ export function BasicConfigSection({
                     type="button"
                     onClick={() => onToggleAsset(asset)}
                     className={cn(
-                      'flex-1 py-2.5 px-3 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer',
+                      'flex-1 py-2.5 px-3 rounded-xl border text-xs font-mono font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer',
                       isSelected
                         ? 'border-primary-coral bg-primary-coral/10 text-primary-coral'
                         : 'border-border-subtle bg-bg-inset/50 text-text-tertiary hover:text-text-primary hover:border-border-subtle/80'
                     )}
                   >
-                    {isSelected && <CheckCircle2 className="size-3.5" />}
-                    {asset}
+                    <TokenIcon symbol={asset} alt="" className="size-4" />
+                    <span>{asset}</span>
+                    {isSelected && <CheckCircle2 className="size-3.5 ml-auto text-primary-coral shrink-0" />}
                   </button>
                 )
               })}

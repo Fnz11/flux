@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
-import { Search, CornerDownLeft, Loader2, X, TrendingUp, ShieldCheck } from 'lucide-react'
+import { Search, CornerDownLeft, Loader2, X, ShieldCheck } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from './dialog'
+import { TokenIcon } from './TokenIcon'
 import { cn } from '@/lib/utils'
 import type { SearchResults, SearchPair, SearchVault, SearchResultKind } from '@/types'
 
@@ -88,7 +89,7 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
 
       {/* Search Command Palette Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl p-0 overflow-hidden bg-bg-surface/95 backdrop-blur-3xl border border-white/15 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] rounded-2xl top-[20%] -translate-y-0 [&>button]:hidden">
+        <DialogContent className="max-w-xl p-0 overflow-hidden bg-bg-surface/95 backdrop-blur-3xl border border-white/15 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] rounded-2xl md:top-[25%] md:translate-y-0 [&>button]:hidden">
           <DialogTitle className="sr-only">Search Modal</DialogTitle>
 
           {/* Search Input Bar */}
@@ -142,6 +143,7 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
                 </div>
                 {(results.items as SearchPair[]).map((pair, idx) => {
                   const isSelected = idx === selectedIndex
+                  const [base, quote] = pair.symbol.split('/')
                   return (
                     <button
                       key={pair.symbol}
@@ -156,13 +158,9 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
                       )}
                     >
                       <div className="flex items-center gap-2.5">
-                        <div
-                          className={cn(
-                            'flex size-7 items-center justify-center rounded-full bg-bg-inset border text-text-secondary transition-colors',
-                            isSelected ? 'border-primary-gold/40 text-primary-gold' : 'border-border-subtle',
-                          )}
-                        >
-                          <TrendingUp className="size-3.5" />
+                        <div className="flex items-center -space-x-2 shrink-0">
+                          {base && <TokenIcon symbol={base} className="size-6 border border-bg-surface" />}
+                          {quote && <TokenIcon symbol={quote} className="size-6 border border-bg-surface" />}
                         </div>
                         <span className="font-semibold">{pair.symbol}</span>
                       </div>

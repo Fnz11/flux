@@ -24,6 +24,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.PriceHistory{},
 		&models.VaultMetric{},
 		&models.Notification{},
+		&models.TransactionDraft{},
 	); err != nil {
 		return err
 	}
@@ -40,6 +41,8 @@ func dropMatviews(db *gorm.DB) error {
 	if err != nil {
 		return err
 	}
+	_, _ = sqlDB.Exec("DROP MATERIALIZED VIEW IF EXISTS vault_balances_summary CASCADE;")
+	_, _ = sqlDB.Exec("DROP MATERIALIZED VIEW IF EXISTS vault_daily_sparkline_mv CASCADE;")
 	_, _ = sqlDB.Exec("DROP MATERIALIZED VIEW IF EXISTS user_pnl_summary CASCADE;")
 	_, _ = sqlDB.Exec("DROP MATERIALIZED VIEW IF EXISTS portfolio_summary CASCADE;")
 	return nil

@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { TokenAmount } from '@/components/ui/TokenAmount'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
+import { WalletPrompt } from '@/components/ui/WalletPrompt'
 
 const configMock = vi.hoisted(() => ({ config: null as { dustThreshold: number } | null }))
 vi.mock('@/stores/config-store', () => ({
@@ -12,6 +13,15 @@ vi.mock('@/stores/config-store', () => ({
 }))
 vi.mock('@/components/ui/tooltip', () => ({
   Tooltip: ({ content, children }: { content: React.ReactNode; children: React.ReactNode }) => <div>{children}<span>{content}</span></div>,
+}))
+vi.mock('@solana/wallet-adapter-react', () => ({
+  useWallet: () => ({
+    connected: false,
+    publicKey: null,
+    wallets: [],
+    select: vi.fn(),
+    disconnect: vi.fn(),
+  }),
 }))
 
 describe('AddressPill', () => {
@@ -69,7 +79,8 @@ describe('TokenAmount', () => {
   it('honors configured dust threshold', () => {
     configMock.config = { dustThreshold: 0.1 }
     render(<TokenAmount amount={0.05} symbol="SOL" showIcon />)
-    expect(screen.getByText(/Dust/)).toHaveTextContent('SOL')
+    expect(screen.getByText(/Dust/)).toBeInTheDocument()
+    expect(screen.getByText('SOL')).toBeInTheDocument()
   })
 })
 
@@ -86,5 +97,14 @@ describe('empty states', () => {
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'TVL' })).toBeInTheDocument()
     expect(screen.getByText('No matching vaults')).toBeInTheDocument()
+  })
+})
+
+describe('WalletPrompt', () => {
+  it('renders title, description, and connect button', () => {
+    render(<WalletPrompt title="Connect Your Wallet" description="Please connect wallet to continue." />)
+    expect(screen.getByText('Connect Your Wallet')).toBeInTheDocument()
+    expect(screen.getByText('Please connect wallet to continue.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Connect Wallet/i })).toBeInTheDocument()
   })
 })

@@ -1,9 +1,7 @@
 import { useState, useRef } from 'react'
-import type { MetricAccent } from './metric-chart-constants'
-
-export type { ACCENT_COLOR, MetricAccent } from './metric-chart-constants'
 
 export type ChartView = 'curve' | 'bars'
+export type MetricAccent = 'emerald' | 'rose' | 'neutral' | 'amber' | 'gold'
 
 export interface SeriesPoint {
   date: string

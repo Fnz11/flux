@@ -21,6 +21,9 @@ export interface RawApiVault {
     description?: string
     focusAssets?: string[]
     focus_assets?: string[]
+    coverImageUrl?: string
+    cover_image_url?: string
+    tags?: string[]
   } | null
   performanceFeeBps?: number
   performance_fee_bps?: number
@@ -106,6 +109,12 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
       displayName: raw.metadata?.displayName ?? raw.metadata?.display_name ?? '',
       description: raw.metadata?.description ?? '',
       focusAssets: raw.metadata?.focusAssets ?? raw.metadata?.focus_assets ?? [],
+      ...(raw.metadata && ('coverImageUrl' in raw.metadata || 'cover_image_url' in raw.metadata)
+        ? { coverImageUrl: raw.metadata.coverImageUrl ?? raw.metadata.cover_image_url ?? '' }
+        : {}),
+      ...(raw.metadata && 'tags' in raw.metadata && raw.metadata.tags
+        ? { tags: raw.metadata.tags }
+        : {}),
     },
     performanceFeeBps: raw.performanceFeeBps ?? raw.performance_fee_bps ?? 0,
     managementFeeBps: raw.managementFeeBps ?? raw.management_fee_bps ?? 0,

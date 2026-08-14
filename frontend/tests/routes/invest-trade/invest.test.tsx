@@ -27,6 +27,12 @@ vi.mock('@/components/ui/modal', () => ({
   Modal: ({ open, title, children }: { open: boolean; title: string; children: ReactNode }) =>
     open ? <section aria-label={title}><h1>{title}</h1>{children}</section> : null,
 }))
+vi.mock('@/components/ui/tooltip', () => ({
+  TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+}))
 vi.mock('@/components/ui/SolscanLink', () => ({
   SolscanLink: ({ signature }: { signature: string }) => <a href={`https://solscan.io/tx/${signature}`}>{signature}</a>,
 }))

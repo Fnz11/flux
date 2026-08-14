@@ -8,12 +8,12 @@ export interface CreateVaultSubmitProps {
 
 export function CreateVaultSubmit({ isPending, agreedToTerms }: CreateVaultSubmitProps) {
   return (
-    <div className="pt-2">
+    <div className="pt-2 flex flex-col items-center">
       <Button
         type="submit"
         variant="sweep"
-        size="lg"
-        className="w-full text-base font-bold py-6 shadow-lg shadow-primary-coral/20 cursor-pointer"
+        size="default"
+        className="w-full max-w-sm h-11 text-sm font-bold shadow-md shadow-primary-coral/20 cursor-pointer"
         disabled={isPending || !agreedToTerms}
       >
         {isPending ? (
@@ -23,12 +23,12 @@ export function CreateVaultSubmit({ isPending, agreedToTerms }: CreateVaultSubmi
           </span>
         ) : (
           <span className="flex items-center gap-2">
-            <Sparkles className="size-5" />
+            <Sparkles className="size-4" />
             CREATE VAULT
           </span>
         )}
       </Button>
-      <p className="mt-2.5 text-center text-xs text-text-tertiary">
+      <p className="mt-2 text-center text-xs text-text-tertiary">
         Requires wallet signature to initialize on-chain state account.
       </p>
     </div>

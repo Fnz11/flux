@@ -1,4 +1,5 @@
 import { useConfigStore } from '@/stores/config-store'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import { cn } from '@/lib/utils'
 
 interface TokenAmountProps {
@@ -45,9 +46,12 @@ export function TokenAmount({
 
   if (numAmount > 0 && numAmount < threshold) {
     return (
-      <span className={cn('font-mono text-text-muted', className)}>
-        {'< '}Dust
-        {symbol && showIcon && (
+      <span className={cn('font-mono text-text-muted inline-flex items-center', className)}>
+        {showIcon && symbol && (
+          <TokenIcon symbol={symbol} className="mr-1 inline-block size-3.5 align-middle" />
+        )}
+        &lt; Dust
+        {symbol && (
           <span className="ml-1 text-xs text-text-tertiary">{symbol}</span>
         )}
       </span>
@@ -55,9 +59,9 @@ export function TokenAmount({
   }
 
   return (
-    <span className={cn('font-mono text-text-primary', className)}>
+    <span className={cn('font-mono text-text-primary inline-flex items-center', className)}>
       {showIcon && symbol && (
-        <span className="mr-1 inline-block size-3 rounded-full bg-primary-gold/30" />
+        <TokenIcon symbol={symbol} className="mr-1 inline-block size-3.5 align-middle" />
       )}
       {formatAmount(numAmount, decimals, compact)}
       {symbol && <span className="ml-1 text-text-muted">{symbol}</span>}

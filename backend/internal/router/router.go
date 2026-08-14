@@ -29,6 +29,7 @@ type HandlerSet struct {
 	Notification *handlers.NotificationHandler
 	Search       *handlers.SearchHandler
 	Fee          *handlers.FeeHandler
+	TxPrepare    *handlers.TxPrepareHandler
 	JWTSecret   string
 	Redis       *redis.Client
 }
@@ -168,6 +169,19 @@ func Setup(hs *HandlerSet) *gin.Engine {
 
 		if hs.Search != nil {
 			v1.GET("/search", hs.Search.Search)
+		}
+
+		txGroup := v1.Group("/tx")
+		{
+			if hs.TxPrepare != nil {
+				prepare := txGroup.Group("/prepare")
+				{
+					prepare.POST("/create-vault", hs.TxPrepare.PrepareCreateVault)
+					prepare.POST("/deposit", hs.TxPrepare.PrepareDeposit)
+					prepare.POST("/withdraw", hs.TxPrepare.PrepareWithdraw)
+				}
+				txGroup.POST("/submit", hs.TxPrepare.SubmitTransaction)
+			}
 		}
 	}
 

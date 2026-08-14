@@ -223,9 +223,11 @@ func (h *VaultHandler) GetVaultBalances(c *gin.Context) {
 }
 
 type UpdateMetadataRequest struct {
-	DisplayName *string   `json:"display_name"`
-	Description *string   `json:"description"`
-	FocusAssets *[]string `json:"focus_assets"`
+	DisplayName   *string   `json:"display_name"`
+	Description   *string   `json:"description"`
+	FocusAssets   *[]string `json:"focus_assets"`
+	CoverImageUrl *string   `json:"cover_image_url"`
+	Tags          *[]string `json:"tags"`
 }
 
 func (h *VaultHandler) UpdateVaultMetadata(c *gin.Context) {
@@ -256,7 +258,7 @@ func (h *VaultHandler) UpdateVaultMetadata(c *gin.Context) {
 		req.Description = &trimmed
 	}
 
-	if req.DisplayName == nil && req.Description == nil && req.FocusAssets == nil {
+	if req.DisplayName == nil && req.Description == nil && req.FocusAssets == nil && req.CoverImageUrl == nil && req.Tags == nil {
 		ErrorResponse(c, http.StatusBadRequest, "No fields to update")
 		return
 	}
@@ -289,6 +291,12 @@ func (h *VaultHandler) UpdateVaultMetadata(c *gin.Context) {
 	}
 	if req.Description != nil {
 		metadata["description"] = *req.Description
+	}
+	if req.CoverImageUrl != nil {
+		metadata["coverImageUrl"] = *req.CoverImageUrl
+	}
+	if req.Tags != nil {
+		metadata["tags"] = *req.Tags
 	}
 	if req.FocusAssets != nil {
 		for _, asset := range *req.FocusAssets {

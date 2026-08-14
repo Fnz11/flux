@@ -6,14 +6,8 @@ import { Check, ChevronDown, Search, SearchX, X } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ResponsiveDrawer, useIsMobile } from '@/components/ui/ResponsiveDrawer'
 import { cn } from '@/lib/utils'
-import { TOKENS } from '@/constants/tokens'
-
-interface TokenMeta {
-  symbol: string
-  name: string
-  color: string
-  icon?: string
-}
+import { TokenIcon } from '@/components/ui/TokenIcon'
+import { getTokenMeta } from '@/constants/tokens'
 
 interface TokenSelectorProps {
   tokens: string[]
@@ -21,47 +15,6 @@ interface TokenSelectorProps {
   onSelect: (token: string) => void
   label?: string
 }
-
-const tokenMetaMap: Record<string, TokenMeta> = {
-  SOL: {
-    symbol: 'SOL',
-    name: 'Solana',
-    color: '#9945FF',
-    icon: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-  },
-  USDC: {
-    symbol: 'USDC',
-    name: 'USD Coin',
-    color: '#2775CA',
-    icon: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-  },
-  USDT: {
-    symbol: 'USDT',
-    name: 'Tether',
-    color: '#26A17B',
-    icon: 'https://coin-images.coingecko.com/coins/images/325/large/Tether.png',
-  },
-  JUP: {
-    symbol: 'JUP',
-    name: 'Jupiter',
-    color: '#F2804F',
-    icon: 'https://static.jup.ag/jup/icon.png',
-  },
-  PYTH: {
-    symbol: 'PYTH',
-    name: 'Pyth Network',
-    color: '#E6D7FF',
-    icon: 'https://coin-images.coingecko.com/coins/images/31924/large/pyth.png',
-  },
-}
-
-function getTokenMeta(symbol: string): TokenMeta {
-  const found = TOKENS.find((t) => t.symbol === symbol)
-  if (found) return found
-  return tokenMetaMap[symbol] ?? { symbol, name: symbol, color: '#737373' }
-}
-
-import { TokenIcon } from './TokenIcon'
 
 export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelectorProps) {
   const [open, setOpen] = useState(false)
@@ -78,7 +31,7 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
       availableTokens.filter(
         (t) =>
           t.toLowerCase().includes(query.toLowerCase()) ||
-          getTokenMeta(t).name.toLowerCase().includes(query.toLowerCase()),
+          (getTokenMeta(t).name || '').toLowerCase().includes(query.toLowerCase()),
       ),
     [availableTokens, query],
   )

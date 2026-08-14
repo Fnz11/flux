@@ -30,10 +30,10 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         'fixed z-[100] w-full border border-white/15 bg-bg-surface/95 backdrop-blur-3xl shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] transition-all duration-200',
-        // Desktop Centered Dialog
-        'md:left-1/2 md:top-1/2 md:max-w-md md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl',
+        // Desktop Centered Dialog (top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2)
+        'md:left-1/2 md:top-1/2 md:max-w-md md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:min-h-0 md:max-h-[85vh]',
         // Mobile Bottom Slide-Up Drawer
-        'left-0 right-0 bottom-0 top-auto translate-x-0 translate-y-0 max-sm:left-0 max-sm:right-0 max-sm:bottom-0 max-sm:top-auto max-sm:translate-x-0 max-sm:translate-y-0 rounded-t-3xl max-sm:rounded-b-none min-h-[60vh] max-h-[88vh] overflow-y-auto border-t border-white/20 p-5 animate-in slide-in-from-bottom duration-300',
+        'left-0 right-0 bottom-0 top-auto translate-x-0 translate-y-0 max-sm:left-0 max-sm:right-0 max-sm:bottom-0 max-sm:top-auto max-sm:translate-x-0 max-sm:translate-y-0 rounded-t-3xl max-sm:rounded-b-none max-h-[88vh] overflow-y-auto border-t border-white/20 p-5 animate-in slide-in-from-bottom duration-300',
         className,
       )}
       {...props}

@@ -2,7 +2,6 @@ import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { useVaultSparklineQuery } from '@/services/hooks/useQuery/useVaultSparklineQuery'
 import { VaultSparkline } from '../vaults/_components/VaultSparkline'
 import { cn } from '@/lib/utils'
 import type { Vault } from '@/types'
@@ -29,7 +28,7 @@ function formatDate(iso: string): string {
 }
 
 export function ManagedVaultRow({ vault }: { vault: Vault }) {
-  const { data: sparkline } = useVaultSparklineQuery(vault.id)
+  const sparkline = vault.sparkline ?? []
   const pnl = vault.pnlPercent ?? 0
   const isPositive = pnl >= 0
   const displayName = vault.metadata.displayName || `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`

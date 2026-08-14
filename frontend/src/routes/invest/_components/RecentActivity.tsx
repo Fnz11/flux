@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useGlobalTransactionsQuery } from '@/services/hooks/useQuery/useGlobalTransactionsQuery'
 import type { GlobalTransactionAction } from '@/services/apis/rest-api/transactions.service'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui/table'
+import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { cn } from '@/lib/utils'
 import { useWebSocketStore } from '@/stores'
@@ -35,13 +36,14 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
 
   let content: ReactNode
   if (isLoading) {
-    content = Array.from({ length: SKELETON_ROWS }).map((_, i) => (
-      <TableRow key={i} className="hover:bg-transparent">
-        <TableCell colSpan={5}>
-          <div className="h-9 animate-pulse rounded-xl bg-bg-inset/60" />
-        </TableCell>
-      </TableRow>
-    ))
+    content = (
+      <TableRowSkeleton
+        columns={5}
+        rows={SKELETON_ROWS}
+        cellAligns={['left', 'left', 'left', 'right', 'right']}
+        cellWidths={['w-28', 'w-16', 'w-24', 'w-20', 'w-12']}
+      />
+    )
   } else if (error) {
     content = (
       <TableRow className="hover:bg-transparent border-0">

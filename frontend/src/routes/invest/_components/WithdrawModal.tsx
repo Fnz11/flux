@@ -6,7 +6,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { useVaultsQuery, usePortfolioQuery } from '@/services/hooks'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/DecimalInput'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -114,12 +114,11 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
                   <FormItem>
                     <FormLabel className="mb-1.5 text-xs font-medium">Share Amount</FormLabel>
                     <FormControl>
-                      <Input
+                      <DecimalInput
                         id="share-amount"
-                        type="number"
-                        step="any"
                         placeholder="0.00"
                         className="text-lg font-mono"
+                        maxDecimals={6}
                         {...field}
                       />
                     </FormControl>

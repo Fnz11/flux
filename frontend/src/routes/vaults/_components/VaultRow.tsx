@@ -4,9 +4,10 @@ import type { Vault } from '@/types'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { useVaultSparklineQuery } from '@/services/hooks/useQuery/useVaultSparklineQuery'
 import { VaultSparkline } from './VaultSparkline'
 import { cn } from '@/lib/utils'
+import { TokenIcon } from '@/components/ui/TokenIcon'
+import { AddressPill } from '@/components/ui/AddressPill'
 import { formatDate, formatMinRaise } from './vaultTableUtils'
 
 export interface VaultRowProps {
@@ -15,15 +16,10 @@ export interface VaultRowProps {
 }
 
 export function VaultRow({ vault, sortBy }: VaultRowProps) {
-  const hasEmbeddedSparkline = Boolean(vault.sparkline && vault.sparkline.length > 0)
-  const { data: fetchedSparkline } = useVaultSparklineQuery(vault.id, '30d', !hasEmbeddedSparkline)
-  const sparkline = hasEmbeddedSparkline ? vault.sparkline : fetchedSparkline
+  const sparkline = vault.sparkline ?? []
   const pnl = vault.pnlPercent ?? 0
   const isPositivePnl = pnl >= 0
   const displayName = vault.metadata.displayName || `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`
-  const managerShort = vault.managerAddress
-    ? `${vault.managerAddress.slice(0, 4)}...${vault.managerAddress.slice(-4)}`
-    : 'Unknown Manager'
   const initials = displayName
     .split(' ')
     .map((n) => n[0])
@@ -44,14 +40,20 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
       <TableCell className="py-4 px-6 whitespace-nowrap">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 shrink-0">
-            <AvatarFallback>{initials}</AvatarFallback>
+            <AvatarFallback seed={vault.address || vault.id || displayName}>{initials}</AvatarFallback>
           </Avatar>
           <div>
             <div className="font-semibold text-text-primary flex items-center gap-2">
               <span>{displayName}</span>
               <StatusBadge status={vault.status} />
             </div>
-            <div className="text-xs text-text-tertiary font-mono">by {managerShort}</div>
+            <div className="mt-0.5">
+              {vault.managerAddress ? (
+                <AddressPill prefix="by " address={vault.managerAddress} length={4} />
+              ) : (
+                <span className="text-xs text-text-tertiary font-mono">by Unknown Manager</span>
+              )}
+            </div>
           </div>
         </div>
       </TableCell>
@@ -86,9 +88,10 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
           {focusAssets.slice(0, 3).map((asset) => (
             <span
               key={asset}
-              className="inline-flex items-center rounded-md bg-bg-inset px-2 py-0.5 text-xs font-medium text-text-secondary border border-border-subtle"
+              className="inline-flex items-center gap-1.5 rounded-md bg-bg-inset px-2 py-0.5 text-xs font-medium text-text-secondary border border-border-subtle"
             >
-              {asset}
+              <TokenIcon symbol={asset} className="size-3.5" />
+              <span>{asset}</span>
             </span>
           ))}
         </div>

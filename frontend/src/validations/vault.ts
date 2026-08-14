@@ -12,6 +12,7 @@ export type VaultsSearchValues = z.infer<typeof vaultsSearchSchema>
 export const editVaultSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').max(64),
   description: z.string().max(500).optional(),
+  coverImageUrl: z.string().optional(),
   focusAssets: z.array(z.string()).min(1, 'Select at least one asset'),
   tags: z.string().optional(),
 })
@@ -21,8 +22,10 @@ export type EditVaultForm = z.infer<typeof editVaultSchema>
 export const createVaultSchema = z.object({
   vaultType: z.enum(['open', 'closed']),
   displayName: z.string().min(2, 'Display name must be at least 2 characters').max(50, 'Max 50 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Max 500 characters'),
+  description: z.string().max(500, 'Max 500 characters').optional(),
   coverImageUrl: z.string().optional(),
+  focusAssets: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
   minRaiseAmount: z.number().min(0, 'Min raise must be ≥ 0'),
   minRaiseUnit: z.enum(['SOL', 'USDC', 'USDT']),
   acceptedAssets: z.array(z.string()).min(1, 'Select at least one accepted asset'),

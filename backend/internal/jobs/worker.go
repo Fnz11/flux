@@ -36,7 +36,12 @@ const (
 var (
 	errNilDB = errors.New("nil database connection")
 
-	matViews = []string{"portfolio_summary", "user_pnl_summary"}
+	matViews = []string{
+		"portfolio_summary",
+		"user_pnl_summary",
+		"vault_daily_sparkline_mv",
+		"vault_balances_summary",
+	}
 
 	// jitterRng is a concurrency-safe, explicitly seeded PRNG for refresh jitter.
 	jitterRng   = rand.New(rand.NewSource(time.Now().UnixNano()))

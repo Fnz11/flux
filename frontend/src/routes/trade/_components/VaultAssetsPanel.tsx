@@ -2,6 +2,8 @@ import { useVaultBalancesQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { Wallet, Layers } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { TokenIcon } from '@/components/ui/TokenIcon'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Vault } from '@/types'
 
@@ -10,14 +12,6 @@ interface VaultAssetsPanelProps {
   vaultName?: string
   vaults?: Vault[]
   onVaultChange?: (vaultId: string) => void
-}
-
-const TOKEN_LOGOS: Record<string, string> = {
-  SOL: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-  USDC: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-  USDT: 'https://coin-images.coingecko.com/coins/images/325/large/Tether.png',
-  JUP: 'https://static.jup.ag/jup/icon.png',
-  PYTH: 'https://coin-images.coingecko.com/coins/images/31924/large/pyth.png',
 }
 
 export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChange }: VaultAssetsPanelProps) {
@@ -73,7 +67,30 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-xl bg-bg-inset animate-pulse p-3" />
+            <div
+              key={i}
+              className="animate-pulse relative flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3 shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="size-7 rounded-full shrink-0 bg-bg-elevated" />
+                  <div className="space-y-1">
+                    <div className="h-3.5 w-12 rounded bg-bg-elevated" />
+                    <div className="h-2.5 w-16 rounded bg-bg-elevated" />
+                  </div>
+                </div>
+                <div className="h-4 w-10 rounded-full bg-bg-elevated" />
+              </div>
+
+              <div className="mt-3 flex items-baseline justify-between">
+                <div className="h-3.5 w-14 rounded bg-bg-elevated" />
+                <div className="h-3.5 w-16 rounded bg-bg-elevated" />
+              </div>
+
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-bg-elevated">
+                <div className="h-full w-2/3 rounded-full bg-bg-inset" />
+              </div>
+            </div>
           ))}
         </div>
       ) : !vaultId ? (
@@ -97,7 +114,6 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {balances.map((asset) => {
-            const logoUrl = TOKEN_LOGOS[asset.symbol] || TOKEN_LOGOS.SOL
             const unitPrice = (asset.usdValue || 0) / (asset.amount || 1)
             const allocPct = totalUsdValue > 0 ? Math.min(100, Math.round(((asset.usdValue || 0) / totalUsdValue) * 100)) : 0
 
@@ -108,7 +124,7 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <img src={logoUrl} alt={asset.symbol} className="size-7 rounded-full object-cover shrink-0" />
+                    <TokenIcon symbol={asset.symbol} className="size-7" />
                     <div>
                       <span className="text-xs font-bold text-text-primary block">{asset.symbol}</span>
                       <span className="text-[10px] text-text-tertiary font-mono">

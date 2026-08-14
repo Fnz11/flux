@@ -1,5 +1,6 @@
 import type { ApiFee, Vault } from '@/types'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui/table'
+import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { Receipt, Coins } from 'lucide-react'
@@ -44,31 +45,31 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
         </Select>
       }
     >
-      {isLoading ? (
-        <div className="p-5 space-y-3 min-h-[220px]">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="animate-pulse h-10 rounded-xl bg-bg-inset/60" />
-          ))}
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>VAULT</TableHead>
-              <TableHead className="text-right">PERFORMANCE FEE</TableHead>
-              <TableHead className="text-right">MANAGEMENT FEE</TableHead>
-              <TableHead className="text-right">TOTAL ACCRUED</TableHead>
-              <TableHead className="text-right">ACTION</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredFees.length === 0 ? (
-              <TableEmpty
-                colSpan={5}
-                title="No accrued fees recorded yet"
-                description="Fees accrued on active vaults will appear here"
-              />
-            ) : (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>VAULT</TableHead>
+            <TableHead className="text-right">PERFORMANCE FEE</TableHead>
+            <TableHead className="text-right">MANAGEMENT FEE</TableHead>
+            <TableHead className="text-right">TOTAL ACCRUED</TableHead>
+            <TableHead className="text-right">ACTION</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRowSkeleton
+              columns={5}
+              rows={4}
+              cellAligns={['left', 'right', 'right', 'right', 'right']}
+              cellWidths={['w-32', 'w-20', 'w-20', 'w-20', 'w-14']}
+            />
+          ) : filteredFees.length === 0 ? (
+            <TableEmpty
+              colSpan={5}
+              title="No accrued fees recorded yet"
+              description="Fees accrued on active vaults will appear here"
+            />
+          ) : (
               filteredFees.map((fee) => {
                 const vault = vaults.find((v) => v.id === fee.vault_id)
                 const vaultName = vault?.metadata.displayName || `Vault ${fee.vault_id.slice(0, 8)}`
@@ -103,7 +104,6 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
             )}
           </TableBody>
         </Table>
-      )}
     </SectionCard>
   )
 }

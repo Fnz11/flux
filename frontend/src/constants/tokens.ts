@@ -49,3 +49,37 @@ export const TOKENS: TokenInfo[] = [
     icon: 'https://coin-images.coingecko.com/coins/images/31924/large/pyth.png',
   },
 ]
+
+export const fallbackTokenMap: Record<string, TokenInfo> = {
+  SOL: TOKENS[0],
+  USDC: TOKENS[1],
+  USDT: TOKENS[2],
+  JUP: TOKENS[3],
+  PYTH: TOKENS[4],
+  USD: {
+    symbol: 'USD',
+    name: 'US Dollar',
+    mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    decimals: 6,
+    color: '#2775CA',
+    icon: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+  },
+}
+
+export function getTokenMeta(symbolOrMint: string): TokenInfo {
+  const cleanSymbol = symbolOrMint?.trim().toUpperCase() || ''
+  const found = TOKENS.find(
+    (t) => t.symbol.toUpperCase() === cleanSymbol || t.mint === symbolOrMint,
+  )
+  if (found) return found
+  return (
+    fallbackTokenMap[cleanSymbol] ?? {
+      symbol: cleanSymbol,
+      name: cleanSymbol,
+      mint: '',
+      decimals: 6,
+      color: '#737373',
+      icon: '',
+    }
+  )
+}

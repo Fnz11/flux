@@ -134,7 +134,7 @@ export function LeaderboardWidget() {
                       {item.icon ? (
                         <AvatarImage src={item.icon} alt={item.symbol} />
                       ) : null}
-                      <AvatarFallback className="text-[10px] bg-bg-inset text-text-secondary border-0">
+                      <AvatarFallback seed={item.symbol} className="text-[10px] bg-bg-inset text-text-secondary border-0">
                         {item.symbol.charAt(0)}
                       </AvatarFallback>
                     </Avatar>

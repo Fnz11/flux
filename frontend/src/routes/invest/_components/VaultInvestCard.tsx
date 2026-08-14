@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { Vault } from '@/types'
 import { Badge } from '@/components/ui/badge'
+import { AddressPill } from '@/components/ui/AddressPill'
 
 interface VaultInvestCardProps {
   vault: Vault
@@ -20,9 +21,9 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
           <h3 className="truncate text-lg font-semibold text-text-primary">
             {vault.metadata.displayName || vault.address.slice(0, 8) + '...'}
           </h3>
-          <p className="mt-0.5 text-xs text-text-muted font-mono">
-            {vault.address.slice(0, 4)}...{vault.address.slice(-4)}
-          </p>
+          <div className="mt-1">
+            <AddressPill address={vault.address} />
+          </div>
         </div>
         <Badge variant={badgeVariant} className="shrink-0">
           {vault.status}

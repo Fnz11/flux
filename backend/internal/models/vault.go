@@ -43,7 +43,7 @@ type VaultResponse struct {
 	VaultType         string          `json:"vault_type"`
 	InvestorCount     int             `json:"investor_count"`
 	TVL               decimal.Decimal `json:"tvl"`
-	Sparkline         interface{}     `json:"sparkline,omitempty"`
+	Sparkline         interface{}     `json:"sparkline"`
 	CreatedAt         time.Time       `json:"created_at"`
 	UpdatedAt         time.Time       `json:"updated_at"`
 }

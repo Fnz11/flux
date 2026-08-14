@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import type { ApiTrade, TradeType } from '@/types'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui/table'
+import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SectionCard } from '@/components/ui/SectionCard'
+import { TokenIcon } from '@/components/ui/TokenIcon'
 import { History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -73,35 +75,34 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
         </Select>
       }
     >
-      {isLoading ? (
-        <div className="p-4 space-y-3 min-h-[220px]">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="animate-pulse h-10 rounded-xl bg-bg-inset/60" />
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="min-h-[220px] flex flex-col justify-between flex-1">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>DATE</TableHead>
-                  <TableHead>TYPE</TableHead>
-                  <TableHead>PAIR</TableHead>
-                  <TableHead className="text-right">AMOUNT</TableHead>
-                  <TableHead className="text-right">PRICE</TableHead>
-                  <TableHead>STATUS</TableHead>
-                  <TableHead className="text-right">TX</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paged.length === 0 ? (
-                  <TableEmpty
-                    colSpan={7}
-                    title="No trades recorded yet"
-                    description="Trades executed on vaults will appear here"
-                  />
-                ) : (
+      <div className="min-h-[220px] flex flex-col justify-between flex-1">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>DATE</TableHead>
+              <TableHead>TYPE</TableHead>
+              <TableHead>PAIR</TableHead>
+              <TableHead className="text-right">AMOUNT</TableHead>
+              <TableHead className="text-right">PRICE</TableHead>
+              <TableHead>STATUS</TableHead>
+              <TableHead className="text-right">TX</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRowSkeleton
+                columns={7}
+                rows={4}
+                cellAligns={['left', 'left', 'left', 'right', 'right', 'left', 'right']}
+                cellWidths={['w-20', 'w-14', 'w-24', 'w-16', 'w-16', 'w-18', 'w-12']}
+              />
+            ) : paged.length === 0 ? (
+              <TableEmpty
+                colSpan={7}
+                title="No trades recorded yet"
+                description="Trades executed on vaults will appear here"
+              />
+            ) : (
                   paged.map((trade) => (
                     <TableRow key={trade.id}>
                       <TableCell className="whitespace-nowrap text-text-tertiary">
@@ -110,8 +111,14 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
                       <TableCell className={cn('font-medium', typeColor[trade.trade_type])}>
                         {trade.trade_type}
                       </TableCell>
-                      <TableCell className="font-mono">
-                        {trade.input_token}/{trade.output_token}
+                      <TableCell className="font-mono text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex items-center -space-x-1.5">
+                            <TokenIcon symbol={trade.input_token} className="size-4" />
+                            <TokenIcon symbol={trade.output_token} className="size-4" />
+                          </div>
+                          <span>{trade.input_token}/{trade.output_token}</span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {trade.amount_in.toFixed(4)}
@@ -130,9 +137,8 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
                 )}
               </TableBody>
             </Table>
-          </div>
 
-          {totalPages > 1 && (
+          {totalPages > 1 && !isLoading && (
             <div className="p-3 border-t border-border-subtle/50 flex items-center justify-center gap-2">
               <Button
                 variant="outline"
@@ -153,8 +159,7 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
               </Button>
             </div>
           )}
-        </>
-      )}
+        </div>
     </SectionCard>
   )
 }

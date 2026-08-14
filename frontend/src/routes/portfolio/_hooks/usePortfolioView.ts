@@ -12,12 +12,17 @@ export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPo
 
   const { data: historyPoints = [] } = usePortfolioHistoryQuery(walletAddress)
 
-  const [sortBy, setSortBy] = useState<SortKey>('value')
+  const [sortBy, setSortBy] = useState<SortKey | undefined>(undefined)
   const [sortAsc, setSortAsc] = useState(false)
 
   const toggleSort = (key: SortKey) => {
     if (sortBy === key) {
-      setSortAsc((prev) => !prev)
+      if (!sortAsc) {
+        setSortAsc(true)
+      } else {
+        setSortBy(undefined)
+        setSortAsc(false)
+      }
     } else {
       setSortBy(key)
       setSortAsc(false)
@@ -25,6 +30,7 @@ export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPo
   }
 
   const sortedPositions = useMemo(() => {
+    if (!sortBy) return enriched
     const copy = [...enriched]
     copy.sort((a, b) => {
       let cmp = 0

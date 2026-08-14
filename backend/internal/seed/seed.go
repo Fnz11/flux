@@ -268,7 +268,7 @@ func cleanTables(db *gorm.DB) error {
 }
 
 func refreshMatviews(db *gorm.DB) error {
-	for _, mv := range []string{"portfolio_summary", "user_pnl_summary"} {
+	for _, mv := range []string{"portfolio_summary", "user_pnl_summary", "vault_daily_sparkline_mv", "vault_balances_summary"} {
 		if err := db.Exec("REFRESH MATERIALIZED VIEW CONCURRENTLY " + mv).Error; err != nil {
 			// fall back to non-concurrent refresh
 			if err2 := db.Exec("REFRESH MATERIALIZED VIEW " + mv).Error; err2 != nil {

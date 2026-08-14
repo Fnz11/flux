@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+import { DecimalInput } from '@/components/ui/DecimalInput'
 import { SLIPPAGE_PRESETS } from '@/constants/ui'
 import type { SwapFormValues } from '@/validations/trade'
 
@@ -29,14 +29,12 @@ export function SlippageField() {
                 </button>
               ))}
               <div className="relative flex items-center ml-1">
-                <Input
+                <DecimalInput
                   id="custom-slippage"
-                  type="number"
                   value={field.value ?? ''}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  step="0.1"
-                  min="0"
-                  max="100"
+                  onValueChange={(_, num) => field.onChange(num ?? 0)}
+                  maxDecimals={2}
+                  placeholder="0.5"
                   className="w-16 px-2 py-1 text-xs h-7 rounded-lg border-border-subtle bg-bg-inset text-center font-mono font-semibold"
                 />
                 <span className="ml-1 text-xs text-text-tertiary">%</span>
