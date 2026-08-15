@@ -7,6 +7,8 @@ import { Modal } from './modal'
 import { Button } from './button'
 import { useAppStore } from '@/stores/app-store'
 import { usePortfolioStore, useVaultStore } from '@/stores'
+import { setAuthToken } from '@/lib/api'
+import { getCachedAuthToken } from '@/services/apis/rest-api/auth.service'
 
 export function WalletConnectButton() {
   const { wallets = [], select, disconnect, connected, publicKey } = useWallet()
@@ -19,9 +21,15 @@ export function WalletConnectButton() {
   // Sync wallet address with global store
   useEffect(() => {
     if (connected && publicKey) {
-      setCurrentUser(publicKey.toBase58())
+      const addr = publicKey.toBase58()
+      setCurrentUser(addr)
+      const cached = getCachedAuthToken(addr)
+      if (cached) {
+        setAuthToken(cached)
+      }
     } else {
       setCurrentUser(null)
+      setAuthToken(null)
       usePortfolioStore.getState().reset()
       useVaultStore.getState().reset()
     }

@@ -46,6 +46,7 @@ function DashboardPage() {
   const managerVaultCount = walletAddress
     ? vaults.filter((v) => v.managerAddress.toLowerCase() === walletAddress.toLowerCase()).length
     : 0
+  const investedVaultCount = portfolioPositions?.length ?? 0
 
   return (
     <div className="space-y-6">
@@ -64,7 +65,7 @@ function DashboardPage() {
         <div className="space-y-6">
           {/* Platform KPI Aggregates */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle bg-bg-elevated">
+            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <div className="flex items-center gap-2">
                   <Coins className="size-4 text-primary-gold" />
@@ -80,7 +81,7 @@ function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle bg-bg-elevated">
+            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <div className="flex items-center gap-2">
                   <Layers className="size-4 text-primary-coral" />
@@ -96,7 +97,7 @@ function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle bg-bg-elevated">
+            <Card className="relative flex flex-col justify-between overflow-hidden p-5 border-border-subtle">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <div className="flex items-center gap-2">
                   <Sparkles className="size-4 text-emerald-400" />
@@ -113,7 +114,7 @@ function DashboardPage() {
             </Card>
           </div>
 
-          <div className="flex h-56 flex-col items-center justify-center rounded-2xl border border-border-subtle bg-bg-elevated/70 text-center p-6">
+          <div className="flex h-56 flex-col items-center justify-center rounded-2xl border border-border-subtle text-center p-6">
             <div className="mb-3 rounded-full bg-bg-inset p-3">
               <Shield className="size-7 text-primary-coral" />
             </div>
@@ -154,7 +155,7 @@ function DashboardPage() {
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                 <div className="flex items-center gap-2">
                   <Layers className="size-4 text-primary-coral" />
-                  <span>{isManager ? 'Your Vaults' : 'Available Vaults'}</span>
+                  <span>{isManager ? 'Your Vaults' : 'Invested Vaults'}</span>
                 </div>
                 {isManager && (
                   <Link to="/vaults/create">
@@ -166,10 +167,10 @@ function DashboardPage() {
               </div>
               <div className="mt-3">
                 <div className="text-3xl font-bold tracking-tight text-text-primary">
-                  {vaultsLoading ? '...' : isManager ? managerVaultCount : activeVaultCount}
+                  {vaultsLoading ? '...' : isManager ? managerVaultCount : investedVaultCount}
                 </div>
                 <p className="mt-1 text-xs text-text-tertiary">
-                  {isManager ? 'Vaults under your authority' : 'Active vaults ready for deposits'}
+                  {isManager ? 'Vaults under your authority' : 'Vaults with active positions'}
                 </p>
               </div>
             </Card>

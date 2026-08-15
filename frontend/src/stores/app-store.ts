@@ -30,7 +30,7 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'fbyt-app',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ isManager: state.isManager }),
     },
   ),

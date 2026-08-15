@@ -11,7 +11,7 @@ pub struct PauseVault<'info> {
 
     #[account(
         mut,
-        seeds = [VAULT_SEED, vault.creator.as_ref()],
+        seeds = [VAULT_SEED, vault.creator.as_ref(), vault.share_token_mint.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.manager == manager.key() @ VaultError::Unauthorized,
     )]

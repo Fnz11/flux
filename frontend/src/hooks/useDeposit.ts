@@ -1,21 +1,22 @@
 import { useCallback } from 'react'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
-import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, SYSVAR_RENT_PUBKEY, TransactionInstruction, Transaction } from '@solana/web3.js'
+import { PublicKey, SystemProgram, LAMPORTS_PER_SOL, TransactionInstruction, Transaction } from '@solana/web3.js'
 import { BN } from 'bn.js'
-import { api } from '@/lib/api'
+import { api, getAuthToken, ApiError } from '@/lib/api'
+import { ensureWalletAuthenticated } from '@/services/apis/rest-api/auth.service'
 import { getProgram } from '@/lib/anchor'
 import { prepareDeposit, submitTx } from '@/services/apis/rest-api/tx.service'
 import {
   buildTransactionWithComputeBudget,
   sendTransaction,
   confirmTransactionHelper,
-  ensureSolBalance,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
   TOKEN_PROGRAM_ID,
 } from '@/lib/transactions'
 import { useTransactionStore } from '@/stores'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface DepositParams {
   vaultAddress: string
@@ -37,6 +38,7 @@ function isNative(tokenMint: string): boolean {
 }
 
 export function useDeposit() {
+  const queryClient = useQueryClient()
   const { connection } = useConnection()
   const wallet = useWallet()
   const addTransaction = useTransactionStore((s) => s.addTransaction)
@@ -60,6 +62,11 @@ export function useDeposit() {
           throw new Error('Wallet not connected')
         }
 
+        const walletSigner = {
+          publicKey: wallet.publicKey,
+          signTransaction: wallet.signTransaction,
+        }
+
         if (!vaultAddress) {
           throw new Error('Vault address is required')
         }
@@ -76,9 +83,9 @@ export function useDeposit() {
           : Math.round(amount * 10 ** USDC_DECIMALS)
 
         let signature: string | null = null
+        let tx: Transaction
+        let draftId: string | undefined
         let blockhashInfo: { blockhash: string; lastValidBlockHeight: number } | undefined
-
-        await ensureSolBalance(connection, userPubkey)
 
         try {
           // 1. Enterprise path: request backend to prepare tx
@@ -100,18 +107,10 @@ export function useDeposit() {
             }
           }
 
-          const tx = Transaction.from(Buffer.from(prep.transaction, 'base64'))
-          const signedTx = await wallet.signTransaction(tx)
-          signature = await connection.sendRawTransaction(signedTx.serialize(), {
-            skipPreflight: false,
-            preflightCommitment: 'confirmed',
-          })
-
-          if (prep.draft_id) {
-            submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
-          }
+          draftId = prep.draft_id
+          tx = Transaction.from(Buffer.from(prep.transaction, 'base64'))
         } catch {
-          // 2. Client-side fallback if backend prepare is unavailable
+          // 2. Client-side fallback ONLY if backend prepare HTTP call fails
           const program = await getProgram(
             {
               publicKey: userPubkey,
@@ -130,10 +129,21 @@ export function useDeposit() {
             program.programId,
           )
 
-          const [shareTokenMintPubkey] = PublicKey.findProgramAddressSync(
-            [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
-            program.programId,
-          )
+          let vaultAccount: { shareTokenMint?: PublicKey; depositMint?: PublicKey } | null = null
+          try {
+            vaultAccount = await (program.account as unknown as { vaultState: { fetch: (pk: PublicKey) => Promise<{ shareTokenMint: PublicKey; depositMint: PublicKey }> } }).vaultState.fetch(vaultPubkey)
+          } catch {
+            try {
+              vaultAccount = await (program.account as unknown as { vault: { fetch: (pk: PublicKey) => Promise<{ shareTokenMint: PublicKey; depositMint: PublicKey }> } }).vault.fetch(vaultPubkey)
+            } catch {}
+          }
+
+          const shareTokenMintPubkey: PublicKey =
+            vaultAccount?.shareTokenMint ||
+            PublicKey.findProgramAddressSync(
+              [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
+              program.programId,
+            )[0]
 
           const tokenMintPubkey = isNative(tokenMint)
             ? NATIVE_MINT
@@ -219,44 +229,109 @@ export function useDeposit() {
               shareTokenMint: shareTokenMintPubkey,
               investorShareAccount,
               tokenProgram: TOKEN_PROGRAM_ID,
+              associatedTokenProgram: new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'),
               systemProgram: SystemProgram.programId,
-              rent: SYSVAR_RENT_PUBKEY,
             })
             .instruction()
 
           ixs.push(depositIx)
+          tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
+        }
 
-          const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
-          signature = await sendTransaction(
-            connection,
-            tx,
-            {
-              publicKey: wallet.publicKey,
-              signTransaction: wallet.signTransaction,
-            },
-          )
+        // 3. Single User Signature and Broadcast
+        if (draftId && tx) {
+          try {
+            const signedTx = await wallet.signTransaction(tx)
+            if (signedTx && typeof signedTx.serialize === 'function') {
+              signature = await connection.sendRawTransaction(signedTx.serialize(), {
+                skipPreflight: false,
+                preflightCommitment: 'confirmed',
+              })
+            } else {
+              signature = await sendTransaction(connection, tx, walletSigner)
+            }
+          } catch {
+            signature = await sendTransaction(connection, tx, walletSigner)
+          }
+        } else {
+          signature = await sendTransaction(connection, tx, walletSigner)
+        }
+
+        if (draftId && signature) {
+          await submitTx({ draftId, signature }).catch(() => {})
         }
 
         if (!signature) {
           throw new Error('Deposit transaction failed: no signature')
         }
 
+        // Await on-chain confirmation before syncing with backend
         await confirmTransactionHelper(connection, signature, blockhashInfo, 'confirmed')
 
-        // Fire-and-forget sync to backend without blocking user UX
-        api.post('/trades/sync', {
-          signature,
-          vault_id: vaultId || vaultPubkey.toBase58(),
-        }).catch((syncErr) => {
-          console.warn('Failed to sync deposit transaction to backend:', syncErr)
-        })
+        // Authenticate wallet for sync if needed
+        if (userPubkey) {
+          const userAddr = userPubkey.toBase58()
+          if (!getAuthToken() && wallet.signMessage) {
+            await ensureWalletAuthenticated(userAddr, wallet.signMessage).catch(() => {})
+          }
+        }
+
+        // Sync with backend (with short retry if transaction indexing is in-flight)
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const syncRes = await api.post<{ success?: boolean; retryable?: boolean }>('/trades/sync', {
+              signature,
+              vault_id: vaultId || vaultPubkey.toBase58(),
+            })
+            if (syncRes && (syncRes as { retryable?: boolean }).retryable !== true) {
+              break
+            }
+          } catch (err: unknown) {
+            if (err instanceof ApiError && (err.status === 409 || err.message.includes('already synced'))) {
+              break
+            }
+          }
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 400))
+          }
+        }
+
+        const targetVaultId = vaultId || vaultPubkey.toBase58()
+        const targetVaultAddress = vaultPubkey.toBase58()
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['vault'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaultBalances'] }),
+          queryClient.invalidateQueries({ queryKey: ['portfolio'] }),
+          queryClient.invalidateQueries({ queryKey: ['portfolioHistory'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaults'] }),
+          queryClient.invalidateQueries({ queryKey: ['infiniteVaults'] }),
+          queryClient.invalidateQueries({ queryKey: ['trades'] }),
+          queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+          queryClient.invalidateQueries({ queryKey: ['marketStats'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaultSparkline'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaultSparklineFull'] }),
+          queryClient.refetchQueries({ queryKey: ['vault', targetVaultId] }),
+          queryClient.refetchQueries({ queryKey: ['vault', targetVaultAddress] }),
+          queryClient.refetchQueries({ queryKey: ['portfolio'] }),
+          queryClient.refetchQueries({ queryKey: ['vaultBalances', targetVaultId] }),
+        ])
 
         updateStatus(txId, 'success')
         return signature
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Deposit failed'
+      } catch (err: unknown) {
+        let message = err instanceof Error ? err.message : 'Deposit failed'
+        const sendTxErr = err as { getLogs?: () => string[]; logs?: string[] }
+        const logs = (typeof sendTxErr?.getLogs === 'function' ? sendTxErr.getLogs() : sendTxErr?.logs) || []
+        const insufficientLog = logs.find((l) => l.includes('insufficient lamports') || l.includes('custom program error: 0x1'))
+        const uninitializedLog = logs.find((l) => l.includes('AccountNotInitialized') || l.includes('0xbc4') || l.includes('3012'))
+        if (insufficientLog) {
+          message = `Insufficient SOL balance for deposit + gas fees (${insufficientLog}).`
+        } else if (uninitializedLog) {
+          message = `Vault account is not initialized on-chain (Error: AccountNotInitialized). Please create a new vault via the app to test on-chain deposits.`
+        }
         updateStatus(txId, 'failed', message)
-        throw err
+        const customErr = new Error(message)
+        throw customErr
       }
     },
     [wallet, connection, addTransaction, updateStatus],

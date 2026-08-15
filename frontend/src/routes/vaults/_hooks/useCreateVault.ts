@@ -17,6 +17,7 @@ export interface CreateVaultParams {
   focusAssets?: string[]
   tags?: string[]
   minRaiseAmount: number
+  minRaiseUnit?: string
   performanceFeePercent: number
   managementFeePercent: number
   lockupPeriodValue: number
@@ -60,7 +61,12 @@ export function useCreateVault() {
 
     const performanceFeeBps = Math.round(data.performanceFeePercent * 100)
     const managementFeeBps = Math.round(data.managementFeePercent * 100)
-    const minRaiseLamports = Math.round(data.minRaiseAmount * 1e9)
+    const isUsdcRaise = data.minRaiseUnit?.toUpperCase() === 'USDC' || data.minRaiseUnit?.toUpperCase() === 'USDT'
+    const depositMint = isUsdcRaise
+      ? (data.minRaiseUnit?.toUpperCase() === 'USDT' ? 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' : 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
+      : undefined
+    const raiseDecimals = isUsdcRaise ? 6 : 9
+    const minRaiseBaseUnits = Math.round(data.minRaiseAmount * 10 ** raiseDecimals)
 
     try {
       // 0. Ensure wallet has SOL for fees/rent on non-mainnet
@@ -74,7 +80,8 @@ export function useCreateVault() {
         coverImageUrl: data.coverImageUrl,
         focusAssets: data.focusAssets,
         tags: data.tags,
-        minRaiseAmount: minRaiseLamports,
+        minRaiseAmount: minRaiseBaseUnits,
+        depositMint,
         performanceFeeBps,
         managementFeeBps,
         lockupPeriodSec: lockupPeriodSeconds,
@@ -100,7 +107,7 @@ export function useCreateVault() {
 
       // 5. Submit signature to backend draft reconciler
       if (prep.draft_id) {
-        submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
+        await submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
       }
 
       // 6. Await on-chain confirmation via enterprise hybrid watcher
@@ -116,7 +123,12 @@ export function useCreateVault() {
 
       confirmTransaction(txId, signature)
       moveToHistory(txId)
-      await queryClient.invalidateQueries({ queryKey: ['vaults'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['vaults'] }),
+        queryClient.invalidateQueries({ queryKey: ['infiniteVaults'] }),
+        queryClient.invalidateQueries({ queryKey: ['marketStats'] }),
+        queryClient.invalidateQueries({ queryKey: ['portfolio'] }),
+      ])
       toastSuccess('Vault created successfully!')
       navigate({ to: '/vaults' })
     } catch (err: unknown) {

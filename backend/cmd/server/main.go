@@ -114,7 +114,7 @@ func main() {
 	txPrepareSvc := services.NewTxPrepareService(draftRepo, vaultRepo, solanaClient)
 	txPrepareHandler := handlers.NewTxPrepareHandler(txPrepareSvc)
 
-	txIndexerWorker := jobs.NewTxIndexerWorker(db, vaultRepo, userRepo, solanaClient, eventService, logger, 5*time.Second)
+	txIndexerWorker := jobs.NewTxIndexerWorker(db, vaultRepo, userRepo, tradeRepo, portfolioRepo, solanaClient, eventService, logger, 5*time.Second)
 	txIndexerWorker.Start(context.Background())
 	txPrepareSvc.SetReconcileCallback(txIndexerWorker.TriggerAsyncReconcile)
 

@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,21 +19,25 @@ import (
 )
 
 type TxIndexerWorker struct {
-	db           *gorm.DB
-	vaultRepo    domain.VaultRepository
-	userRepo     domain.UserRepository
-	client       *pkgSolana.Client
-	eventService *services.EventService
-	logger       *logrus.Logger
-	interval     time.Duration
-	stopCh       chan struct{}
-	stopOnce     sync.Once
+	db            *gorm.DB
+	vaultRepo     domain.VaultRepository
+	userRepo      domain.UserRepository
+	tradeRepo     domain.TradeRepository
+	portfolioRepo domain.PortfolioRepository
+	client        *pkgSolana.Client
+	eventService  *services.EventService
+	logger        *logrus.Logger
+	interval      time.Duration
+	stopCh        chan struct{}
+	stopOnce      sync.Once
 }
 
 func NewTxIndexerWorker(
 	db *gorm.DB,
 	vaultRepo domain.VaultRepository,
 	userRepo domain.UserRepository,
+	tradeRepo domain.TradeRepository,
+	portfolioRepo domain.PortfolioRepository,
 	client *pkgSolana.Client,
 	eventService *services.EventService,
 	logger *logrus.Logger,
@@ -45,14 +50,16 @@ func NewTxIndexerWorker(
 		interval = 5 * time.Second
 	}
 	return &TxIndexerWorker{
-		db:           db,
-		vaultRepo:    vaultRepo,
-		userRepo:     userRepo,
-		client:       client,
-		eventService: eventService,
-		logger:       logger,
-		interval:     interval,
-		stopCh:       make(chan struct{}),
+		db:            db,
+		vaultRepo:     vaultRepo,
+		userRepo:      userRepo,
+		tradeRepo:     tradeRepo,
+		portfolioRepo: portfolioRepo,
+		client:        client,
+		eventService:  eventService,
+		logger:        logger,
+		interval:      interval,
+		stopCh:        make(chan struct{}),
 	}
 }
 
@@ -245,12 +252,52 @@ func (w *TxIndexerWorker) finalizeDeposit(ctx context.Context, draft *models.Tra
 	var meta struct {
 		VaultAddress   string `json:"vaultAddress"`
 		AmountLamports uint64 `json:"amountLamports"`
+		DepositMint    string `json:"depositMint"`
 	}
 	_ = json.Unmarshal(draft.Metadata, &meta)
 
 	if meta.VaultAddress != "" && meta.AmountLamports > 0 {
 		amountDec := decimal.NewFromInt(int64(meta.AmountLamports)).Div(decimal.NewFromInt(1e9))
-		_ = w.vaultRepo.UpdateTVL(ctx, meta.VaultAddress, amountDec)
+		vault, err := w.vaultRepo.GetByAddress(ctx, meta.VaultAddress)
+		if err == nil && vault != nil {
+			actor, err := w.userRepo.FindOrCreateByWallet(ctx, draft.UserPubkey)
+			if err == nil && actor != nil {
+				sig := ""
+				if draft.Signature != nil {
+					sig = *draft.Signature
+				}
+				if sig != "" && w.tradeRepo != nil {
+					if existing, err := w.tradeRepo.FindBySignature(ctx, sig); err != nil || existing == nil {
+						tokenSym := "SOL"
+						if meta.DepositMint != "" && !strings.EqualFold(meta.DepositMint, pkgSolana.NativeMint.String()) {
+							tokenSym = "USDC"
+						}
+						tradeDetail := &domain.TradeDetail{
+							VaultID:              vault.ID,
+							ActorID:              actor.ID,
+							TransactionSignature: sig,
+							TradeType:            "Deposit",
+							InputToken:           tokenSym,
+							OutputToken:          vault.Address,
+							AmountIn:             amountDec,
+							AmountOut:            amountDec,
+							PriceAtExecution:     decimal.NewFromInt(1),
+							ExecutedAt:           time.Now().UTC(),
+						}
+						_ = w.tradeRepo.Create(ctx, tradeDetail)
+					}
+				}
+
+				if w.portfolioRepo != nil {
+					_ = w.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountDec, amountDec, decimal.NewFromInt(1))
+				}
+			}
+			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, amountDec)
+
+			if w.eventService != nil {
+				w.eventService.DispatchPortfolioUpdate(draft.UserPubkey, vault.ID, decimal.Zero)
+			}
+		}
 	}
 
 	w.db.WithContext(ctx).Model(draft).Update("status", models.TxDraftStatusConfirmed)
@@ -266,6 +313,46 @@ func (w *TxIndexerWorker) finalizeWithdraw(ctx context.Context, draft *models.Tr
 		SharesToBurn uint64 `json:"sharesToBurn"`
 	}
 	_ = json.Unmarshal(draft.Metadata, &meta)
+
+	if meta.VaultAddress != "" && meta.SharesToBurn > 0 {
+		sharesDec := decimal.NewFromInt(int64(meta.SharesToBurn)).Div(decimal.NewFromInt(1e9))
+		vault, err := w.vaultRepo.GetByAddress(ctx, meta.VaultAddress)
+		if err == nil && vault != nil {
+			actor, err := w.userRepo.FindOrCreateByWallet(ctx, draft.UserPubkey)
+			if err == nil && actor != nil {
+				sig := ""
+				if draft.Signature != nil {
+					sig = *draft.Signature
+				}
+				if sig != "" && w.tradeRepo != nil {
+					if existing, err := w.tradeRepo.FindBySignature(ctx, sig); err != nil || existing == nil {
+						tradeDetail := &domain.TradeDetail{
+							VaultID:              vault.ID,
+							ActorID:              actor.ID,
+							TransactionSignature: sig,
+							TradeType:            "Withdraw",
+							InputToken:           vault.Address,
+							OutputToken:          "SOL",
+							AmountIn:             sharesDec,
+							AmountOut:            sharesDec,
+							PriceAtExecution:     decimal.NewFromInt(1),
+							ExecutedAt:           time.Now().UTC(),
+						}
+						_ = w.tradeRepo.Create(ctx, tradeDetail)
+					}
+				}
+
+				if w.portfolioRepo != nil {
+					_ = w.portfolioRepo.ReducePosition(ctx, actor.ID, vault.ID, sharesDec)
+				}
+			}
+			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, sharesDec.Neg())
+
+			if w.eventService != nil {
+				w.eventService.DispatchPortfolioUpdate(draft.UserPubkey, vault.ID, decimal.Zero)
+			}
+		}
+	}
 
 	w.db.WithContext(ctx).Model(draft).Update("status", models.TxDraftStatusConfirmed)
 

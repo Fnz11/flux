@@ -5,7 +5,7 @@ import { useWallet } from '@solana/wallet-adapter-react'
 import { useConfigStore } from '@/stores'
 import { useVaultsQuery, useVaultBalancesQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { Form } from '@/components/ui/form'
-import { ArrowDownUp } from 'lucide-react'
+import { ArrowDownUp, Lock } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { PriceDisplay } from './PriceDisplay'
 import { ConfirmationDialog } from './ConfirmationDialog'
@@ -43,7 +43,7 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
       (v) =>
         v.managerAddress &&
         v.managerAddress.toLowerCase() === walletAddress.toLowerCase() &&
-        v.status?.toLowerCase() === 'active'
+        (v.status?.toLowerCase() === 'active' || v.status?.toLowerCase() === 'fundraising')
     )
   }, [customVaults, fetchedVaults, walletAddress])
 
@@ -77,18 +77,37 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
   // Fetch balances of the selected active vault
   const { data: vaultBalances = [], isLoading: isLoadingBalances } = useVaultBalancesQuery(vaultId ?? '')
 
+  const selectedVault = useMemo(() => {
+    return vaults.find((v) => v.id === vaultId || v.address === vaultId)
+  }, [vaults, vaultId])
+
   const currentAsset = useMemo(() => {
-    return vaultBalances.find(
+    const found = vaultBalances.find(
       (b) =>
         b.symbol?.toUpperCase() === inputToken.toUpperCase() ||
         b.mint?.toLowerCase() === inputToken.toLowerCase()
     )
-  }, [vaultBalances, inputToken])
+    if (found) return found
+    if (selectedVault && selectedVault.tvl > 0 && (inputToken.toUpperCase() === 'SOL' || inputToken === 'So11111111111111111111111111111111111111112')) {
+      const solPrice = 150
+      return {
+        mint: 'So11111111111111111111111111111111111111112',
+        symbol: 'SOL',
+        amount: selectedVault.tvl / solPrice,
+        usdValue: selectedVault.tvl,
+      }
+    }
+    return undefined
+  }, [vaultBalances, inputToken, selectedVault])
 
   const maxBalance = useMemo(() => {
     if (!vaultId || isLoadingBalances) return null
-    return currentAsset ? currentAsset.amount : 0
-  }, [vaultId, isLoadingBalances, currentAsset])
+    if (currentAsset) return currentAsset.amount
+    if (selectedVault && selectedVault.tvl > 0 && inputToken.toUpperCase() === 'SOL') {
+      return selectedVault.tvl / 150
+    }
+    return 0
+  }, [vaultId, isLoadingBalances, currentAsset, selectedVault, inputToken])
 
   const handleSetMax = useCallback(() => {
     if (maxBalance !== null && maxBalance > 0) {
@@ -134,6 +153,7 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     if (!vaultId || !inputNum) return
     await execute({
       vaultId,
+      vaultAddress: selectedVault?.address,
       inputToken,
       outputToken,
       amountIn: inputNum,
@@ -142,7 +162,7 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
       slippage,
     })
     setShowConfirm(false)
-  }, [vaultId, inputNum, inputToken, outputToken, outputAmount, rate, slippage, execute])
+  }, [vaultId, selectedVault, inputNum, inputToken, outputToken, outputAmount, rate, slippage, execute])
 
   const toggleDirection = () => {
     setInputToken(outputToken)
@@ -168,6 +188,8 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     rate,
     outputAmount,
     minReceived,
+    selectedVault,
+    isVaultFundraising: selectedVault?.status?.toLowerCase() === 'fundraising',
     priceData,
     isExecuting,
     walletConnected: wallet.connected,
@@ -185,6 +207,8 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
     vaults,
     isLoadingVaults,
     vaultId,
+    selectedVault,
+    isVaultFundraising,
     slippage,
     inputToken,
     setInputToken,
@@ -225,6 +249,18 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
               />
             }
           >
+            {isVaultFundraising && selectedVault && (
+              <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-status-warning/30 bg-status-warning/10 p-3 text-xs text-status-warning">
+                <Lock className="size-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Vault Locked — Fundraising Phase</p>
+                  <p className="text-[11px] text-text-secondary mt-0.5">
+                    This vault has not reached its minimum raise target ({selectedVault.minRaiseAmount ?? '0'} {selectedVault.metadata?.focusAssets?.[0] ?? 'SOL'}) or been activated yet. Trading will unlock once the target is met.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
               <PayInputField
                 maxBalance={maxBalance}
@@ -246,10 +282,11 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
               <SlippageField />
 
               <SwapActionButton
-                disabled={!vaultId || !inputNum || !walletConnected || isExecuting || isInsufficientBalance}
+                disabled={!vaultId || !inputNum || !walletConnected || isExecuting || isInsufficientBalance || isVaultFundraising}
                 isExecuting={isExecuting}
                 walletConnected={walletConnected}
                 isInsufficientBalance={isInsufficientBalance}
+                isVaultFundraising={isVaultFundraising}
                 hasVault={Boolean(vaultId)}
                 hasAmount={Boolean(inputNum)}
               />

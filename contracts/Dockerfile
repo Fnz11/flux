@@ -23,4 +23,4 @@ RUN anchor build && \
 
 EXPOSE 8899 8900
 
-CMD ["solana-test-validator", "--reset", "--bpf-program", "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais", "/workspace/target/deploy/fbyt_clone_vault.so"]
+CMD ["solana-test-validator", "--reset", "--bpf-program", "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais", "/workspace/target/deploy/fbyt_clone_vault.so", "--account", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "/workspace/usdc_mint.json", "--account", "5LbY84L6Z1iFFnu9YysHFHq5tHTHYsiLUDNnqf9PNdMw", "/workspace/pyth_price_update.json"]

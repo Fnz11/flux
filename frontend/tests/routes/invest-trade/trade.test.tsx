@@ -131,15 +131,19 @@ describe('SwapForm', () => {
     fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Execute Swap' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Confirm Swap' }))
-    await waitFor(() => expect(mocks.execute).toHaveBeenCalledWith({
-      vaultId: vault.id,
-      inputToken: 'SOL',
-      outputToken: 'USDC',
-      amountIn: 2,
-      amountOut: 200,
-      priceAtExecution: 100,
-      slippage: 0.5,
-    }))
+    await waitFor(() =>
+      expect(mocks.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          vaultId: vault.id,
+          inputToken: 'SOL',
+          outputToken: 'USDC',
+          amountIn: 2,
+          amountOut: 200,
+          priceAtExecution: 100,
+          slippage: 0.5,
+        }),
+      ),
+    )
   })
 })
 

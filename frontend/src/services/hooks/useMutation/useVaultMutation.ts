@@ -9,6 +9,7 @@ export function useUpdateVaultMetadataMutation() {
       updateVaultMetadata(id, metadata),
     onSuccess: (updatedVault) => {
       queryClient.invalidateQueries({ queryKey: ['vaults'] })
+      queryClient.invalidateQueries({ queryKey: ['infiniteVaults'] })
       queryClient.invalidateQueries({ queryKey: ['vault', updatedVault.id] })
     },
   })

@@ -2,7 +2,25 @@ import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig 
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api/v1'
 
-let authToken: string | null = null
+let authToken: string | null = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+
+export function setAuthToken(token: string | null) {
+  authToken = token
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.setItem('auth_token', token)
+    } else {
+      localStorage.removeItem('auth_token')
+    }
+  }
+}
+
+export function getAuthToken(): string | null {
+  if (!authToken && typeof window !== 'undefined') {
+    authToken = localStorage.getItem('auth_token')
+  }
+  return authToken
+}
 
 export class ApiError extends Error {
   constructor(
@@ -16,8 +34,9 @@ export class ApiError extends Error {
 }
 
 function authInterceptor(config: InternalAxiosRequestConfig) {
-  if (authToken && config.headers) {
-    config.headers.Authorization = `Bearer ${authToken}`
+  const token = getAuthToken()
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`
   }
   return config
 }

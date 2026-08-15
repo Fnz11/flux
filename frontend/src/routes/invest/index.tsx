@@ -27,9 +27,14 @@ export const Route = createFileRoute('/invest/')({
 function InvestPage() {
   useRouteWsChannel(['global:activity'])
   const wallet = useWallet()
-  const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useVaultsQuery()
+  const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useVaultsQuery({
+    sortBy: 'tvl',
+    sortOrder: 'desc',
+  })
 
-  const topVaults = vaults.slice(0, 6)
+  const topVaults = vaults
+    .filter((v) => v.status === 'Active' || v.status === 'Fundraising')
+    .slice(0, 6)
 
   return (
     <div className="space-y-4">

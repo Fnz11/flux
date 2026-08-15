@@ -16,7 +16,7 @@ pub struct Deposit<'info> {
 
     #[account(
         mut,
-        seeds = [VAULT_SEED, vault.creator.as_ref()],
+        seeds = [VAULT_SEED, vault.creator.as_ref(), vault.share_token_mint.as_ref()],
         bump = vault.vault_bump,
         constraint = vault.status != VaultStatusCode::Dormant @ crate::errors::VaultError::VaultLocked,
         constraint = !vault.is_paused @ crate::errors::VaultError::VaultLocked,

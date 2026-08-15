@@ -29,6 +29,15 @@ func AutoMigrate(db *gorm.DB) error {
 		return err
 	}
 
+	if sqlDB, err := db.DB(); err == nil {
+		_, _ = sqlDB.Exec(`
+			ALTER TABLE IF EXISTS trade_histories ALTER COLUMN input_token TYPE varchar(64);
+			ALTER TABLE IF EXISTS trade_histories ALTER COLUMN output_token TYPE varchar(64);
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_histories_sig_exec ON trade_histories (transaction_signature, executed_at);
+			CREATE UNIQUE INDEX IF NOT EXISTS uq_portfolios_user_vault ON portfolios (user_id, vault_id);
+		`)
+	}
+
 	if err := recreateMatviews(db); err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flux-protocol/backend/internal/domain"
@@ -112,11 +113,48 @@ func (s *TxPrepareService) PrepareCreateVault(ctx context.Context, dto PrepareCr
 		blockhash = solana.HashFromBytes([]byte("11111111111111111111111111111111"))
 	}
 
-	allowedMints := [4]solana.PublicKey{
-		depositMintPk,
-		solana.PublicKey{},
-		solana.PublicKey{},
-		solana.PublicKey{},
+	var allowedMints [4]solana.PublicKey
+	allowedIdx := 0
+	if !depositMintPk.IsZero() {
+		allowedMints[allowedIdx] = depositMintPk
+		allowedIdx++
+	}
+
+	for _, asset := range dto.FocusAssets {
+		if allowedIdx >= 4 {
+			break
+		}
+		var pk solana.PublicKey
+		switch strings.ToUpper(strings.TrimSpace(asset)) {
+		case "SOL", "WSOL", pkgSolana.NativeMint.String():
+			pk = pkgSolana.NativeMint
+		case "USDC", "EPJFWDD5AUFQSSQEM2QN1XZYBAPC8G4WEGGKZWYTDT1V":
+			pk = solana.MustPublicKeyFromBase58("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
+		case "USDT", "ES9VMFRZACERMJFRF4H2FYD4KCONKY11MCCEE8BENWNYB":
+			pk = solana.MustPublicKeyFromBase58("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
+		case "JUP", "JUPYIWRYJFSKUPTIHA7HKE8RVUTAEFOSYBKEDZNSDVCN":
+			pk = solana.MustPublicKeyFromBase58("JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN")
+		case "PYTH", "HZ1JOV2PWBSHAI4EVWKGAEGG5QUPWVKIDGIEW6JH5W73":
+			pk = solana.MustPublicKeyFromBase58("HZ1Jov2PwbShAi4evWKGAkgg5qUpWVKidGiEw6JH5W73")
+		default:
+			if parsed, pErr := solana.PublicKeyFromBase58(asset); pErr == nil {
+				pk = parsed
+			}
+		}
+
+		if !pk.IsZero() {
+			alreadyPresent := false
+			for i := 0; i < allowedIdx; i++ {
+				if allowedMints[i].Equals(pk) {
+					alreadyPresent = true
+					break
+				}
+			}
+			if !alreadyPresent {
+				allowedMints[allowedIdx] = pk
+				allowedIdx++
+			}
+		}
 	}
 
 	prep, err := pkgSolana.BuildInitializeVaultTx(s.programID, pkgSolana.CreateVaultParams{
@@ -149,6 +187,7 @@ func (s *TxPrepareService) PrepareCreateVault(ctx context.Context, dto PrepareCr
 		"lockupPeriod":      dto.LockupPeriodSec,
 		"shareTokenMint":    prep.ShareTokenMint.String(),
 		"vaultAddress":      prep.VaultAddress.String(),
+		"depositMint":       depositMintPk.String(),
 	}
 	metaBytes, _ := json.Marshal(metadataMap)
 
@@ -210,9 +249,8 @@ func (s *TxPrepareService) PrepareDeposit(ctx context.Context, dto PrepareDeposi
 		depositMintPk = pkgSolana.NativeMint
 	}
 
-	// Derive shareTokenMint PDA or lookup
-	// seeds: [b"share_mint", vault.key()]
-	shareTokenMintPda, _, err := solana.FindProgramAddress([][]byte{
+	// Derive shareTokenMint PDA or lookup from on-chain vault state
+	shareTokenMintPk, _, err := solana.FindProgramAddress([][]byte{
 		[]byte("share_mint"),
 		vaultPk.Bytes(),
 	}, s.programID)
@@ -228,6 +266,34 @@ func (s *TxPrepareService) PrepareDeposit(ctx context.Context, dto PrepareDeposi
 			blockhash = details.Blockhash
 			lastValidHeight = details.LastValidBlockHeight
 		}
+
+		accInfo, err := s.client.GetAccountInfo(ctx, vaultPk)
+		if err == nil && accInfo != nil && accInfo.Value != nil && len(accInfo.Value.Data.GetBinary()) >= 137 {
+			data := accInfo.Value.Data.GetBinary()
+			// VaultState layout:
+			// 8 disc + 32 manager + 32 creator = 72
+			offset := 72
+			if len(data) > offset {
+				if data[offset] == 0 {
+					offset += 1 // Option::None
+				} else {
+					offset += 33 // Option::Some
+				}
+				if len(data) >= offset+32 {
+					onChainDepositMint := solana.PublicKeyFromBytes(data[offset : offset+32])
+					if !onChainDepositMint.IsZero() {
+						depositMintPk = onChainDepositMint
+					}
+				}
+				offset += 32 // skip deposit_mint
+				if len(data) >= offset+32 {
+					onChainMint := solana.PublicKeyFromBytes(data[offset : offset+32])
+					if !onChainMint.IsZero() {
+						shareTokenMintPk = onChainMint
+					}
+				}
+			}
+		}
 	}
 	if blockhash.IsZero() {
 		blockhash = solana.HashFromBytes([]byte("11111111111111111111111111111111"))
@@ -237,7 +303,7 @@ func (s *TxPrepareService) PrepareDeposit(ctx context.Context, dto PrepareDeposi
 		Investor:         investorPk,
 		Vault:            vaultPk,
 		DepositMint:      depositMintPk,
-		ShareTokenMint:   shareTokenMintPda,
+		ShareTokenMint:   shareTokenMintPk,
 		Amount:           dto.AmountLamports,
 		RecentBlockhash:  blockhash,
 		ComputeUnitLimit: 200000,

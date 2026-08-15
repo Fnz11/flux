@@ -259,7 +259,7 @@ describe('PnL ticker', () => {
 describe('trade history', () => {
   it('renders loading and empty states', () => {
     const { rerender, container } = render(<TradeHistory trades={[]} isLoading />)
-    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(4)
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(6)
     rerender(<TradeHistory trades={[]} />)
     expect(screen.getByText('No trades recorded yet')).toBeInTheDocument()
   })

@@ -1,6 +1,5 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect, useMemo } from 'react'
-import { useAppStore } from '@/stores/app-store'
+import { createFileRoute } from '@tanstack/react-router'
+import { useState, useMemo } from 'react'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useFees } from '@/hooks/useFees'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -11,14 +10,6 @@ import { Coins, Zap, Wallet, Info } from 'lucide-react'
 import { generateMetadata } from '@/lib/metadata'
 
 export const Route = createFileRoute('/payout')({
-  beforeLoad: () => {
-    const isManager = useAppStore.getState().isManager
-    if (!isManager) {
-      throw redirect({
-        to: '/invest',
-      })
-    }
-  },
   component: PayoutPage,
   head: () => ({
     meta: generateMetadata({
@@ -31,17 +22,9 @@ export const Route = createFileRoute('/payout')({
 })
 
 export function PayoutPage() {
-  const isManager = useAppStore((s) => s.isManager)
-  const navigate = useNavigate()
   const { data: vaults = [] } = useVaultsQuery()
 
   const [selectedVaultId, setSelectedVaultId] = useState<string>('ALL')
-
-  useEffect(() => {
-    if (!isManager) {
-      navigate({ to: '/invest', replace: true })
-    }
-  }, [isManager, navigate])
 
   const vaultIds = useMemo(() => vaults.map((v) => v.id), [vaults])
   const { fees, isLoading } = useFees(vaultIds)

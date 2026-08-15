@@ -503,7 +503,7 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 		if !solPrice.IsZero() && v.TVL.IsPositive() {
 			hasDepositTrades := false
 			for _, t := range trades {
-				if t.TradeType == "Deposit" {
+				if strings.EqualFold(strings.TrimSpace(t.TradeType), "deposit") {
 					hasDepositTrades = true
 					break
 				}
@@ -526,12 +526,12 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 				outTok = solMint
 			}
 
-			switch t.TradeType {
-			case "Deposit":
+			switch strings.ToLower(strings.TrimSpace(t.TradeType)) {
+			case "deposit":
 				holdings[inTok] = holdings[inTok].Add(t.AmountIn)
-			case "Withdraw":
+			case "withdraw":
 				holdings[outTok] = holdings[outTok].Sub(t.AmountOut)
-			case "Buy", "Sell":
+			case "buy", "sell":
 				holdings[inTok] = holdings[inTok].Sub(t.AmountIn)
 				holdings[outTok] = holdings[outTok].Add(t.AmountOut)
 			}
@@ -547,8 +547,8 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 	solAmt := holdings[solMint].Add(holdings["SOL"])
 	usdcAmt := holdings[usdcMint].Add(holdings["USDC"])
 
-	// If no trades exist yet, default 100% of TVL to SOL as base deposit
-	if !hasBalancesMV && len(trades) == 0 {
+	// If no trades exist yet or calculated balance is 0 despite positive TVL, default TVL to SOL
+	if !hasBalancesMV && (len(trades) == 0 || (solAmt.IsZero() && usdcAmt.IsZero() && v.TVL.IsPositive())) {
 		if !solPrice.IsZero() {
 			solAmt = v.TVL.Div(solPrice)
 		}

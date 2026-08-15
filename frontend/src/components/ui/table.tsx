@@ -17,7 +17,7 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
         containerClassName,
       )}
     >
-      <table ref={ref} className={cn('w-full caption-bottom text-sm flex-1', className)} {...props} />
+      <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   ),
 )
@@ -27,11 +27,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead
-    ref={ref}
-    className={cn('sticky top-0 z-10 border-b border-border-subtle/60 bg-bg-inset/80 backdrop-blur-md select-none', className)}
-    {...props}
-  />
+  <thead ref={ref} className={cn('border-b border-border-subtle/60 bg-bg-inset/60', className)} {...props} />
 ))
 TableHeader.displayName = 'TableHeader'
 
@@ -39,14 +35,7 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody
-    ref={ref}
-    className={cn(
-      '[&_tr:nth-child(even)]:bg-white/[0.01] [&_tr:nth-child(odd)]:bg-transparent',
-      className,
-    )}
-    {...props}
-  />
+  <tbody ref={ref} className={cn(className)} {...props} />
 ))
 TableBody.displayName = 'TableBody'
 

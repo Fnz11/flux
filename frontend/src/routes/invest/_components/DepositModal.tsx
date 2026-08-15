@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useWallet } from '@solana/wallet-adapter-react'
+import { useWallet, useConnection } from '@solana/wallet-adapter-react'
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { TOKEN_PROGRAM_ID } from '@/lib/transactions'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useDepositModal } from '../_hooks/useDepositModal'
 import { Modal } from '@/components/ui/modal'
@@ -11,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { TokenIcon } from '@/components/ui/TokenIcon'
 import { depositSchema, type DepositFormValues } from '@/validations/invest'
-import { CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react'
 
 interface DepositModalProps {
   vaultId: string
@@ -20,6 +22,7 @@ interface DepositModalProps {
 }
 
 const PERCENTAGE_PRESETS = [25, 50, 75, 100] as const
+const SOL_GAS_RESERVE = 0.005 // Keep 0.005 SOL for network fees
 
 export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   const {
@@ -33,14 +36,66 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
     setStep,
     setSelectedToken,
     setAmount,
+    vault,
   } = useDepositModal(vaultId)
 
   const { data: vaults = [] } = useVaultsQuery()
-  const vaultStore = vaults.find((v) => v.id === vaultId)
+  const vaultStore = vault || vaults.find((v) => v.id === vaultId || v.address === vaultId)
 
   const wallet = useWallet()
+  const { connection } = useConnection()
   const [tokenBalance, setTokenBalance] = useState<number | null>(null)
   const [sliderValue, setSliderValue] = useState<number>(0)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Fetch real balance for selected token
+  useEffect(() => {
+    let isCancelled = false
+    async function fetchBalance() {
+      if (!wallet.publicKey || !connection) {
+        setTokenBalance(null)
+        return
+      }
+      try {
+        if (selectedToken.symbol === 'SOL' || selectedToken.mint === 'So11111111111111111111111111111111111111112') {
+          const lamports = await connection.getBalance(wallet.publicKey)
+          if (!isCancelled) {
+            setTokenBalance(lamports / LAMPORTS_PER_SOL)
+          }
+        } else if (selectedToken.mint) {
+          // Fetch SPL token balance
+          try {
+            const tokenMintPubkey = new PublicKey(selectedToken.mint)
+            const tokenAccounts = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
+              mint: tokenMintPubkey,
+              programId: TOKEN_PROGRAM_ID,
+            })
+            if (!isCancelled) {
+              if (tokenAccounts.value.length > 0) {
+                const amount = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount
+                setTokenBalance(amount ?? 0)
+              } else {
+                setTokenBalance(0)
+              }
+            }
+          } catch {
+            if (!isCancelled) setTokenBalance(null)
+          }
+        } else {
+          if (!isCancelled) setTokenBalance(null)
+        }
+      } catch {
+        if (!isCancelled) setTokenBalance(null)
+      }
+    }
+
+    if (open) {
+      fetchBalance()
+    }
+    return () => {
+      isCancelled = true
+    }
+  }, [wallet.publicKey, connection, selectedToken, open])
 
   const form = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
@@ -53,21 +108,34 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   const numAmount = Number(amountWatch) || 0
   const estimatedShares = numAmount * (vaultStore?.tvl ? 1 + vaultStore.tvl / 1e6 : 1) || 0
 
+  // Calculate usable max balance (reserving gas for native SOL)
+  const usableBalance = useMemo(() => {
+    if (tokenBalance === null) return null
+    if (selectedToken.symbol === 'SOL') {
+      return Math.max(0, tokenBalance - SOL_GAS_RESERVE)
+    }
+    return tokenBalance
+  }, [tokenBalance, selectedToken.symbol])
+
+  // Is entered amount exceeding usable balance
+  const isInsufficient = usableBalance !== null && numAmount > usableBalance
+
   // Sync slider when amount changes manually
   useEffect(() => {
-    if (tokenBalance && tokenBalance > 0) {
-      const pct = Math.min(100, Math.max(0, Math.round((numAmount / tokenBalance) * 100)))
+    if (usableBalance && usableBalance > 0) {
+      const pct = Math.min(100, Math.max(0, Math.round((numAmount / usableBalance) * 100)))
       setSliderValue(pct)
     }
-  }, [numAmount, tokenBalance])
+  }, [numAmount, usableBalance])
 
   const handlePercentageClick = (pct: number) => {
     setSliderValue(pct)
-    if (tokenBalance && tokenBalance > 0) {
-      const calculated = (tokenBalance * (pct / 100)).toFixed(selectedToken.decimals === 9 ? 4 : 2)
+    if (usableBalance !== null && usableBalance > 0) {
+      const calculated = (usableBalance * (pct / 100)).toFixed(
+        selectedToken.decimals === 9 ? 4 : 2,
+      )
       form.setValue('amount', calculated, { shouldValidate: true })
     } else {
-      // If no live balance connected, set standard proportional presets
       const base = 10
       const calculated = ((base * pct) / 100).toString()
       form.setValue('amount', calculated, { shouldValidate: true })
@@ -76,8 +144,10 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
 
   const handleSliderChange = (val: number) => {
     setSliderValue(val)
-    if (tokenBalance && tokenBalance > 0) {
-      const calculated = (tokenBalance * (val / 100)).toFixed(selectedToken.decimals === 9 ? 4 : 2)
+    if (usableBalance !== null && usableBalance > 0) {
+      const calculated = (usableBalance * (val / 100)).toFixed(
+        selectedToken.decimals === 9 ? 4 : 2,
+      )
       form.setValue('amount', calculated, { shouldValidate: true })
     }
   }
@@ -85,17 +155,41 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   const resetModalState = () => {
     form.reset()
     setSliderValue(0)
+    setErrorMessage(null)
     handleClose()
     onClose()
   }
 
   const onNextStep = form.handleSubmit((data) => {
+    if (usableBalance !== null && Number(data.amount) > usableBalance) {
+      form.setError('amount', {
+        message: `Insufficient balance. Max usable: ${usableBalance.toFixed(selectedToken.decimals === 9 ? 4 : 2)} ${selectedToken.symbol}`,
+      })
+      return
+    }
+    setErrorMessage(null)
     setAmount(data.amount)
     setStep(1)
   })
 
-  const onConfirm = () => {
-    handleConfirm()
+  const onConfirm = async () => {
+    setErrorMessage(null)
+    try {
+      await handleConfirm()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('insufficient lamports') || msg.includes('0x1')) {
+        setErrorMessage(
+          `Insufficient SOL balance for deposit + transaction fees. Available: ${tokenBalance?.toFixed(4) ?? '0'} SOL.`,
+        )
+      } else if (msg.includes('AccountNotInitialized') || msg.includes('0xbc4') || msg.includes('3012')) {
+        setErrorMessage(
+          'This vault is not yet initialized on-chain (Error: AccountNotInitialized). Please create a new vault via Create Vault to test on-chain deposits.',
+        )
+      } else {
+        setErrorMessage(msg)
+      }
+    }
   }
 
   const displayName = vaultStore?.metadata?.displayName || `Vault ${vaultId.slice(0, 8)}`
@@ -159,7 +253,7 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
                 <span className="font-medium text-text-muted">Deposit Amount</span>
                 {tokenBalance !== null ? (
                   <div className="flex items-center gap-1.5 text-text-tertiary font-mono text-[11px]">
-                    <span>Bal: {tokenBalance.toFixed(3)} {selectedToken.symbol}</span>
+                    <span>Bal: {tokenBalance.toFixed(selectedToken.decimals === 9 ? 4 : 2)} {selectedToken.symbol}</span>
                     <button
                       type="button"
                       onClick={() => handlePercentageClick(100)}
@@ -259,10 +353,11 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
               <Button
                 type="submit"
                 variant="default"
-                className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] flex items-center justify-center gap-1.5"
+                disabled={isInsufficient}
+                className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                <span>Next</span>
-                <ArrowRight className="size-3.5" />
+                <span>{isInsufficient ? 'Insufficient Balance' : 'Next'}</span>
+                {!isInsufficient && <ArrowRight className="size-3.5" />}
               </Button>
             </div>
           </form>
@@ -302,6 +397,13 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
               <span className="font-mono text-text-primary">{((vaultStore?.performanceFeeBps || 0) / 100).toFixed(2)}%</span>
             </div>
           </div>
+
+          {errorMessage && (
+            <div className="rounded-xl border border-status-error/30 bg-status-error/10 p-3 flex items-start gap-2 text-xs text-status-error">
+              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-1">
             <Button

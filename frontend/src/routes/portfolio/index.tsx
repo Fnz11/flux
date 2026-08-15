@@ -54,7 +54,7 @@ export function PortfolioPage() {
       />
 
       {!walletAddress ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-border-subtle bg-bg-elevated/70 text-center">
+        <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-border-subtle text-center backdrop-blur-sm">
           <div className="mb-4 rounded-full bg-bg-inset p-3">
             <ShieldCheck className="size-8 text-primary-coral" />
           </div>

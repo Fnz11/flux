@@ -3,7 +3,9 @@ import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 import { BN } from 'bn.js'
 import { useTransactionStore } from '@/stores'
-import { api } from '@/lib/api'
+import { api, getAuthToken } from '@/lib/api'
+import { ensureWalletAuthenticated } from '@/services/apis/rest-api/auth.service'
+import { getVault } from '@/services/apis/rest-api/vault.service'
 import { getProgram } from '@/lib/anchor'
 import {
   buildTransactionWithComputeBudget,
@@ -16,8 +18,11 @@ import {
 } from '@/lib/transactions'
 import type { SyncTradeRequest, TradeType } from '@/types'
 
-interface ExecuteTradeParams {
+import { getTokenMeta } from '@/constants/tokens'
+
+export interface ExecuteTradeParams {
   vaultId: string
+  vaultAddress?: string
   inputToken: string
   outputToken: string
   amountIn: number
@@ -27,11 +32,24 @@ interface ExecuteTradeParams {
 }
 
 const NATIVE_MINT = new PublicKey('So11111111111111111111111111111111111111112')
-const PYTH_RECEIVER_PROGRAM_ID = new PublicKey('rec5EKMGg6MxZYaMdyBfgwp4d5rCZzfKUCrfmss5EBn')
+const PYTH_RECEIVER_PROGRAM_ID = new PublicKey('rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ')
 const SOL_USD_FEED_ID = 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d'
 
 function isNativeMint(mintStr: string): boolean {
-  return mintStr === 'So11111111111111111111111111111111111111112' || mintStr.toUpperCase() === 'SOL'
+  return mintStr === 'So11111111111111111111111111111111111111112' || mintStr?.toUpperCase() === 'SOL'
+}
+
+function resolveMint(symbolOrMint: string): PublicKey {
+  if (isNativeMint(symbolOrMint)) return NATIVE_MINT
+  try {
+    return new PublicKey(symbolOrMint)
+  } catch {
+    const meta = getTokenMeta(symbolOrMint)
+    if (meta.mint) {
+      return new PublicKey(meta.mint)
+    }
+    throw new Error(`Invalid token mint or symbol: ${symbolOrMint}`)
+  }
 }
 
 export function useExecuteTrade() {
@@ -67,14 +85,20 @@ export function useExecuteTrade() {
           try {
             const program = await getProgram(wallet, connection)
             if (program && program.idl.instructions?.length) {
-              if (!params.vaultId) {
+              const targetAddress = params.vaultAddress || params.vaultId
+              if (!targetAddress) {
                 throw new Error('Vault ID is required')
               }
               let vaultPubkey: PublicKey
               try {
-                vaultPubkey = new PublicKey(params.vaultId)
+                vaultPubkey = new PublicKey(targetAddress)
               } catch {
-                throw new Error(`Invalid vault address: ${params.vaultId}`)
+                const fetched = await getVault(params.vaultId).catch(() => null)
+                if (fetched?.address) {
+                  vaultPubkey = new PublicKey(fetched.address)
+                } else {
+                  throw new Error(`Invalid vault address: ${targetAddress}`)
+                }
               }
 
               const [vaultAuthorityPda] = PublicKey.findProgramAddressSync(
@@ -82,26 +106,62 @@ export function useExecuteTrade() {
                 program.programId,
               )
 
-              const inputMintPubkey = isNativeMint(params.inputToken)
-                ? NATIVE_MINT
-                : new PublicKey(params.inputToken)
+              const inputMintPubkey = resolveMint(params.inputToken)
+              const outputMintPubkey = resolveMint(params.outputToken)
 
-              const outputMintPubkey = isNativeMint(params.outputToken)
-                ? NATIVE_MINT
-                : new PublicKey(params.outputToken)
+              const inputMintInfo = isNativeMint(params.inputToken)
+                ? null
+                : await connection.getAccountInfo(inputMintPubkey).catch(() => null)
+              const inputTokenProgramId = inputMintInfo?.owner ?? TOKEN_PROGRAM_ID
+
+              const outputMintInfo = isNativeMint(params.outputToken)
+                ? null
+                : await connection.getAccountInfo(outputMintPubkey).catch(() => null)
+              const outputTokenProgramId = outputMintInfo?.owner ?? TOKEN_PROGRAM_ID
 
               const vaultInputAta = getAssociatedTokenAddressSync(
                 inputMintPubkey,
                 vaultAuthorityPda,
                 true,
+                inputTokenProgramId,
               )
               const vaultOutputAta = getAssociatedTokenAddressSync(
                 outputMintPubkey,
                 vaultAuthorityPda,
                 true,
+                outputTokenProgramId,
               )
 
               const ixs: TransactionInstruction[] = []
+
+              // If vault is in Fundraising status and current user is manager, auto-activate if min raise met
+              try {
+                let vaultAccount: { status?: { fundraising?: object; active?: object } | number; manager?: PublicKey } | null = null
+                if (program.account && 'vaultState' in program.account) {
+                  vaultAccount = await (program.account as unknown as { vaultState: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object } | number; manager?: PublicKey }> } }).vaultState.fetch(vaultPubkey).catch(() => null)
+                } else if (program.account && 'vault' in program.account) {
+                  vaultAccount = await (program.account as unknown as { vault: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object } | number; manager?: PublicKey }> } }).vault.fetch(vaultPubkey).catch(() => null)
+                }
+
+                if (vaultAccount) {
+                  const isFundraising =
+                    (vaultAccount.status && typeof vaultAccount.status === 'object' && 'fundraising' in vaultAccount.status) ||
+                    vaultAccount.status === 0
+                  const isManager = vaultAccount.manager ? vaultAccount.manager.equals(wallet.publicKey) : true
+                  if (isFundraising && isManager && program.methods?.activateVault) {
+                    const activateIx = await program.methods
+                      .activateVault()
+                      .accounts({
+                        manager: wallet.publicKey,
+                        vault: vaultPubkey,
+                      })
+                      .instruction()
+                    ixs.push(activateIx)
+                  }
+                }
+              } catch (checkErr) {
+                console.warn('Auto-activate vault check skipped:', checkErr)
+              }
 
               // Add ATA creation for input token if missing
               const inputAtaInfo = await connection.getAccountInfo(vaultInputAta)
@@ -112,6 +172,7 @@ export function useExecuteTrade() {
                     vaultInputAta,
                     vaultAuthorityPda,
                     inputMintPubkey,
+                    inputTokenProgramId,
                   ),
                 )
               }
@@ -130,13 +191,19 @@ export function useExecuteTrade() {
                     vaultOutputAta,
                     vaultAuthorityPda,
                     outputMintPubkey,
+                    outputTokenProgramId,
                   ),
                 )
               }
 
-              const amountInBn = new BN(Math.round(params.amountIn * 1e9))
+              const inputMeta = getTokenMeta(params.inputToken)
+              const outputMeta = getTokenMeta(params.outputToken)
+              const inputDecimals = isNativeMint(params.inputToken) ? 9 : (inputMeta.decimals || 6)
+              const outputDecimals = isNativeMint(params.outputToken) ? 9 : (outputMeta.decimals || 6)
+
+              const amountInBn = new BN(Math.round(params.amountIn * 10 ** inputDecimals))
               const minAmountOutBn = new BN(
-                Math.round(params.amountOut * (1 - params.slippage / 100) * 1e9),
+                Math.round(params.amountOut * (1 - params.slippage / 100) * 10 ** outputDecimals),
               )
 
               // Derive Pyth oracle price feed PDA
@@ -196,6 +263,12 @@ export function useExecuteTrade() {
         }
 
         try {
+          if (wallet?.publicKey) {
+            const userAddr = wallet.publicKey.toBase58()
+            if (!getAuthToken() && 'signMessage' in wallet && typeof (wallet as unknown as { signMessage?: (msg: Uint8Array) => Promise<Uint8Array> }).signMessage === 'function') {
+              await ensureWalletAuthenticated(userAddr, (wallet as unknown as { signMessage: (msg: Uint8Array) => Promise<Uint8Array> }).signMessage).catch(() => {})
+            }
+          }
           await api.post('/trades/sync', syncPayload)
         } catch (err) {
           console.warn('Failed to sync executed trade to backend:', err)

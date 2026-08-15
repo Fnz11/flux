@@ -43,14 +43,28 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 vi.mock('@solana/wallet-adapter-react', () => ({
   useWallet: () => ({ publicKey: { toBase58: () => 'wallet-1' }, connected: true }),
+  useConnection: () => ({
+    connection: {
+      getBalance: vi.fn(async () => 10 * 1e9),
+      getParsedTokenAccountsByOwner: vi.fn(async () => ({ value: [] })),
+    },
+  }),
 }))
 vi.mock('@/hooks/useDeposit', () => ({ useDeposit: () => ({ execute: mocks.deposit }) }))
 vi.mock('@/hooks/useWithdraw', () => ({ useWithdraw: () => ({ execute: mocks.withdraw }) }))
 vi.mock('@/services/hooks/useQuery/useVaultsQuery', () => ({
   useVaultsQuery: () => ({ data: mocks.vaults, isLoading: mocks.vaultsLoading }),
+  useVaultDetailQuery: (id: string) => ({
+    data: mocks.vaults.find((v) => v.id === id || v.address === id) || mocks.vaults[0],
+    isLoading: mocks.vaultsLoading,
+  }),
 }))
 vi.mock('@/services/hooks', () => ({
   useVaultsQuery: () => ({ data: mocks.vaults, isLoading: mocks.vaultsLoading }),
+  useVaultDetailQuery: (id: string) => ({
+    data: mocks.vaults.find((v) => v.id === id || v.address === id) || mocks.vaults[0],
+    isLoading: mocks.vaultsLoading,
+  }),
   usePortfolioQuery: () => ({ data: mocks.positions, isLoading: mocks.portfolioLoading }),
 }))
 vi.mock('@/hooks/usePortfolioPnl', () => ({ usePortfolioPnl: () => mocks.pnl }))

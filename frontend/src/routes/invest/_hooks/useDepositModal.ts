@@ -1,12 +1,20 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useDeposit } from '@/hooks/useDeposit'
-import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
+import { useVaultsQuery, useVaultDetailQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { TOKENS as ALL_TOKENS, getTokenMeta, type TokenInfo } from '@/constants/tokens'
 import type { Vault } from '@/types'
 
 export const TOKENS = ALL_TOKENS
 
 export function getSupportedDepositTokens(vault?: Vault): TokenInfo[] {
+  const depositMint =
+    vault?.metadata?.depositMint ||
+    (vault as unknown as { deposit_mint?: string })?.deposit_mint ||
+    (vault as unknown as { depositMint?: string })?.depositMint
+  if (depositMint) {
+    const meta = getTokenMeta(depositMint)
+    if (meta.mint) return [meta]
+  }
   const focus = vault?.metadata?.focusAssets || []
   if (focus.length > 0 && !focus.includes('All')) {
     const matched = focus
@@ -19,8 +27,9 @@ export function getSupportedDepositTokens(vault?: Vault): TokenInfo[] {
 
 export function useDepositModal(vaultId: string) {
   const { execute } = useDeposit()
+  const { data: vaultDetail } = useVaultDetailQuery(vaultId)
   const { data: vaults = [] } = useVaultsQuery()
-  const vault = vaults.find((v) => v.id === vaultId)
+  const vault = vaultDetail || vaults.find((v) => v.id === vaultId || v.address === vaultId)
 
   const availableTokens = useMemo(() => getSupportedDepositTokens(vault), [vault])
 

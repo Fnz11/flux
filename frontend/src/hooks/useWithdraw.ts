@@ -2,7 +2,8 @@ import { useCallback } from 'react'
 import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram, TransactionInstruction, Transaction } from '@solana/web3.js'
 import { BN } from 'bn.js'
-import { api } from '@/lib/api'
+import { api, getAuthToken, ApiError } from '@/lib/api'
+import { ensureWalletAuthenticated } from '@/services/apis/rest-api/auth.service'
 import { getProgram } from '@/lib/anchor'
 import { prepareWithdraw, submitTx } from '@/services/apis/rest-api/tx.service'
 import {
@@ -15,6 +16,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@/lib/transactions'
 import { useTransactionStore } from '@/stores'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface WithdrawParams {
   vaultAddress: string
@@ -26,6 +28,7 @@ interface WithdrawParams {
 const NATIVE_MINT = new PublicKey('So11111111111111111111111111111111111111112')
 
 export function useWithdraw() {
+  const queryClient = useQueryClient()
   const { connection } = useConnection()
   const wallet = useWallet()
   const addTransaction = useTransactionStore((s) => s.addTransaction)
@@ -94,7 +97,7 @@ export function useWithdraw() {
           })
 
           if (prep.draft_id) {
-            submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
+            await submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
           }
         } catch {
           // 2. Client-side fallback if backend prepare is unavailable
@@ -120,10 +123,21 @@ export function useWithdraw() {
             program.programId,
           )
 
-          const [shareTokenMintPubkey] = PublicKey.findProgramAddressSync(
-            [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
-            program.programId,
-          )
+          let vaultAccount: { shareTokenMint?: PublicKey; depositMint?: PublicKey } | null = null
+          try {
+            vaultAccount = await (program.account as unknown as { vaultState: { fetch: (pk: PublicKey) => Promise<{ shareTokenMint: PublicKey; depositMint: PublicKey }> } }).vaultState.fetch(vaultPubkey)
+          } catch {
+            try {
+              vaultAccount = await (program.account as unknown as { vault: { fetch: (pk: PublicKey) => Promise<{ shareTokenMint: PublicKey; depositMint: PublicKey }> } }).vault.fetch(vaultPubkey)
+            } catch {}
+          }
+
+          const shareTokenMintPubkey: PublicKey =
+            vaultAccount?.shareTokenMint ||
+            PublicKey.findProgramAddressSync(
+              [Buffer.from('share_mint'), vaultPubkey.toBuffer()],
+              program.programId,
+            )[0]
 
           const investorTokenAccount = getAssociatedTokenAddressSync(
             withdrawMintPubkey,
@@ -189,15 +203,56 @@ export function useWithdraw() {
           throw new Error('Withdraw transaction failed: no signature')
         }
 
+        // Await on-chain confirmation before syncing with backend
         await confirmTransactionHelper(connection, signature, blockhashInfo, 'confirmed')
 
-        // Fire-and-forget sync to backend without blocking user UX
-        api.post('/trades/sync', {
-          signature,
-          vault_id: vaultId || vaultPubkey.toBase58(),
-        }).catch((syncErr) => {
-          console.warn('Failed to sync withdraw transaction to backend:', syncErr)
-        })
+        // Authenticate wallet for sync if needed
+        if (userPubkey) {
+          const userAddr = userPubkey.toBase58()
+          if (!getAuthToken() && wallet.signMessage) {
+            await ensureWalletAuthenticated(userAddr, wallet.signMessage).catch(() => {})
+          }
+        }
+
+        // Sync with backend (with short retry if transaction indexing is in-flight)
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const syncRes = await api.post<{ success?: boolean; retryable?: boolean }>('/trades/sync', {
+              signature,
+              vault_id: vaultId || vaultPubkey.toBase58(),
+            })
+            if (syncRes && (syncRes as { retryable?: boolean }).retryable !== true) {
+              break
+            }
+          } catch (err: unknown) {
+            if (err instanceof ApiError && (err.status === 409 || err.message.includes('already synced'))) {
+              break
+            }
+          }
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 400))
+          }
+        }
+
+        const targetVaultId = vaultId || vaultPubkey.toBase58()
+        const targetVaultAddress = vaultPubkey.toBase58()
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['vault'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaultBalances'] }),
+          queryClient.invalidateQueries({ queryKey: ['portfolio'] }),
+          queryClient.invalidateQueries({ queryKey: ['portfolioHistory'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaults'] }),
+          queryClient.invalidateQueries({ queryKey: ['infiniteVaults'] }),
+          queryClient.invalidateQueries({ queryKey: ['trades'] }),
+          queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+          queryClient.invalidateQueries({ queryKey: ['marketStats'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaultSparkline'] }),
+          queryClient.invalidateQueries({ queryKey: ['vaultSparklineFull'] }),
+          queryClient.refetchQueries({ queryKey: ['vault', targetVaultId] }),
+          queryClient.refetchQueries({ queryKey: ['vault', targetVaultAddress] }),
+          queryClient.refetchQueries({ queryKey: ['portfolio'] }),
+          queryClient.refetchQueries({ queryKey: ['vaultBalances', targetVaultId] }),
+        ])
 
         updateStatus(txId, 'success')
         return signature

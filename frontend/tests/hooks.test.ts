@@ -37,6 +37,13 @@ const connection = {
   confirmTransaction: mocks.confirmOnChain,
 }
 
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn(),
+    refetchQueries: vi.fn(),
+  }),
+}))
+
 vi.mock('../src/stores', () => ({
   useTransactionStore: <T>(selector: (state: typeof mocks) => T) => selector(mocks),
 }))
@@ -82,13 +89,24 @@ vi.mock('../src/lib/transactions', () => ({
   buildTransactionWithComputeBudget: vi.fn(() => ({})),
   sendTransaction: mocks.sendTransaction,
   confirmTransactionHelper: vi.fn(async () => ({})),
+  ensureSolBalance: vi.fn(async () => ({})),
   getAssociatedTokenAddressSync: vi.fn(() => ({ toBase58: () => 'ata' })),
   createAssociatedTokenAccountInstruction: vi.fn(() => ({})),
   createSyncNativeInstruction: vi.fn(() => ({})),
   TOKEN_PROGRAM_ID: 'token-program',
   ASSOCIATED_TOKEN_PROGRAM_ID: 'associated-token-program',
 }))
-vi.mock('../src/lib/api', () => ({ api: { post: mocks.apiPost } }))
+vi.mock('../src/lib/api', () => ({
+  api: { post: mocks.apiPost },
+  getAuthToken: vi.fn(() => 'mock-token'),
+  setAuthToken: vi.fn(),
+}))
+vi.mock('../src/services/apis/rest-api/auth.service', () => ({
+  ensureWalletAuthenticated: vi.fn(async () => 'mock-token'),
+  getCachedAuthToken: vi.fn(() => 'mock-token'),
+  requestNonce: vi.fn(async () => 'mock-nonce'),
+  verifySignature: vi.fn(async () => 'mock-token'),
+}))
 
 const depositParams = { vaultAddress: 'vault', tokenMint: 'SOL', amount: 1.25, vaultId: 'v1' }
 const withdrawParams = { vaultAddress: 'vault', shareAmount: 2.5, vaultId: 'v1' }

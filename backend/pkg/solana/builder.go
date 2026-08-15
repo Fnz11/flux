@@ -10,6 +10,33 @@ import (
 	"github.com/gagliardetto/solana-go/programs/system"
 )
 
+// buildCreateIdempotentATAIx creates an ATA if not already created (instruction 1)
+func buildCreateIdempotentATAIx(payer, owner, mint, ata solana.PublicKey) solana.Instruction {
+	return solana.NewInstruction(
+		AssociatedTokenProgram,
+		solana.AccountMetaSlice{
+			solana.NewAccountMeta(payer, true, true),
+			solana.NewAccountMeta(ata, true, false),
+			solana.NewAccountMeta(owner, false, false),
+			solana.NewAccountMeta(mint, false, false),
+			solana.NewAccountMeta(solana.SystemProgramID, false, false),
+			solana.NewAccountMeta(SplTokenProgram, false, false),
+		},
+		[]byte{1}, // CreateIdempotent
+	)
+}
+
+// buildSyncNativeIx syncs lamports balance to WSOL token account (instruction 17)
+func buildSyncNativeIx(tokenAccount solana.PublicKey) solana.Instruction {
+	return solana.NewInstruction(
+		SplTokenProgram,
+		solana.AccountMetaSlice{
+			solana.NewAccountMeta(tokenAccount, true, false),
+		},
+		[]byte{17}, // SyncNative
+	)
+}
+
 var (
 	DefaultProgramID = solana.MustPublicKeyFromBase58("FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais")
 	NativeMint       = solana.MustPublicKeyFromBase58("So11111111111111111111111111111111111111112")
@@ -240,9 +267,9 @@ func BuildDepositTx(programID solana.PublicKey, p DepositParams) (*PreparedTrans
 	// 5: deposit_mint []
 	// 6: share_token_mint [writable]
 	// 7: investor_share_token_account [writable]
-	// 8: system_program []
-	// 9: token_program []
-	// 10: associated_token_program []
+	// 8: token_program []
+	// 9: associated_token_program []
+	// 10: system_program []
 	accounts := solana.AccountMetaSlice{
 		solana.NewAccountMeta(p.Investor, true, true),
 		solana.NewAccountMeta(p.Vault, true, false),
@@ -252,9 +279,9 @@ func BuildDepositTx(programID solana.PublicKey, p DepositParams) (*PreparedTrans
 		solana.NewAccountMeta(p.DepositMint, false, false),
 		solana.NewAccountMeta(p.ShareTokenMint, true, false),
 		solana.NewAccountMeta(investorShareAta, true, false),
-		solana.NewAccountMeta(solana.SystemProgramID, false, false),
 		solana.NewAccountMeta(SplTokenProgram, false, false),
 		solana.NewAccountMeta(AssociatedTokenProgram, false, false),
+		solana.NewAccountMeta(solana.SystemProgramID, false, false),
 	}
 
 	var instructions []solana.Instruction
@@ -266,14 +293,33 @@ func BuildDepositTx(programID solana.PublicKey, p DepositParams) (*PreparedTrans
 		instructions = append(instructions, buildComputeUnitPriceIx(p.ComputeUnitPrice))
 	}
 
-	// If native SOL, wrap SOL to WSOL ATA
+	// If native SOL, create WSOL ATA for investor, transfer SOL, and SyncNative
 	if p.DepositMint.Equals(NativeMint) {
+		instructions = append(instructions, buildCreateIdempotentATAIx(
+			p.Investor,
+			p.Investor,
+			NativeMint,
+			investorTokenAta,
+		))
+
 		instructions = append(instructions, system.NewTransferInstruction(
 			p.Amount,
 			p.Investor,
 			investorTokenAta,
 		).Build())
+
+		instructions = append(instructions, buildSyncNativeIx(
+			investorTokenAta,
+		))
 	}
+
+	// Ensure vault token account (owned by vault authority) ATA is created
+	instructions = append(instructions, buildCreateIdempotentATAIx(
+		p.Investor,
+		vaultAuthPda,
+		p.DepositMint,
+		vaultTokenAta,
+	))
 
 	instructions = append(instructions, solana.NewInstruction(programID, accounts, buf.Bytes()))
 

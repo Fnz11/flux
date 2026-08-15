@@ -78,8 +78,15 @@ export function VaultDetailView({
   const { data: vault, isLoading, isError } = useVaultDetailQuery(id)
   const { data: positions = [] } = usePortfolioQuery(walletAddress)
   const position = useMemo(
-    () => positions.find((p) => p.vaultId === id || p.vaultAddress === vault?.address),
-    [positions, id, vault?.address],
+    () =>
+      positions.find(
+        (p) =>
+          (p.vaultId && id && p.vaultId.toLowerCase() === id.toLowerCase()) ||
+          (p.vaultAddress && id && p.vaultAddress.toLowerCase() === id.toLowerCase()) ||
+          (vault?.address && p.vaultAddress && p.vaultAddress.toLowerCase() === vault.address.toLowerCase()) ||
+          (vault?.id && p.vaultId && p.vaultId.toLowerCase() === vault.id.toLowerCase()),
+      ),
+    [positions, id, vault?.address, vault?.id],
   )
 
   const [activeTab, setActiveTab] = useState<VaultDetailTab>(defaultTab)

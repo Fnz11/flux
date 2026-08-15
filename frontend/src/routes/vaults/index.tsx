@@ -82,7 +82,10 @@ function VaultsListPage() {
       sortOrder: sortOrder,
       managerAddress: walletAddress || undefined,
     },
-    20
+    20,
+    {
+      enabled: Boolean(walletAddress),
+    }
   )
 
   const { loadMoreRef } = useInfiniteScroll({

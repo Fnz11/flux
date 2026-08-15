@@ -9,8 +9,8 @@ import (
 
 type Portfolio struct {
 	ID                 uuid.UUID       `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	UserID             uuid.UUID       `gorm:"type:uuid;not null;index"`
-	VaultID            uuid.UUID       `gorm:"type:uuid;not null;index"`
+	UserID             uuid.UUID       `gorm:"type:uuid;not null;uniqueIndex:idx_user_vault"`
+	VaultID            uuid.UUID       `gorm:"type:uuid;not null;uniqueIndex:idx_user_vault"`
 	SharesOwned        decimal.Decimal `gorm:"type:numeric(36,18);default:0.0"`
 	TotalInvestedValue decimal.Decimal `gorm:"type:numeric(36,18);default:0.0"`
 	AverageEntryPrice  decimal.Decimal `gorm:"type:numeric(36,18);default:0.0"`

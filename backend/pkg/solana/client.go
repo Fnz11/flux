@@ -184,3 +184,23 @@ func (c *Client) SendRawTransaction(ctx context.Context, tx *solana.Transaction)
 	return sig, nil
 }
 
+func (c *Client) GetAccountInfo(ctx context.Context, pubkey solana.PublicKey) (*rpc.GetAccountInfoResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	result, err := c.execute(func() (any, error) {
+		res, err := c.rpcClient.GetAccountInfo(ctx, pubkey)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("get account info: %w", err)
+	}
+
+	res, _ := result.(*rpc.GetAccountInfoResult)
+	return res, nil
+}
+
+

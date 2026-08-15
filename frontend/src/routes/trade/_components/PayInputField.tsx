@@ -20,7 +20,9 @@ export function PayInputField({
 }: PayInputFieldProps) {
   const formattedMax =
     maxBalance !== null
-      ? maxBalance.toFixed(2)
+      ? maxBalance > 0 && maxBalance < 0.01
+        ? parseFloat(maxBalance.toFixed(6)).toString()
+        : maxBalance.toFixed(2)
       : '0.00'
 
   return (

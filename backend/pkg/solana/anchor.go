@@ -118,7 +118,9 @@ func parseWithdraw(data []byte) (*AnchorInstruction, error) {
 }
 
 func parseExecuteTradePyth(data []byte) (*AnchorInstruction, error) {
-	if len(data) < 24 {
+	// The on-chain instruction is: executeTradePyth(amount_in: u64, min_amount_out: u64)
+	// That's exactly 2 × 8 = 16 bytes. There is no slippage arg in the Rust program.
+	if len(data) < 16 {
 		return nil, fmt.Errorf("data too short for execute_trade_pyth")
 	}
 
@@ -127,21 +129,16 @@ func parseExecuteTradePyth(data []byte) (*AnchorInstruction, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read amount_in: %w", err)
 	}
-	amountOut, offset, err := readU64(data, offset)
+	minAmountOut, _, err := readU64(data, offset)
 	if err != nil {
-		return nil, fmt.Errorf("read amount_out: %w", err)
-	}
-	slippage, _, err := readU64(data, offset)
-	if err != nil {
-		return nil, fmt.Errorf("read slippage: %w", err)
+		return nil, fmt.Errorf("read min_amount_out: %w", err)
 	}
 
 	return &AnchorInstruction{
 		Name: "execute_trade_pyth",
 		Args: map[string]interface{}{
-			"amount_in":  amountIn,
-			"amount_out": amountOut,
-			"slippage":   slippage,
+			"amount_in":     amountIn,
+			"min_amount_out": minAmountOut,
 		},
 	}, nil
 }
