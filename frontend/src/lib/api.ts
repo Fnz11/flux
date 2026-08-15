@@ -55,6 +55,12 @@ client.interceptors.response.use(
     const status = error.response?.status ?? 0
     const body = error.response?.data
     const message = body?.error ?? error.message ?? 'Unknown error'
+
+    // Clear stale / expired token on 401 so subsequent calls don't keep failing
+    if (status === 401) {
+      setAuthToken(null)
+    }
+
     throw new ApiError(status, message, body?.code)
   },
 )

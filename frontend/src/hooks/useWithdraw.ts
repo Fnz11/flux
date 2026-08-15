@@ -3,7 +3,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey, SystemProgram, TransactionInstruction, Transaction } from '@solana/web3.js'
 import { BN } from 'bn.js'
 import { api, getAuthToken, ApiError } from '@/lib/api'
-import { ensureWalletAuthenticated } from '@/services/apis/rest-api/auth.service'
+import { ensureWalletAuthenticated, isTokenExpired } from '@/services/apis/rest-api/auth.service'
 import { getProgram } from '@/lib/anchor'
 import { prepareWithdraw, submitTx } from '@/services/apis/rest-api/tx.service'
 import {
@@ -209,7 +209,8 @@ export function useWithdraw() {
         // Authenticate wallet for sync if needed
         if (userPubkey) {
           const userAddr = userPubkey.toBase58()
-          if (!getAuthToken() && wallet.signMessage) {
+          const currentToken = getAuthToken()
+          if ((!currentToken || isTokenExpired(currentToken)) && wallet.signMessage) {
             await ensureWalletAuthenticated(userAddr, wallet.signMessage).catch(() => {})
           }
         }

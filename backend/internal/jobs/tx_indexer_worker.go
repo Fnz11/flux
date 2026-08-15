@@ -292,7 +292,9 @@ func (w *TxIndexerWorker) finalizeDeposit(ctx context.Context, draft *models.Tra
 					_ = w.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountDec, amountDec, decimal.NewFromInt(1))
 				}
 			}
-			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, amountDec)
+			solPrice := decimal.NewFromFloat(150.0)
+			tvlDelta := amountDec.Mul(solPrice)
+			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta)
 
 			if w.eventService != nil {
 				w.eventService.DispatchPortfolioUpdate(draft.UserPubkey, vault.ID, decimal.Zero)
@@ -346,7 +348,9 @@ func (w *TxIndexerWorker) finalizeWithdraw(ctx context.Context, draft *models.Tr
 					_ = w.portfolioRepo.ReducePosition(ctx, actor.ID, vault.ID, sharesDec)
 				}
 			}
-			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, sharesDec.Neg())
+			solPrice := decimal.NewFromFloat(150.0)
+			tvlDelta := sharesDec.Mul(solPrice).Neg()
+			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta)
 
 			if w.eventService != nil {
 				w.eventService.DispatchPortfolioUpdate(draft.UserPubkey, vault.ID, decimal.Zero)

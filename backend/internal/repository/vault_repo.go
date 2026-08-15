@@ -465,77 +465,67 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 	}
 
 	holdings := make(map[string]decimal.Decimal)
-	hasBalancesMV := false
+	var hasDepositTrades bool
+	var tradeCount int64
 
-	if db.Migrator().HasTable("vault_balances_summary") {
+	// Count trades and check for deposits
+	if err := db.Model(&models.TradeHistory{}).Where("vault_id = ?", v.ID).Count(&tradeCount).Error; err == nil && tradeCount > 0 {
+		var depCount int64
+		db.Model(&models.TradeHistory{}).Where("vault_id = ? AND LOWER(TRIM(trade_type)) = 'deposit'", v.ID).Count(&depCount)
+		hasDepositTrades = depCount > 0
+
+		// Fast real-time aggregation from trade_histories without loading rows into Go memory
 		type balRow struct {
 			Token  string          `gorm:"column:token"`
 			Amount decimal.Decimal `gorm:"column:amount"`
 		}
 		var rows []balRow
-		if err := db.Table("vault_balances_summary").Where("vault_id = ?", v.ID).Scan(&rows).Error; err == nil && len(rows) > 0 {
+		query := `
+			SELECT
+				token,
+				SUM(delta) AS amount
+			FROM (
+				SELECT 
+					COALESCE(NULLIF(input_token, ''), 'So11111111111111111111111111111111111111112') AS token,
+					CASE 
+						WHEN LOWER(TRIM(trade_type)) = 'deposit' THEN amount_in
+						WHEN LOWER(TRIM(trade_type)) IN ('buy', 'sell') THEN -amount_in
+						ELSE 0
+					END AS delta
+				FROM trade_histories
+				WHERE vault_id = ?
+				UNION ALL
+				SELECT
+					COALESCE(NULLIF(output_token, ''), 'So11111111111111111111111111111111111111112') AS token,
+					CASE
+						WHEN LOWER(TRIM(trade_type)) = 'withdraw' THEN -amount_out
+						WHEN LOWER(TRIM(trade_type)) IN ('buy', 'sell') THEN amount_out
+						ELSE 0
+					END AS delta
+				FROM trade_histories
+				WHERE vault_id = ?
+			) sub
+			GROUP BY token
+		`
+		if err := db.Raw(query, v.ID.String(), v.ID.String()).Scan(&rows).Error; err == nil {
 			for _, row := range rows {
-				holdings[row.Token] = row.Amount
+				tok := strings.TrimSpace(row.Token)
+				if strings.EqualFold(tok, "SOL") {
+					tok = solMint
+				} else if strings.EqualFold(tok, "USDC") {
+					tok = usdcMint
+				}
+				holdings[tok] = holdings[tok].Add(row.Amount)
 			}
-			hasBalancesMV = true
 		}
 	}
 
-	var trades []models.TradeHistory
-	if !hasBalancesMV {
-		// Fetch trades to calculate actual on-chain asset balances if MV not present
-		if err := db.Where("vault_id = ?", v.ID).Order("executed_at ASC").Find(&trades).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
-
-		normalizeToken := func(tok string) string {
-			switch strings.ToUpper(strings.TrimSpace(tok)) {
-			case "SOL", solMint:
-				return solMint
-			case "USDC", usdcMint:
-				return usdcMint
-			default:
-				return tok
-			}
-		}
-
-		initialSol := decimal.Zero
-		if !solPrice.IsZero() && v.TVL.IsPositive() {
-			hasDepositTrades := false
-			for _, t := range trades {
-				if strings.EqualFold(strings.TrimSpace(t.TradeType), "deposit") {
-					hasDepositTrades = true
-					break
-				}
-			}
-			if !hasDepositTrades {
-				initialSol = v.TVL.Div(solPrice)
-			}
-		}
-		if initialSol.IsPositive() {
-			holdings[solMint] = holdings[solMint].Add(initialSol)
-		}
-
-		for _, t := range trades {
-			inTok := normalizeToken(t.InputToken)
-			if inTok == "" {
-				inTok = solMint
-			}
-			outTok := normalizeToken(t.OutputToken)
-			if outTok == "" {
-				outTok = solMint
-			}
-
-			switch strings.ToLower(strings.TrimSpace(t.TradeType)) {
-			case "deposit":
-				holdings[inTok] = holdings[inTok].Add(t.AmountIn)
-			case "withdraw":
-				holdings[outTok] = holdings[outTok].Sub(t.AmountOut)
-			case "buy", "sell":
-				holdings[inTok] = holdings[inTok].Sub(t.AmountIn)
-				holdings[outTok] = holdings[outTok].Add(t.AmountOut)
-			}
-		}
+	initialSol := decimal.Zero
+	if !solPrice.IsZero() && v.TVL.IsPositive() && !hasDepositTrades {
+		initialSol = v.TVL.Div(solPrice)
+	}
+	if initialSol.IsPositive() {
+		holdings[solMint] = holdings[solMint].Add(initialSol)
 	}
 
 	for k, val := range holdings {
@@ -548,7 +538,7 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 	usdcAmt := holdings[usdcMint].Add(holdings["USDC"])
 
 	// If no trades exist yet or calculated balance is 0 despite positive TVL, default TVL to SOL
-	if !hasBalancesMV && (len(trades) == 0 || (solAmt.IsZero() && usdcAmt.IsZero() && v.TVL.IsPositive())) {
+	if tradeCount == 0 || (solAmt.IsZero() && usdcAmt.IsZero() && v.TVL.IsPositive()) {
 		if !solPrice.IsZero() {
 			solAmt = v.TVL.Div(solPrice)
 		}

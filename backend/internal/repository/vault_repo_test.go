@@ -445,38 +445,6 @@ func TestGetVaultBalances(t *testing.T) {
 		}
 	})
 
-	t.Run("GetVaultBalances from vault_balances_summary MV", func(t *testing.T) {
-		mvVaultID := uuid.New()
-		mvVaultAddr := "MVVaultAddress1111111111111111111111111"
-		_ = db.Create(&models.Vault{ID: mvVaultID, Address: mvVaultAddr, ManagerID: managerID, TVL: decimal.NewFromFloat(500.0)}).Error
-
-		_ = db.Exec(`CREATE TABLE IF NOT EXISTS vault_balances_summary (
-			vault_id text,
-			token text,
-			amount numeric
-		)`).Error
-
-		solMint := "So11111111111111111111111111111111111111112"
-		usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-
-		_ = db.Exec(`INSERT INTO vault_balances_summary (vault_id, token, amount) VALUES (?, ?, 2.0)`, mvVaultID.String(), solMint).Error
-		_ = db.Exec(`INSERT INTO vault_balances_summary (vault_id, token, amount) VALUES (?, ?, 200.0)`, mvVaultID.String(), usdcMint).Error
-
-		balances, err := repo.GetVaultBalances(context.Background(), mvVaultAddr)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if len(balances) != 2 {
-			t.Fatalf("expected 2 balances, got %d", len(balances))
-		}
-		if !balances[0].Amount.Equal(decimal.NewFromFloat(2.0)) {
-			t.Errorf("expected SOL amount 2.0, got %s", balances[0].Amount)
-		}
-		if !balances[1].Amount.Equal(decimal.NewFromFloat(200.0)) {
-			t.Errorf("expected USDC amount 200.0, got %s", balances[1].Amount)
-		}
-	})
-
 	t.Run("fetchVaultCounts from portfolio_summary MV", func(t *testing.T) {
 		psVaultID := uuid.New()
 		psVaultAddr := "PSVaultAddress1111111111111111111111111"

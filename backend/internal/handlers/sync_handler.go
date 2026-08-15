@@ -327,7 +327,9 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, finalAmountIn, finalAmountOut, finalPrice); err != nil {
 				return err
 			}
-			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, finalAmountIn); err != nil {
+			solPrice := decimal.NewFromFloat(150.0)
+			tvlDelta := finalAmountIn.Mul(solPrice)
+			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta); err != nil {
 				return err
 			}
 		case "Withdraw":
@@ -412,13 +414,22 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string,
 					outputToken = outputMint
 				}
 			}
-			if v, ok := anchorIx.Args["amount_in"].(uint64); ok {
-				amountIn = decimal.NewFromUint64(v)
+			
+			getDivisor := func(tok string) decimal.Decimal {
+				if tok == "SOL" || tok == solMint {
+					return decimal.NewFromInt(1000000000)
+				}
+				if tok == "USDC" || tok == usdcMint {
+					return decimal.NewFromInt(1000000)
+				}
+				return decimal.NewFromInt(1000000)
 			}
-			if v, ok := anchorIx.Args["amount_out"].(uint64); ok {
-				amountOut = decimal.NewFromUint64(v)
-			} else if v, ok := anchorIx.Args["min_amount_out"].(uint64); ok {
-				amountOut = decimal.NewFromUint64(v)
+			
+			if v, ok := anchorIx.Args["amount_in"].(uint64); ok {
+				amountIn = decimal.NewFromUint64(v).Div(getDivisor(inputToken))
+			}
+			if v, ok := anchorIx.Args["min_amount_out"].(uint64); ok {
+				amountOut = decimal.NewFromUint64(v).Div(getDivisor(outputToken))
 			}
 			if amountIn.IsPositive() {
 				priceAtExecution = amountOut.Div(amountIn)
@@ -432,7 +443,7 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string,
 			inputToken = "SOL"
 			outputToken = "SOL"
 			if v, ok := anchorIx.Args["amount"].(uint64); ok {
-				amountIn = decimal.NewFromUint64(v)
+				amountIn = decimal.NewFromUint64(v).Div(decimal.NewFromInt(1000000000))
 			}
 			amountOut = amountIn
 			priceAtExecution = decimal.NewFromInt(1)
@@ -445,9 +456,9 @@ func classifyInstructions(parsed *solana.ParsedTransaction, vaultAddress string,
 			inputToken = "SOL"
 			outputToken = "SOL"
 			if v, ok := anchorIx.Args["shares_to_burn"].(uint64); ok {
-				amountIn = decimal.NewFromUint64(v)
+				amountIn = decimal.NewFromUint64(v).Div(decimal.NewFromInt(1000000000))
 			} else if v, ok := anchorIx.Args["shares"].(uint64); ok {
-				amountIn = decimal.NewFromUint64(v)
+				amountIn = decimal.NewFromUint64(v).Div(decimal.NewFromInt(1000000000))
 			}
 			if totalShares.IsPositive() && vaultTVL.IsPositive() {
 				navPerShare := vaultTVL.Div(totalShares)

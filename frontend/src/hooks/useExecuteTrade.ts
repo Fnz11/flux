@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react'
 import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 import { BN } from 'bn.js'
 import { useTransactionStore } from '@/stores'
 import { api, getAuthToken } from '@/lib/api'
-import { ensureWalletAuthenticated } from '@/services/apis/rest-api/auth.service'
+import { ensureWalletAuthenticated, isTokenExpired } from '@/services/apis/rest-api/auth.service'
 import { getVault } from '@/services/apis/rest-api/vault.service'
 import { getProgram } from '@/lib/anchor'
 import {
@@ -56,6 +57,7 @@ export function useExecuteTrade() {
   const [isLoading, setIsLoading] = useState(false)
   const wallet = useAnchorWallet()
   const { connection } = useConnection()
+  const queryClient = useQueryClient()
   const addTransaction = useTransactionStore((s) => s.addTransaction)
   const updateStatus = useTransactionStore((s) => s.updateStatus)
   const confirmTransaction = useTransactionStore((s) => s.confirmTransaction)
@@ -265,11 +267,34 @@ export function useExecuteTrade() {
         try {
           if (wallet?.publicKey) {
             const userAddr = wallet.publicKey.toBase58()
-            if (!getAuthToken() && 'signMessage' in wallet && typeof (wallet as unknown as { signMessage?: (msg: Uint8Array) => Promise<Uint8Array> }).signMessage === 'function') {
+            const currentToken = getAuthToken()
+            if ((!currentToken || isTokenExpired(currentToken)) && 'signMessage' in wallet && typeof (wallet as unknown as { signMessage?: (msg: Uint8Array) => Promise<Uint8Array> }).signMessage === 'function') {
               await ensureWalletAuthenticated(userAddr, (wallet as unknown as { signMessage: (msg: Uint8Array) => Promise<Uint8Array> }).signMessage).catch(() => {})
             }
           }
           await api.post('/trades/sync', syncPayload)
+
+          // Invalidate all caches so UI reflects updated balances & trade history
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['vaults'] }),
+            queryClient.invalidateQueries({ queryKey: ['infiniteVaults'] }),
+            queryClient.invalidateQueries({ queryKey: ['vaultBalances'] }),
+            queryClient.invalidateQueries({ queryKey: ['portfolio'] }),
+            queryClient.invalidateQueries({ queryKey: ['portfolioHistory'] }),
+            queryClient.invalidateQueries({ queryKey: ['trades'] }),
+            queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+            queryClient.invalidateQueries({ queryKey: ['marketStats'] }),
+            queryClient.invalidateQueries({ queryKey: ['vaultSparkline'] }),
+            queryClient.invalidateQueries({ queryKey: ['vaultSparklineFull'] }),
+            queryClient.refetchQueries({ queryKey: ['vault', params.vaultId] }),
+            queryClient.refetchQueries({ queryKey: ['vaultBalances', params.vaultId] }),
+            ...(params.vaultAddress
+              ? [
+                  queryClient.refetchQueries({ queryKey: ['vault', params.vaultAddress] }),
+                  queryClient.refetchQueries({ queryKey: ['vaultBalances', params.vaultAddress] }),
+                ]
+              : []),
+          ])
         } catch (err) {
           console.warn('Failed to sync executed trade to backend:', err)
         }
@@ -282,7 +307,7 @@ export function useExecuteTrade() {
         setIsLoading(false)
       }
     },
-    [wallet, connection, addTransaction, updateStatus, confirmTransaction, moveToHistory],
+    [wallet, connection, queryClient, addTransaction, updateStatus, confirmTransaction, moveToHistory],
   )
 
   return { execute, isLoading }

@@ -89,12 +89,12 @@ func TestParseAnchorInstruction(t *testing.T) {
 
 	t.Run("execute_trade_pyth_happy_path", func(t *testing.T) {
 		disc := anchorDiscriminator("execute_trade_pyth")
-		data := make([]byte, 8+24)
+		// Only 2 args: amount_in (u64) + min_amount_out (u64) = 16 bytes
+		data := make([]byte, 8+16)
 		copy(data[:8], disc[:])
 
 		binary.LittleEndian.PutUint64(data[8:16], 1000)
 		binary.LittleEndian.PutUint64(data[16:24], 950)
-		binary.LittleEndian.PutUint64(data[24:32], 50)
 
 		ix, err := ParseAnchorInstruction(data)
 		if err != nil {
@@ -106,11 +106,8 @@ func TestParseAnchorInstruction(t *testing.T) {
 		if amtIn, ok := ix.Args["amount_in"].(uint64); !ok || amtIn != 1000 {
 			t.Errorf("expected amount_in=1000, got %v", ix.Args["amount_in"])
 		}
-		if amtOut, ok := ix.Args["amount_out"].(uint64); !ok || amtOut != 950 {
-			t.Errorf("expected amount_out=950, got %v", ix.Args["amount_out"])
-		}
-		if slip, ok := ix.Args["slippage"].(uint64); !ok || slip != 50 {
-			t.Errorf("expected slippage=50, got %v", ix.Args["slippage"])
+		if minOut, ok := ix.Args["min_amount_out"].(uint64); !ok || minOut != 950 {
+			t.Errorf("expected min_amount_out=950, got %v", ix.Args["min_amount_out"])
 		}
 	})
 
