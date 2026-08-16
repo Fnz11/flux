@@ -17,7 +17,6 @@ pub struct VaultState {
     pub pending_manager: Option<Pubkey>,
     pub deposit_mint: Pubkey,
     pub share_token_mint: Pubkey,
-    pub allowed_output_mints: [Pubkey; 4],
     pub min_raise_amount: u64,
     pub performance_fee_bps: u16,
     pub management_fee_bps: u16,
@@ -34,6 +33,8 @@ pub struct VaultState {
     pub last_trade_at: i64,
     pub high_water_mark: u64,
     pub last_fee_accrual_at: i64,
+    #[max_len(100)]
+    pub allowed_output_mints: Vec<Pubkey>,
     pub _reserved: [u8; 64],
 }
 
@@ -61,12 +62,6 @@ mod tests {
             pending_manager: Some(Pubkey::new_unique()),
             deposit_mint: Pubkey::new_unique(),
             share_token_mint: Pubkey::new_unique(),
-            allowed_output_mints: [
-                Pubkey::new_unique(),
-                Pubkey::new_unique(),
-                Pubkey::new_unique(),
-                Pubkey::new_unique(),
-            ],
             min_raise_amount: 1_000_000,
             performance_fee_bps: 1000,
             management_fee_bps: 200,
@@ -83,6 +78,7 @@ mod tests {
             last_trade_at: 1700003600,
             high_water_mark: 0,
             last_fee_accrual_at: 1700000000,
+            allowed_output_mints: vec![Pubkey::new_unique(), Pubkey::new_unique()],
             _reserved: [0u8; 64],
         };
 
@@ -94,9 +90,9 @@ mod tests {
         assert_eq!(original.manager, decoded.manager);
         assert_eq!(original.creator, decoded.creator);
         assert_eq!(original.pending_manager, decoded.pending_manager);
+        assert_eq!(original.allowed_output_mints, decoded.allowed_output_mints);
         assert_eq!(original.deposit_mint, decoded.deposit_mint);
         assert_eq!(original.share_token_mint, decoded.share_token_mint);
-        assert_eq!(original.allowed_output_mints, decoded.allowed_output_mints);
         assert_eq!(original.min_raise_amount, decoded.min_raise_amount);
         assert_eq!(original.performance_fee_bps, decoded.performance_fee_bps);
         assert_eq!(original.management_fee_bps, decoded.management_fee_bps);
@@ -126,14 +122,9 @@ mod tests {
             manager: Pubkey::new_unique(),
             creator: Pubkey::new_unique(),
             pending_manager: None,
+            allowed_output_mints: vec![],
             deposit_mint: Pubkey::new_unique(),
             share_token_mint: Pubkey::new_unique(),
-            allowed_output_mints: [
-                Pubkey::new_unique(),
-                Pubkey::new_unique(),
-                Pubkey::new_unique(),
-                Pubkey::new_unique(),
-            ],
             min_raise_amount: 1_000_000,
             performance_fee_bps: 1000,
             management_fee_bps: 200,
@@ -187,11 +178,6 @@ mod tests {
     }
 
     #[test]
-    fn allowed_output_mints_exactly_four_slots() {
-        assert_eq!(sample().allowed_output_mints.len(), 4);
-    }
-
-    #[test]
     fn status_values_are_forward_only() {
         let mut v = sample();
         v.status = VaultStatusCode::Active;
@@ -207,8 +193,8 @@ mod tests {
     }
 
     #[test]
-    fn vault_state_init_space_is_409() {
-        assert_eq!(VaultState::INIT_SPACE, 441);
+    fn vault_state_init_space_is_correct() {
+        assert_eq!(VaultState::INIT_SPACE, 3517);
     }
 
     #[test]

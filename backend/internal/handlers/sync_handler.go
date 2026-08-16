@@ -327,7 +327,7 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, finalAmountIn, finalAmountOut, finalPrice); err != nil {
 				return err
 			}
-			solPrice := decimal.NewFromFloat(150.0)
+			solPrice := decimal.NewFromFloat(75.33197084)
 			tvlDelta := finalAmountIn.Mul(solPrice)
 			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta); err != nil {
 				return err

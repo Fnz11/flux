@@ -5,6 +5,7 @@ import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react'
 import { Transaction } from '@solana/web3.js'
 import { useTransactionStore } from '@/stores'
 import { prepareCreateVault, submitTx } from '@/services/apis/rest-api/tx.service'
+import { getVault } from '@/services/apis/rest-api/vault.service'
 import { confirmTransactionHelper, ensureSolBalance } from '@/lib/transactions'
 import { formatError } from '@/lib/errors'
 import { toastSuccess, toastInfo } from '@/lib/toast'
@@ -105,7 +106,7 @@ export function useCreateVault() {
         preflightCommitment: 'confirmed',
       })
 
-      // 5. Submit signature to backend draft reconciler
+      // 5. Submit signature to backend draft reconciler early
       if (prep.draft_id) {
         await submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
       }
@@ -121,6 +122,27 @@ export function useCreateVault() {
 
       await confirmTransactionHelper(connection, signature, blockhashInfo, 'confirmed')
 
+      // 7. Resubmit post-confirmation to trigger immediate indexing reconciliation
+      if (prep.draft_id) {
+        await submitTx({ draftId: prep.draft_id, signature }).catch(() => {})
+      }
+
+      // 8. Wait for backend to index the vault before redirecting
+      const targetVaultAddress = prep.vault_address
+      if (targetVaultAddress) {
+        for (let attempt = 0; attempt < 10; attempt++) {
+          try {
+            const v = await getVault(targetVaultAddress)
+            if (v && (v.id || v.address)) {
+              break
+            }
+          } catch {
+            // Wait for background worker
+          }
+          await new Promise((r) => setTimeout(r, 400))
+        }
+      }
+
       confirmTransaction(txId, signature)
       moveToHistory(txId)
       await Promise.all([
@@ -129,6 +151,7 @@ export function useCreateVault() {
         queryClient.invalidateQueries({ queryKey: ['marketStats'] }),
         queryClient.invalidateQueries({ queryKey: ['portfolio'] }),
       ])
+      await queryClient.refetchQueries({ queryKey: ['infiniteVaults'] }).catch(() => {})
       toastSuccess('Vault created successfully!')
       navigate({ to: '/vaults' })
     } catch (err: unknown) {

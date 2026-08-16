@@ -113,15 +113,15 @@ func (s *TxPrepareService) PrepareCreateVault(ctx context.Context, dto PrepareCr
 		blockhash = solana.HashFromBytes([]byte("11111111111111111111111111111111"))
 	}
 
-	var allowedMints [4]solana.PublicKey
-	allowedIdx := 0
+	// Prepare allowed_output_mints
+	var allowedMints []solana.PublicKey
+
 	if !depositMintPk.IsZero() {
-		allowedMints[allowedIdx] = depositMintPk
-		allowedIdx++
+		allowedMints = append(allowedMints, depositMintPk)
 	}
 
 	for _, asset := range dto.FocusAssets {
-		if allowedIdx >= 4 {
+		if len(allowedMints) >= 100 {
 			break
 		}
 		var pk solana.PublicKey
@@ -144,15 +144,14 @@ func (s *TxPrepareService) PrepareCreateVault(ctx context.Context, dto PrepareCr
 
 		if !pk.IsZero() {
 			alreadyPresent := false
-			for i := 0; i < allowedIdx; i++ {
-				if allowedMints[i].Equals(pk) {
+			for _, m := range allowedMints {
+				if m.Equals(pk) {
 					alreadyPresent = true
 					break
 				}
 			}
 			if !alreadyPresent {
-				allowedMints[allowedIdx] = pk
-				allowedIdx++
+				allowedMints = append(allowedMints, pk)
 			}
 		}
 	}

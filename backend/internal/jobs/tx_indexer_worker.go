@@ -89,7 +89,7 @@ func (w *TxIndexerWorker) ReconcileDraftByID(ctx context.Context, draftID uuid.U
 // TriggerAsyncReconcile triggers non-blocking fast reconciliation with quick retries
 func (w *TxIndexerWorker) TriggerAsyncReconcile(draftID uuid.UUID) {
 	go func() {
-		delays := []time.Duration{100 * time.Millisecond, 400 * time.Millisecond, 1000 * time.Millisecond, 2500 * time.Millisecond}
+		delays := []time.Duration{50 * time.Millisecond, 150 * time.Millisecond, 300 * time.Millisecond, 600 * time.Millisecond, 1200 * time.Millisecond, 2500 * time.Millisecond}
 		for _, delay := range delays {
 			time.Sleep(delay)
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -230,7 +230,7 @@ func (w *TxIndexerWorker) finalizeCreateVault(ctx context.Context, draft *models
 		Address:           meta.VaultAddress,
 		ManagerID:         user.ID,
 		ManagerAddress:    draft.UserPubkey,
-		Status:            "Active",
+		Status:            "Fundraising",
 		Metadata:          datatypes.JSON(metaJSON),
 		PerformanceFeeBps: meta.PerformanceFeeBps,
 		ManagementFeeBps:  meta.ManagementFeeBps,
@@ -269,8 +269,10 @@ func (w *TxIndexerWorker) finalizeDeposit(ctx context.Context, draft *models.Tra
 				if sig != "" && w.tradeRepo != nil {
 					if existing, err := w.tradeRepo.FindBySignature(ctx, sig); err != nil || existing == nil {
 						tokenSym := "SOL"
+						priceEx := decimal.NewFromFloat(75.33197084)
 						if meta.DepositMint != "" && !strings.EqualFold(meta.DepositMint, pkgSolana.NativeMint.String()) {
 							tokenSym = "USDC"
+							priceEx = decimal.NewFromInt(1)
 						}
 						tradeDetail := &domain.TradeDetail{
 							VaultID:              vault.ID,
@@ -281,7 +283,7 @@ func (w *TxIndexerWorker) finalizeDeposit(ctx context.Context, draft *models.Tra
 							OutputToken:          vault.Address,
 							AmountIn:             amountDec,
 							AmountOut:            amountDec,
-							PriceAtExecution:     decimal.NewFromInt(1),
+							PriceAtExecution:     priceEx,
 							ExecutedAt:           time.Now().UTC(),
 						}
 						_ = w.tradeRepo.Create(ctx, tradeDetail)
@@ -292,7 +294,7 @@ func (w *TxIndexerWorker) finalizeDeposit(ctx context.Context, draft *models.Tra
 					_ = w.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountDec, amountDec, decimal.NewFromInt(1))
 				}
 			}
-			solPrice := decimal.NewFromFloat(150.0)
+			solPrice := decimal.NewFromFloat(75.33197084)
 			tvlDelta := amountDec.Mul(solPrice)
 			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta)
 
@@ -337,7 +339,7 @@ func (w *TxIndexerWorker) finalizeWithdraw(ctx context.Context, draft *models.Tr
 							OutputToken:          "SOL",
 							AmountIn:             sharesDec,
 							AmountOut:            sharesDec,
-							PriceAtExecution:     decimal.NewFromInt(1),
+							PriceAtExecution:     decimal.NewFromFloat(75.33197084),
 							ExecutedAt:           time.Now().UTC(),
 						}
 						_ = w.tradeRepo.Create(ctx, tradeDetail)
@@ -348,7 +350,7 @@ func (w *TxIndexerWorker) finalizeWithdraw(ctx context.Context, draft *models.Tr
 					_ = w.portfolioRepo.ReducePosition(ctx, actor.ID, vault.ID, sharesDec)
 				}
 			}
-			solPrice := decimal.NewFromFloat(150.0)
+			solPrice := decimal.NewFromFloat(75.33197084)
 			tvlDelta := sharesDec.Mul(solPrice).Neg()
 			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta)
 

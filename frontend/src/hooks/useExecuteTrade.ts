@@ -3,6 +3,7 @@ import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 import { BN } from 'bn.js'
+import { toast } from 'react-hot-toast'
 import { useTransactionStore } from '@/stores'
 import { api, getAuthToken } from '@/lib/api'
 import { ensureWalletAuthenticated, isTokenExpired } from '@/services/apis/rest-api/auth.service'
@@ -138,18 +139,31 @@ export function useExecuteTrade() {
 
               // If vault is in Fundraising status and current user is manager, auto-activate if min raise met
               try {
-                let vaultAccount: { status?: { fundraising?: object; active?: object } | number; manager?: PublicKey } | null = null
+                let vaultAccount: { status?: { fundraising?: object; active?: object; Fundraising?: object; Active?: object } | number; manager?: PublicKey } | null = null
                 if (program.account && 'vaultState' in program.account) {
-                  vaultAccount = await (program.account as unknown as { vaultState: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object } | number; manager?: PublicKey }> } }).vaultState.fetch(vaultPubkey).catch(() => null)
+                  vaultAccount = await (program.account as unknown as { vaultState: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object; Fundraising?: object; Active?: object } | number; manager?: PublicKey }> } }).vaultState.fetch(vaultPubkey).catch((e) => {
+                    console.error('fetch vaultState failed', e)
+                    return null
+                  })
                 } else if (program.account && 'vault' in program.account) {
-                  vaultAccount = await (program.account as unknown as { vault: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object } | number; manager?: PublicKey }> } }).vault.fetch(vaultPubkey).catch(() => null)
+                  vaultAccount = await (program.account as unknown as { vault: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object; Fundraising?: object; Active?: object } | number; manager?: PublicKey }> } }).vault.fetch(vaultPubkey).catch((e) => {
+                    console.error('fetch vault failed', e)
+                    return null
+                  })
                 }
+
+                console.log('vaultAccount fetched:', vaultAccount)
 
                 if (vaultAccount) {
                   const isFundraising =
-                    (vaultAccount.status && typeof vaultAccount.status === 'object' && 'fundraising' in vaultAccount.status) ||
+                    (vaultAccount.status && typeof vaultAccount.status === 'object' && ('fundraising' in vaultAccount.status || 'Fundraising' in vaultAccount.status)) ||
                     vaultAccount.status === 0
+                  
                   const isManager = vaultAccount.manager ? vaultAccount.manager.equals(wallet.publicKey) : true
+                  if (!isFundraising) toast.error('Vault is not in fundraising state: ' + JSON.stringify(vaultAccount.status))
+                  if (!isManager) toast.error('You are not the manager')
+                  console.log('isFundraising:', isFundraising, 'isManager:', isManager, 'has activateVault:', !!program.methods?.activateVault)
+                  
                   if (isFundraising && isManager && program.methods?.activateVault) {
                     const activateIx = await program.methods
                       .activateVault()
@@ -159,10 +173,13 @@ export function useExecuteTrade() {
                       })
                       .instruction()
                     ixs.push(activateIx)
+                    toast.success('Added activateVault instruction!')
+                    console.log('added activateIx')
                   }
                 }
               } catch (checkErr) {
-                console.warn('Auto-activate vault check skipped:', checkErr)
+                toast.error('Auto-activate vault check skipped with error: ' + checkErr)
+                console.error('Auto-activate vault check skipped with error:', checkErr)
               }
 
               // Add ATA creation for input token if missing

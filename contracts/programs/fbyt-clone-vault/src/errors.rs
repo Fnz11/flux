@@ -42,4 +42,6 @@ pub enum VaultError {
     VaultPaused,
     #[msg("Share token mint mismatch")]
     ShareMintMismatch,
+    #[msg("Too many output mints allowed.")]
+    TooManyOutputMints,
 }

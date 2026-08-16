@@ -159,9 +159,16 @@ export interface VaultBalancesResponse {
 }
 
 export async function getVaultBalances(vaultId: string): Promise<VaultBalance[]> {
-  const res = await api.get<VaultBalancesResponse | VaultBalance[]>(`/vaults/${vaultId}/balances`)
-  if (Array.isArray(res)) return res
-  if (res && Array.isArray(res.balances)) return res.balances
-  return []
-}
+  const res = await api.get<any>(`/vaults/${vaultId}/balances`)
+  let balances: any[] = []
+  
+  if (Array.isArray(res)) balances = res
+  else if (res && Array.isArray(res.balances)) balances = res.balances
+  else if (res && res.data && Array.isArray(res.data.balances)) balances = res.data.balances
 
+  return balances.map((b: any) => ({
+    ...b,
+    amount: Number(b.amount || 0),
+    usdValue: Number(b.usdValue || 0),
+  }))
+}

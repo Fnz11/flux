@@ -569,10 +569,6 @@
               {
                 "kind": "account",
                 "path": "manager"
-              },
-              {
-                "kind": "account",
-                "path": "share_token_mint"
               }
             ]
           }
@@ -1484,15 +1480,6 @@
             "type": "pubkey"
           },
           {
-            "name": "allowed_output_mints",
-            "type": {
-              "array": [
-                "pubkey",
-                4
-              ]
-            }
-          },
-          {
             "name": "min_raise_amount",
             "type": "u64"
           },
@@ -1559,6 +1546,12 @@
           {
             "name": "last_fee_accrual_at",
             "type": "i64"
+          },
+          {
+            "name": "allowed_output_mints",
+            "type": {
+              "vec": "pubkey"
+            }
           },
           {
             "name": "_reserved",

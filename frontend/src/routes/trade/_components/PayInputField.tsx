@@ -9,6 +9,7 @@ export interface PayInputFieldProps {
   tokens: string[]
   inputToken: string
   onInputTokenChange: (token: string) => void
+  disabledTokens?: string[]
 }
 
 export function PayInputField({
@@ -17,12 +18,13 @@ export function PayInputField({
   tokens,
   inputToken,
   onInputTokenChange,
+  disabledTokens,
 }: PayInputFieldProps) {
   const formattedMax =
     maxBalance !== null
-      ? maxBalance > 0 && maxBalance < 0.01
-        ? parseFloat(maxBalance.toFixed(6)).toString()
-        : maxBalance.toFixed(2)
+      ? Number(maxBalance) > 0 && Number(maxBalance) < 0.01
+        ? parseFloat(Number(maxBalance).toFixed(6)).toString()
+        : Number(maxBalance).toFixed(2)
       : '0.00'
 
   return (
@@ -56,6 +58,7 @@ export function PayInputField({
               tokens={tokens}
               selected={inputToken}
               onSelect={onInputTokenChange}
+              disabledTokens={disabledTokens}
             />
           </div>
           <FormMessage className="mt-1" />

@@ -29,7 +29,9 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
     },
     ref,
   ) => {
-    const isNumberMode = valueAsNumber || typeof value === 'number'
+    // Remember whether this input was initialized or set as number mode
+    const initialIsNumber = React.useRef(valueAsNumber || typeof value === 'number')
+    const isNumberMode = valueAsNumber || typeof value === 'number' || initialIsNumber.current
 
     const formatInitialValue = (val: string | number | null | undefined): string => {
       if (val === undefined || val === null || val === '') return ''
@@ -76,8 +78,7 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
           if (isNumberMode) {
             onChange(null)
           } else {
-            e.target.value = ''
-            onChange(e)
+            onChange('')
           }
         }
         return
@@ -101,8 +102,7 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
           if (isNumberMode) {
             onChange(null)
           } else {
-            e.target.value = raw
-            onChange(e)
+            onChange(raw)
           }
         }
         return
@@ -118,8 +118,7 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
         if (isNumberMode) {
           onChange(validNum)
         } else {
-          e.target.value = raw
-          onChange(e)
+          onChange(raw)
         }
       }
     }
@@ -159,9 +158,9 @@ export const DecimalInput = React.forwardRef<HTMLInputElement, DecimalInputProps
         ref={ref}
         value={displayValue}
         placeholder={placeholder}
+        {...props}
         onChange={handleChange}
         onBlur={handleBlur}
-        {...props}
       />
     )
   },

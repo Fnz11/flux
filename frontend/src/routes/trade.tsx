@@ -62,12 +62,14 @@ export function TradePage() {
       />
 
       <div className="space-y-6">
-        <SwapForm
-          preselectedVaultId={activeVault?.id}
-          vaults={managerVaults}
-          isLoadingVaults={isFetchingVaults}
-          onVaultChange={(id) => setSelectedVaultId(id)}
-        />
+        <div className="relative z-10">
+          <SwapForm
+            preselectedVaultId={activeVault?.id}
+            vaults={managerVaults}
+            isLoadingVaults={isFetchingVaults}
+            onVaultChange={(id) => setSelectedVaultId(id)}
+          />
+        </div>
 
         <div className="flex flex-col gap-6">
           <VaultAssetsPanel

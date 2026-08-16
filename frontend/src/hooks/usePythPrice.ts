@@ -24,18 +24,22 @@ interface PythPriceResult {
 }
 
 const priceFeedIds: Record<string, string> = {
-  'SOL/USDC': 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
-  'SOL/USDT': 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
-  'SOL/BONK': 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
-  'USDC/SOL': 'eaa020c61cc47971281346194c5a240b4eccc5a8a4b6d0f3a3e6b6e6e0a9c1f',
-  'BONK/SOL': '72b021217b7f8d5f8f3f7d9c8e5c6b7a6f8f9e0d1c2b3a4d5e6f7a8b9c0d',
+  'SOL': 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
+  'SOL/USD': 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
+  'USDC': 'eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a',
+  'USDT': '2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b',
+  'BONK': '72b021217ca3fe68922a19aaf990109cb9d84e9ad004b4d2025ad6f529314419',
+  'JUP': '0a0408d619e9380abad35060f9192039ed5042fa6f82301d0e48bb52be830996',
+  'PYTH': '0bbf28e9a841a1cc788f6a361b17ca072d0ea3098a1e5df1c3922d06719579ff',
 }
 
-function getPriceFeedId(pair: string): string | undefined {
-  return priceFeedIds[pair]
+function getFeedId(key: string): string | undefined {
+  if (priceFeedIds[key]) return priceFeedIds[key]
+  const base = key.split('/')[0]
+  return priceFeedIds[base]
 }
 
-export function usePythPrice(pair: string): PythPriceResult {
+export function usePythPrice(symbolOrPair: string): PythPriceResult {
   const [result, setResult] = useState<PythPriceResult>({
     price: 0,
     confidence: 0,
@@ -46,7 +50,7 @@ export function usePythPrice(pair: string): PythPriceResult {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
-    const feedId = getPriceFeedId(pair)
+    const feedId = getFeedId(symbolOrPair)
     if (!feedId) {
       setResult({
         price: 0,
@@ -71,8 +75,9 @@ export function usePythPrice(pair: string): PythPriceResult {
         if (!parsed) throw new Error('No price data')
 
         const { price, conf, expo, publish_time } = parsed.price
-        const adjustedPrice = Number(price) * 10 ** expo
-        const adjustedConf = Number(conf) * 10 ** expo
+        let adjustedPrice = Number(price) * 10 ** expo
+        let adjustedConf = Number(conf) * 10 ** expo
+
         const lastUpdated = new Date(publish_time * 1000)
         const age = Date.now() - lastUpdated.getTime()
         const status = age > STALE_THRESHOLD ? 'stale' : 'live'
@@ -106,7 +111,7 @@ export function usePythPrice(pair: string): PythPriceResult {
         intervalRef.current = null
       }
     }
-  }, [pair])
+  }, [symbolOrPair])
 
   return result
 }

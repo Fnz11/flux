@@ -40,7 +40,7 @@ fn test_initialize_vault_basic() {
         performance_fee_bps: 500,
         management_fee_bps: 200,
         lockup_period: 0,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
 
     let accounts = vec![

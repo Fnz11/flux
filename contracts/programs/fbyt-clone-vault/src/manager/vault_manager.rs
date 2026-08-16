@@ -135,7 +135,6 @@ mod tests {
             pending_manager: None,
             deposit_mint: Pubkey::default(),
             share_token_mint: Pubkey::default(),
-            allowed_output_mints: [Pubkey::default(); 4],
             min_raise_amount: 0,
             performance_fee_bps: 1000, // 10%
             management_fee_bps: 200,   // 2%
@@ -152,6 +151,7 @@ mod tests {
             last_trade_at: 0,
             high_water_mark: 0,
             last_fee_accrual_at: 0,
+            allowed_output_mints: vec![],
             _reserved: [0u8; 64],
         }
     }

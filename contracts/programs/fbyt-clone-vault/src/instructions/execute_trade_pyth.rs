@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     Mint, TokenAccount, TokenInterface,
-    burn, Burn, mint_to, MintTo,
 };
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 use crate::constants::*;
@@ -38,10 +37,7 @@ pub struct ExecuteTradePyth<'info> {
     )]
     pub vault_input_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        constraint = (vault_input_mint.key() == vault.deposit_mint || vault.allowed_output_mints.contains(&vault_input_mint.key())) @ crate::errors::VaultError::InvalidMint,
-    )]
+    #[account(mut)]
     pub vault_input_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
@@ -51,10 +47,7 @@ pub struct ExecuteTradePyth<'info> {
     )]
     pub vault_output_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        constraint = (vault_output_mint.key() == vault.deposit_mint || vault.allowed_output_mints.contains(&vault_output_mint.key())) @ crate::errors::VaultError::InvalidMint,
-    )]
+    #[account(mut)]
     pub vault_output_mint: Box<InterfaceAccount<'info, Mint>>,
 
     pub price_update: Box<Account<'info, PriceUpdateV2>>,
@@ -68,6 +61,12 @@ pub fn handler(ctx: Context<ExecuteTradePyth>, amount_in: u64, min_amount_out: u
 
     let vault = &mut ctx.accounts.vault;
     let clock = Clock::get()?;
+
+    require!(
+        vault.allowed_output_mints.contains(&ctx.accounts.vault_output_mint.key()) 
+        || ctx.accounts.vault_output_mint.key() == vault.deposit_mint,
+        crate::errors::VaultError::InvalidMint
+    );
 
     let is_quote_to_base = ctx.accounts.vault_output_mint.key() == anchor_spl::token::spl_token::native_mint::ID;
 

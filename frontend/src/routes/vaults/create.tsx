@@ -48,7 +48,7 @@ export function CreateVaultPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageName, setImageName] = useState<string | null>(null)
 
-  const form = useForm<CreateVaultFormValues>({
+  const form = useForm<CreateVaultFormValues, unknown, CreateVaultFormValues>({
     resolver: zodResolver(createVaultSchema),
     defaultValues: {
       vaultType: 'open',
@@ -134,6 +134,10 @@ export function CreateVaultPage() {
     if (current.includes(asset)) {
       setValue('focusAssets', current.filter((a) => a !== asset), { shouldValidate: true, shouldDirty: true })
     } else {
+      if (current.length >= 100) {
+        alert('You can only select up to 100 focus assets per vault.')
+        return
+      }
       setValue('focusAssets', [...current, asset], { shouldValidate: true, shouldDirty: true })
     }
   }

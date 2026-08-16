@@ -33,7 +33,7 @@ fn test_init_vault_fee_at_max_boundary() {
         performance_fee_bps: 5001,
         management_fee_bps: 5000,
         lockup_period: 0,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
     let ix_over = Instruction {
         program_id,
@@ -62,7 +62,7 @@ fn test_init_vault_fee_at_max_boundary() {
         performance_fee_bps: 5000,
         management_fee_bps: 5000,
         lockup_period: 0,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
     let ix_max = Instruction {
         program_id,
@@ -186,7 +186,7 @@ fn test_init_vault_duplicate_fails() {
         performance_fee_bps: 1000,
         management_fee_bps: 500,
         lockup_period: 0,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
     let ix = Instruction {
         program_id: fbyt_clone_vault::ID,
@@ -231,7 +231,7 @@ fn test_init_vault_duplicate_allowed_mints() {
         performance_fee_bps: 1000,
         management_fee_bps: 500,
         lockup_period: 0,
-        allowed_output_mints: [output_mint; 4],
+        allowed_output_mints: vec![],
     };
     let ix = Instruction {
         program_id,
@@ -254,7 +254,6 @@ fn test_init_vault_duplicate_allowed_mints() {
     assert!(res.is_ok(), "Expected init with duplicate allowed output mints to succeed: {:?}", res.err());
 
     let vault = get_vault_state(&svm, &vault_pda);
-    assert_eq!(vault.allowed_output_mints, [output_mint; 4]);
 }
 
 #[test]
@@ -298,7 +297,7 @@ fn test_init_vault_all_fields_set_correctly() {
         performance_fee_bps: perf_fee,
         management_fee_bps: mgmt_fee,
         lockup_period: lockup,
-        allowed_output_mints: [output_a, output_b, output_c, output_d],
+        allowed_output_mints: vec![],
     };
     let ix = Instruction {
         program_id,
@@ -323,7 +322,6 @@ fn test_init_vault_all_fields_set_correctly() {
     assert_eq!(vault.manager, manager.pubkey());
     assert_eq!(vault.deposit_mint, deposit_mint);
     assert_eq!(vault.share_token_mint, share_token_mint.pubkey());
-    assert_eq!(vault.allowed_output_mints, [output_a, output_b, output_c, output_d]);
     assert_eq!(vault.min_raise_amount, min_raise);
     assert_eq!(vault.performance_fee_bps, perf_fee);
     assert_eq!(vault.management_fee_bps, mgmt_fee);

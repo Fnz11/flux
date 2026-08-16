@@ -122,7 +122,29 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
   const pythPriceFeedId = `${inputToken}/${outputToken}`
   const priceData: PriceState = usePythPrice(pythPriceFeedId)
 
-  const tokens = config?.focusAssetsWhitelist ?? ['SOL', 'USDC', 'USDT', 'BONK', 'JUP', 'PYTH']
+  const tokens = useMemo(() => {
+    const focusAssets = selectedVault?.metadata?.focusAssets
+    if (Array.isArray(focusAssets) && focusAssets.length > 0) {
+      return focusAssets
+    }
+    return config?.focusAssetsWhitelist ?? ['SOL', 'USDC', 'USDT', 'BONK', 'JUP', 'PYTH']
+  }, [selectedVault, config])
+
+  useEffect(() => {
+    if (!tokens || tokens.length === 0) return
+    let currentInput = inputToken
+    let currentOutput = outputToken
+
+    if (!tokens.includes(currentInput)) {
+      currentInput = tokens[0]
+      setInputToken(currentInput)
+    }
+
+    if (!tokens.includes(currentOutput) || (currentOutput === currentInput && tokens.length > 1)) {
+      currentOutput = tokens.find((t) => t !== currentInput) ?? tokens[0]
+      setOutputToken(currentOutput)
+    }
+  }, [tokens, inputToken, outputToken])
 
   const inputNum = parseFloat(inputAmount) || 0
   const rate = priceData.status === 'live' || priceData.status === 'stale' ? priceData.price : 0
@@ -164,6 +186,22 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     setShowConfirm(false)
   }, [vaultId, selectedVault, inputNum, inputToken, outputToken, outputAmount, rate, slippage, execute])
 
+  const handleInputTokenChange = useCallback((token: string) => {
+    if (token === outputToken) {
+      const nextOutput = tokens.find((t) => t !== token) ?? token
+      setOutputToken(inputToken !== token ? inputToken : nextOutput)
+    }
+    setInputToken(token)
+  }, [inputToken, outputToken, tokens])
+
+  const handleOutputTokenChange = useCallback((token: string) => {
+    if (token === inputToken) {
+      const nextInput = tokens.find((t) => t !== token) ?? token
+      setInputToken(outputToken !== token ? outputToken : nextInput)
+    }
+    setOutputToken(token)
+  }, [inputToken, outputToken, tokens])
+
   const toggleDirection = () => {
     setInputToken(outputToken)
     setOutputToken(inputToken)
@@ -176,9 +214,9 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     vaultId,
     slippage,
     inputToken,
-    setInputToken,
+    setInputToken: handleInputTokenChange,
     outputToken,
-    setOutputToken,
+    setOutputToken: handleOutputTokenChange,
     showConfirm,
     setShowConfirm,
     maxBalance,
@@ -188,8 +226,8 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     rate,
     outputAmount,
     minReceived,
-    selectedVault,
     isVaultFundraising: selectedVault?.status?.toLowerCase() === 'fundraising',
+    isManager: selectedVault?.managerAddress?.toLowerCase() === wallet.publicKey?.toBase58().toLowerCase(),
     priceData,
     isExecuting,
     walletConnected: wallet.connected,
@@ -209,6 +247,7 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
     vaultId,
     selectedVault,
     isVaultFundraising,
+    isManager,
     slippage,
     inputToken,
     setInputToken,
@@ -235,7 +274,7 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
 
   return (
     <div className="grid gap-5 lg:grid-cols-5 items-start">
-      <div className="space-y-4 lg:col-span-3">
+      <div className="space-y-4 lg:col-span-3 relative z-20">
         <Form {...form}>
           <SectionCard
             icon={<ArrowDownUp className="size-4 text-primary-coral" />}
@@ -268,6 +307,7 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
                 tokens={tokens}
                 inputToken={inputToken}
                 onInputTokenChange={setInputToken}
+                disabledTokens={[outputToken]}
               />
 
               <SwapDirectionToggle onToggle={toggleDirection} />
@@ -277,16 +317,17 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
                 tokens={tokens}
                 outputToken={outputToken}
                 onOutputTokenChange={setOutputToken}
+                disabledTokens={[inputToken]}
               />
 
               <SlippageField />
 
               <SwapActionButton
-                disabled={!vaultId || !inputNum || !walletConnected || isExecuting || isInsufficientBalance || isVaultFundraising}
+                disabled={!vaultId || !inputNum || !walletConnected || isExecuting || isInsufficientBalance || (isVaultFundraising && !isManager)}
                 isExecuting={isExecuting}
                 walletConnected={walletConnected}
                 isInsufficientBalance={isInsufficientBalance}
-                isVaultFundraising={isVaultFundraising}
+                isVaultFundraising={isVaultFundraising && !isManager}
                 hasVault={Boolean(vaultId)}
                 hasAmount={Boolean(inputNum)}
               />

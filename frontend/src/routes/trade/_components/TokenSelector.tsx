@@ -14,16 +14,16 @@ interface TokenSelectorProps {
   selected: string
   onSelect: (token: string) => void
   label?: string
+  disabledTokens?: string[]
 }
 
-export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelectorProps) {
+export function TokenSelector({ tokens, selected, onSelect, label, disabledTokens }: TokenSelectorProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const isMobile = useIsMobile()
 
   const availableTokens = useMemo(() => {
-    const filteredList = tokens.filter((t) => t !== 'BONK')
-    return filteredList.length > 0 ? filteredList : ['SOL', 'USDC', 'USDT', 'JUP', 'PYTH']
+    return tokens && tokens.length > 0 ? tokens : ['SOL', 'USDC', 'USDT', 'JUP', 'PYTH']
   }, [tokens])
 
   const filtered = useMemo(
@@ -82,17 +82,22 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
           filtered.map((token) => {
             const meta = getTokenMeta(token)
             const isSelected = token === selected
+            const isDisabled = disabledTokens?.includes(token)
             return (
               <button
                 key={token}
                 type="button"
+                disabled={isDisabled}
                 className={cn(
-                  'flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-left transition-colors cursor-pointer',
-                  isSelected
-                    ? 'bg-primary-coral/15 text-primary-coral font-semibold border border-primary-coral/30'
-                    : 'hover:bg-bg-inset/80 text-text-primary border border-transparent',
+                  'flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-left transition-colors',
+                  isDisabled
+                    ? 'opacity-40 cursor-not-allowed'
+                    : isSelected
+                    ? 'bg-primary-coral/15 text-primary-coral font-semibold border border-primary-coral/30 cursor-pointer'
+                    : 'hover:bg-bg-inset/80 text-text-primary border border-transparent cursor-pointer',
                 )}
                 onClick={() => {
+                  if (isDisabled) return
                   onSelect(token)
                   handleClose()
                 }}
@@ -112,7 +117,7 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
   )
 
   return (
-    <div className="relative">
+    <div className={cn('relative', open && 'z-50')}>
       {label && <Label className="mb-1 text-xs text-text-tertiary">{label}</Label>}
 
       <Button
@@ -149,7 +154,7 @@ export function TokenSelector({ tokens, selected, onSelect, label }: TokenSelect
               className="fixed inset-0 z-40 cursor-default"
               onClick={handleClose}
             />
-            <div className="absolute left-0 right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-white/15 bg-bg-elevated/95 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-3xl animate-in fade-in-50 zoom-in-95">
+            <div className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-white/15 bg-bg-elevated/95 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-3xl animate-in fade-in-50 zoom-in-95">
               {renderTokenList()}
             </div>
           </>

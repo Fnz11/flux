@@ -53,7 +53,7 @@ const vault: Vault = {
   managerAddress: 'manager-address',
   managerId: 'manager-1',
   status: 'Active',
-  metadata: { displayName: 'Alpha Vault', description: 'Core vault', focusAssets: ['SOL', 'USDC'] },
+  metadata: { displayName: 'Alpha Vault', description: 'Core vault', focusAssets: ['SOL', 'USDC', 'USDT'] },
   performanceFeeBps: 1250,
   managementFeeBps: 200,
   tvl: 500_000,
@@ -96,6 +96,21 @@ describe('SwapForm', () => {
     fireEvent.click(selectors[0])
     fireEvent.click(screen.getByRole('button', { name: /USDT/ }))
     expect(screen.getByText('USDT / USDC')).toBeInTheDocument()
+  })
+
+  it('disables input token in quote token selector', () => {
+    render(<SwapForm preselectedVaultId={vault.id} />)
+    // Select USDT as input token
+    const selectors = screen.getAllByRole('button', { name: /SOL|USDC/ })
+    fireEvent.click(selectors[0])
+    fireEvent.click(screen.getByRole('button', { name: /USDT/ }))
+    expect(screen.getByText('USDT / USDC')).toBeInTheDocument()
+
+    // Open quote token selector (second token selector)
+    const quoteSelector = screen.getByRole('button', { name: /USDC/ })
+    fireEvent.click(quoteSelector)
+    const usdtOption = screen.getByRole('button', { name: /Tether/ })
+    expect(usdtOption).toBeDisabled()
   })
 
   it('updates slippage and minimum output', () => {
@@ -144,6 +159,24 @@ describe('SwapForm', () => {
         }),
       ),
     )
+  })
+
+  it('restricts token options to selected vault focus assets', () => {
+    const customVault: Vault = {
+      ...vault,
+      id: 'custom-vault',
+      metadata: { displayName: 'Custom Vault', description: 'Custom', focusAssets: ['AAA', 'BBB', 'CCC'] },
+    }
+    mocks.vaults = [customVault]
+    render(<SwapForm preselectedVaultId={customVault.id} vaults={[customVault]} />)
+    
+    const selector = screen.getByRole('button', { name: /AAA/ })
+    fireEvent.click(selector)
+    expect(screen.getAllByText('AAA').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('BBB').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('CCC').length).toBeGreaterThan(0)
+    expect(screen.queryByText('SOL')).not.toBeInTheDocument()
+    expect(screen.queryByText('USDC')).not.toBeInTheDocument()
   })
 })
 
@@ -212,11 +245,11 @@ describe('PriceDisplay', () => {
 })
 
 describe('TokenSelector', () => {
-  it('opens with supported tokens and excludes BONK', () => {
+  it('opens with supported tokens', () => {
     render(<TokenSelector tokens={['SOL', 'USDC', 'BONK']} selected="SOL" onSelect={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /SOL/ }))
     expect(screen.getByText('USD Coin')).toBeInTheDocument()
-    expect(screen.queryByText('BONK')).not.toBeInTheDocument()
+    expect(screen.getAllByText('BONK').length).toBeGreaterThan(0)
   })
 
   it('filters tokens by name', () => {
@@ -241,6 +274,16 @@ describe('TokenSelector', () => {
     fireEvent.click(screen.getByRole('button', { name: /USDC/ }))
     expect(onSelect).toHaveBeenCalledWith('USDC')
     expect(screen.queryByPlaceholderText('Search tokens...')).not.toBeInTheDocument()
+  })
+
+  it('disables tokens in disabledTokens list and prevents selecting them', () => {
+    const onSelect = vi.fn()
+    render(<TokenSelector tokens={['SOL', 'USDC', 'USDT']} selected="SOL" disabledTokens={['USDT']} onSelect={onSelect} />)
+    fireEvent.click(screen.getByRole('button', { name: /SOL/ }))
+    const usdtBtn = screen.getByRole('button', { name: /USDT/ })
+    expect(usdtBtn).toBeDisabled()
+    fireEvent.click(usdtBtn)
+    expect(onSelect).not.toHaveBeenCalled()
   })
 })
 

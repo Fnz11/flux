@@ -439,30 +439,7 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 	solMint := "So11111111111111111111111111111111111111112"
 	usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
-	// Fetch latest SOL price from price_histories or price_history if available
-	solPrice := decimal.NewFromFloat(150.0)
-	var pricePoint struct {
-		Price decimal.Decimal
-	}
-	if db.Migrator().HasTable("price_histories") {
-		if err := db.Table("price_histories").
-			Select("price").
-			Where("token IN ?", []string{"SOL", solMint}).
-			Order("fetched_at DESC").
-			Limit(1).
-			Scan(&pricePoint).Error; err == nil && !pricePoint.Price.IsZero() {
-			solPrice = pricePoint.Price
-		}
-	} else if db.Migrator().HasTable("price_history") {
-		if err := db.Table("price_history").
-			Select("price").
-			Where("token IN ?", []string{"SOL", solMint}).
-			Order("fetched_at DESC").
-			Limit(1).
-			Scan(&pricePoint).Error; err == nil && !pricePoint.Price.IsZero() {
-			solPrice = pricePoint.Price
-		}
-	}
+	solPrice := decimal.NewFromFloat(75.33197084)
 
 	holdings := make(map[string]decimal.Decimal)
 	var hasDepositTrades bool

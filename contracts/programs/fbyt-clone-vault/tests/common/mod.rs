@@ -196,7 +196,7 @@ pub fn initialize_vault_with_params(
         performance_fee_bps,
         management_fee_bps,
         lockup_period,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
     let ix = Instruction {
         program_id: fbyt_clone_vault::ID,

@@ -80,7 +80,7 @@ type CreateVaultParams struct {
 	PerformanceFeeBps     uint16
 	ManagementFeeBps      uint16
 	LockupPeriodSec       int64
-	AllowedOutputMints    [4]solana.PublicKey
+	AllowedOutputMints    []solana.PublicKey
 	RecentBlockhash       solana.Hash
 	ComputeUnitPrice      uint64 // micro-lamports per CU
 	ComputeUnitLimit      uint32 // default 200000
@@ -134,9 +134,12 @@ func BuildInitializeVaultTx(programID solana.PublicKey, p CreateVaultParams) (*P
 	if err := binary.Write(buf, binary.LittleEndian, p.LockupPeriodSec); err != nil {
 		return nil, err
 	}
-	// allowed_output_mints: [Pubkey; 4]
-	for i := 0; i < 4; i++ {
-		buf.Write(p.AllowedOutputMints[i].Bytes())
+	// allowed_output_mints: Vec<Pubkey>
+	if err := binary.Write(buf, binary.LittleEndian, uint32(len(p.AllowedOutputMints))); err != nil {
+		return nil, err
+	}
+	for _, mint := range p.AllowedOutputMints {
+		buf.Write(mint.Bytes())
 	}
 
 	// Accounts:

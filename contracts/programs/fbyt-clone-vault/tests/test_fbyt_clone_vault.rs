@@ -268,7 +268,7 @@ fn test_fee_cap_enforcement_on_initialization() {
         performance_fee_bps: 6000,
         management_fee_bps: 5000,
         lockup_period: 0,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
     let ix_invalid = Instruction {
         program_id,
@@ -297,7 +297,7 @@ fn test_fee_cap_enforcement_on_initialization() {
         performance_fee_bps: 5000,
         management_fee_bps: 5000,
         lockup_period: 0,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
     let ix_valid = Instruction {
         program_id,
@@ -401,7 +401,7 @@ fn test_rejects_double_init() {
         performance_fee_bps: 1000,
         management_fee_bps: 500,
         lockup_period: 0,
-        allowed_output_mints: [Pubkey::default(); 4],
+        allowed_output_mints: vec![],
     };
     let ix = Instruction {
         program_id: fbyt_clone_vault::ID,

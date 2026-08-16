@@ -47,7 +47,7 @@ pub fn handler(
     performance_fee_bps: u16,
     management_fee_bps: u16,
     lockup_period: i64,
-    allowed_output_mints: [Pubkey; 4],
+    allowed_output_mints: Vec<Pubkey>,
 ) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
     let clock = Clock::get()?;
@@ -56,13 +56,17 @@ pub fn handler(
         (performance_fee_bps as u32) + (management_fee_bps as u32) <= 10000,
         crate::errors::VaultError::FeeTooHigh
     );
+    require!(
+        allowed_output_mints.len() <= 100,
+        crate::errors::VaultError::TooManyOutputMints
+    );
 
     vault.manager = ctx.accounts.manager.key();
     vault.creator = ctx.accounts.manager.key();
     vault.pending_manager = None;
+    vault.allowed_output_mints = allowed_output_mints.clone();
     vault.deposit_mint = ctx.accounts.deposit_mint.key();
     vault.share_token_mint = ctx.accounts.share_token_mint.key();
-    vault.allowed_output_mints = allowed_output_mints;
     vault.min_raise_amount = min_raise_amount;
     vault.performance_fee_bps = performance_fee_bps;
     vault.management_fee_bps = management_fee_bps;

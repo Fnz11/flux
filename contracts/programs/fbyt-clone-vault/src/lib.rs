@@ -24,7 +24,7 @@ pub mod fbyt_clone_vault {
         performance_fee_bps: u16,
         management_fee_bps: u16,
         lockup_period: i64,
-        allowed_output_mints: [Pubkey; 4],
+        allowed_output_mints: Vec<Pubkey>,
     ) -> Result<()> {
         instructions::initialize_vault::handler(
             ctx,

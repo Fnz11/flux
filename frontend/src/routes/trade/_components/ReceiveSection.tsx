@@ -6,6 +6,7 @@ export interface ReceiveSectionProps {
   tokens: string[]
   outputToken: string
   onOutputTokenChange: (token: string) => void
+  disabledTokens?: string[]
 }
 
 export function ReceiveSection({
@@ -13,6 +14,7 @@ export function ReceiveSection({
   tokens,
   outputToken,
   onOutputTokenChange,
+  disabledTokens,
 }: ReceiveSectionProps) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-150 hover:border-white/20">
@@ -25,6 +27,7 @@ export function ReceiveSection({
           tokens={tokens}
           selected={outputToken}
           onSelect={onOutputTokenChange}
+          disabledTokens={disabledTokens}
         />
       </div>
     </div>

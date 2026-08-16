@@ -307,7 +307,6 @@ fn test_execute_trade_wrong_manager() {
 #[test]
 fn test_execute_trade_wrong_output_mint() {
     let (mut svm, manager, _program_id) = setup_svm();
-    // allowed_output_mints defaults to [Pubkey::default(); 4], so a freshly
     // created mint is NOT allowlisted and must be rejected (InvalidMint).
     let (vault_pda, vault_authority_pda, deposit_mint, _good_out, input_ata, _good_out_ata) =
         setup_active_trade_vault(&mut svm, &manager);
