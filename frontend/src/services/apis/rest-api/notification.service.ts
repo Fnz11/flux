@@ -9,8 +9,10 @@ export async function getNotifications(params?: GetNotificationsParams): Promise
   if (params?.page) q.set('page', String(params.page))
   if (params?.limit) q.set('limit', String(params.limit))
   const s = q.toString()
-  const res = await api.get<NotificationsResponse>(`/notifications${s ? '?' + s : ''}`)
-  return { items: (res.items ?? []).map(mapApiNotification), total: res.total ?? 0, unread: res.unread ?? 0 }
+  const res = await api.get<NotificationsResponse | { data?: NotificationsResponse }>(`/notifications${s ? '?' + s : ''}`)
+  const payload = (res && typeof res === 'object' && 'data' in res && res.data) ? res.data : res
+  const items = (payload as NotificationsResponse)?.items ?? (Array.isArray(payload) ? payload : [])
+  return { items: items.map(mapApiNotification), total: (payload as NotificationsResponse)?.total ?? 0, unread: (payload as NotificationsResponse)?.unread ?? 0 }
 }
 export async function createNotification(input: { type: string; title: string; message: string }): Promise<Notification> {
   const raw = await api.post<ApiNotification>('/notifications', input)

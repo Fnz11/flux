@@ -20,9 +20,11 @@ export interface MetricsResponse {
 
 export async function getMetrics(metric: string, period: string = '30d'): Promise<SeriesPoint[]> {
   try {
-    const res = await api.get<MetricsResponse>('/metrics/series', { metric, period })
-    if (!res || !res.series) return []
-    return res.series.map(point => ({
+    const res = await api.get<MetricsResponse | { data?: MetricsResponse }>('/metrics/series', { metric, period })
+    const payload = (res && typeof res === 'object' && 'data' in res && res.data) ? res.data : res
+    const series = (payload as MetricsResponse)?.series
+    if (!series || !Array.isArray(series)) return []
+    return series.map(point => ({
       date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       value: parseFloat(point.value) || 0
     }))

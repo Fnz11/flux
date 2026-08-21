@@ -40,14 +40,16 @@ interface LeaderboardResponseEnvelope {
 }
 
 export async function getMarketStats(): Promise<MarketStats> {
-  const res = await api.get<MarketStatsResponse>('/metrics/market')
-  return res.data
+  const res = await api.get<MarketStatsResponse | MarketStats>('/metrics/market')
+  const payload = (res && typeof res === 'object' && 'data' in res && res.data) ? res.data : res
+  return ((payload as { data?: MarketStats })?.data ?? payload) as MarketStats
 }
 
 export async function getLeaderboard(type: LeaderboardType, limit?: number, period?: string): Promise<LeaderboardItem[]> {
   const params: Record<string, string | number> = { type }
   if (limit != null) params.limit = limit
   if (period) params.period = period
-  const res = await api.get<LeaderboardResponseEnvelope>('/metrics/leaderboard', params)
-  return res.data?.items ?? []
+  const res = await api.get<LeaderboardResponseEnvelope | LeaderboardResponse>('/metrics/leaderboard', params)
+  const payload = (res && typeof res === 'object' && 'data' in res && res.data) ? res.data : res
+  return ((payload as { data?: LeaderboardResponse })?.data?.items ?? (payload as LeaderboardResponse)?.items ?? (Array.isArray(payload) ? payload : []))
 }

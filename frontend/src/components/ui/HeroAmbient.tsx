@@ -10,14 +10,14 @@ export const HeroAmbient: React.FC<HeroAmbientProps> = ({ variant = 'full', clas
   return (
     <div
       className={cn(
-        'pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-screen max-w-7xl h-[560px] overflow-hidden select-none -z-10',
+        'pointer-events-none fixed -top-24 left-1/2 -translate-x-1/2 w-screen h-screen overflow-hidden select-none -z-10',
         className,
       )}
       aria-hidden="true"
     >
       {/* Stakent Dotted Background Mesh */}
       <svg
-        className="absolute inset-0 h-full w-full opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black_50%,transparent_90%)]"
+        className="absolute inset-0 h-full w-full opacity-[0.12] [mask-image:radial-gradient(ellipse_at_top,black_50%,transparent_90%)]"
         xmlns="http://www.w3.org/2000/svg"
         width="100%"
         height="100%"
@@ -38,9 +38,12 @@ export const HeroAmbient: React.FC<HeroAmbientProps> = ({ variant = 'full', clas
       {/* Primary Coral & Gold Glow Ambient */}
       <div className="absolute top-[-5%] left-1/2 -translate-x-1/2 h-[340px] w-[800px] sm:w-[1000px] rounded-full bg-gradient-to-b from-primary-coral/20 via-primary-amber/12 to-transparent blur-[140px] opacity-70" />
 
+      <div className="absolute bottom-[-5%] left-0 h-[340px] w-[800px] sm:w-[1000px] rounded-full bg-gradient-to-b from-primary-coral/20 via-primary-amber/12 to-transparent blur-[140px] opacity-20" />
+
       {/* Secondary Stakent Deep Blue Accent Glow */}
       <div className="absolute top-10 right-[10%] h-[280px] w-[500px] rounded-full bg-indigo-600/10 blur-[130px]" />
 
+      <div className="absolute bottom-5 right-5 h-[280px] w-[500px] rounded-full bg-indigo-600/5 blur-[130px]" />
       {/* Soft Golden Ring Arc */}
       {variant !== 'amber' && (
         <svg

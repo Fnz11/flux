@@ -1,10 +1,14 @@
 import { useMemo } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { usePortfolioQuery } from '@/services/hooks/useQuery/usePortfolioQuery'
 import type { PortfolioPosition } from '@/types'
 
 export function usePortfolioPnl(walletAddressOrPositions?: string | PortfolioPosition[]) {
+  const { publicKey } = useWallet()
   const isString = typeof walletAddressOrPositions === 'string'
-  const walletAddress = isString ? walletAddressOrPositions : ''
+  const walletAddress = isString
+    ? walletAddressOrPositions
+    : (!walletAddressOrPositions && publicKey ? publicKey.toBase58() : '')
   const { data: queriedPositions = [] } = usePortfolioQuery(walletAddress)
 
   const positions = useMemo(() => {

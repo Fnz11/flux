@@ -141,12 +141,12 @@ export function mapApiPortfolioToPortfolio(raw: RawApiPortfolioPosition | null |
     vaultId: raw.vaultId ?? raw.vault_id ?? '',
     vaultAddress: raw.vaultAddress ?? raw.vault_address ?? '',
     vaultName: raw.vaultName ?? raw.vault_name ?? '',
-    sharesOwned: typeof raw.sharesOwned === 'number' ? raw.sharesOwned : (raw.shares_owned ?? 0),
-    totalInvested: typeof raw.totalInvested === 'number' ? raw.totalInvested : (raw.total_invested_value ?? 0),
-    averageEntryPrice: typeof raw.averageEntryPrice === 'number' ? raw.averageEntryPrice : (raw.average_entry_price ?? 0),
-    currentValue: typeof raw.currentValue === 'number' ? raw.currentValue : (raw.current_value ?? 0),
-    pnl: typeof raw.pnl === 'number' ? raw.pnl : (raw.pnl ?? 0),
-    pnlPercent: typeof raw.pnlPercent === 'number' ? raw.pnlPercent : (raw.pnl_percent ?? 0),
+    sharesOwned: typeof raw.sharesOwned === 'number' ? raw.sharesOwned : Number(raw.shares_owned ?? 0),
+    totalInvested: typeof raw.totalInvested === 'number' ? raw.totalInvested : Number(raw.total_invested_value ?? 0),
+    averageEntryPrice: typeof raw.averageEntryPrice === 'number' ? raw.averageEntryPrice : Number(raw.average_entry_price ?? 0),
+    currentValue: typeof raw.currentValue === 'number' ? raw.currentValue : Number(raw.current_value ?? 0),
+    pnl: typeof raw.pnl === 'number' ? raw.pnl : Number(raw.pnl ?? 0),
+    pnlPercent: typeof raw.pnlPercent === 'number' ? raw.pnlPercent : Number(raw.pnl_percent ?? 0),
   }
 }
 
