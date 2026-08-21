@@ -5,6 +5,7 @@ import { SectionCard } from '@/components/ui/SectionCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { TokenIcon } from '@/components/ui/TokenIcon'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { VaultAllocationChart } from './VaultAllocationChart'
 import type { Vault } from '@/types'
 
 interface VaultAssetsPanelProps {
@@ -87,33 +88,38 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
       }
     >
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="animate-pulse relative flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3 shadow-xs"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="size-7 rounded-full shrink-0 bg-bg-elevated" />
-                  <div className="space-y-1">
-                    <div className="h-3.5 w-12 rounded bg-bg-elevated" />
-                    <div className="h-2.5 w-16 rounded bg-bg-elevated" />
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse relative flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3 shadow-xs"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="size-7 rounded-full shrink-0 bg-bg-elevated" />
+                    <div className="space-y-1">
+                      <div className="h-3.5 w-12 rounded bg-bg-elevated" />
+                      <div className="h-2.5 w-16 rounded bg-bg-elevated" />
+                    </div>
                   </div>
+                  <div className="h-4 w-10 rounded-full bg-bg-elevated" />
                 </div>
-                <div className="h-4 w-10 rounded-full bg-bg-elevated" />
-              </div>
 
-              <div className="mt-3 flex items-baseline justify-between">
-                <div className="h-3.5 w-14 rounded bg-bg-elevated" />
-                <div className="h-3.5 w-16 rounded bg-bg-elevated" />
-              </div>
+                <div className="mt-3 flex items-baseline justify-between">
+                  <div className="h-3.5 w-14 rounded bg-bg-elevated" />
+                  <div className="h-3.5 w-16 rounded bg-bg-elevated" />
+                </div>
 
-              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-bg-elevated">
-                <div className="h-full w-2/3 rounded-full bg-bg-inset" />
+                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-bg-elevated">
+                  <div className="h-full w-2/3 rounded-full bg-bg-inset" />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="w-full lg:w-[260px] xl:w-[280px] shrink-0 rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-4 animate-pulse flex flex-col items-center justify-center min-h-[160px]">
+            <div className="size-24 rounded-full border-4 border-bg-elevated" />
+          </div>
         </div>
       ) : !vaultId ? (
         <div className="rounded-xl border border-border-subtle/50 bg-bg-inset/40 p-4">
@@ -134,52 +140,58 @@ export function VaultAssetsPanel({ vaultId, vaultName, vaults = [], onVaultChang
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {effectiveBalances.map((asset) => {
-            const unitPrice = (asset.usdValue || 0) / (asset.amount || 1)
-            const allocPct = totalUsdValue > 0 ? Math.min(100, Math.round(((asset.usdValue || 0) / totalUsdValue) * 100)) : 0
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {effectiveBalances.map((asset) => {
+              const unitPrice = (asset.usdValue || 0) / (asset.amount || 1)
+              const allocPct = totalUsdValue > 0 ? Math.min(100, Math.round(((asset.usdValue || 0) / totalUsdValue) * 100)) : 0
 
-            return (
-              <div
-                key={asset.symbol || asset.mint}
-                className="relative flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3 hover:border-primary-coral/40 transition-colors shadow-xs"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TokenIcon symbol={asset.symbol} className="size-7" />
-                    <div>
-                      <span className="text-xs font-bold text-text-primary block">{asset.symbol}</span>
-                      <span className="text-[10px] text-text-tertiary font-mono">
-                        ${unitPrice > 10 ? unitPrice.toFixed(2) : unitPrice.toFixed(4)} / unit
-                      </span>
+              return (
+                <div
+                  key={asset.symbol || asset.mint}
+                  className="relative flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3 hover:border-primary-coral/40 transition-colors shadow-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TokenIcon symbol={asset.symbol} className="size-7" />
+                      <div>
+                        <span className="text-xs font-bold text-text-primary block">{asset.symbol}</span>
+                        <span className="text-[10px] text-text-tertiary font-mono">
+                          ${unitPrice > 10 ? unitPrice.toFixed(2) : unitPrice.toFixed(4)} / unit
+                        </span>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-bold text-primary-gold bg-primary-gold/10 px-2 py-0.5 rounded-full border border-primary-gold/20 font-mono">
+                      {allocPct}%
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-primary-gold bg-primary-gold/10 px-2 py-0.5 rounded-full border border-primary-gold/20 font-mono">
-                    {allocPct}%
-                  </span>
-                </div>
 
-                <div className="mt-3 flex items-baseline justify-between font-mono">
-                  <span className="text-xs font-semibold text-text-primary">
-                    {asset.amount.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: asset.amount < 1 && asset.amount > 0 ? 6 : 4,
-                    })}
-                  </span>
-                  <span className="text-xs font-bold text-emerald-400">
-                    ${(asset.usdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
+                  <div className="mt-3 flex items-baseline justify-between font-mono">
+                    <span className="text-xs font-semibold text-text-primary">
+                      {asset.amount.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: asset.amount < 1 && asset.amount > 0 ? 6 : 4,
+                      })}
+                    </span>
+                    <span className="text-xs font-bold text-emerald-400">
+                      ${(asset.usdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
 
-                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-bg-elevated">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary-coral to-primary-gold rounded-full"
-                    style={{ width: `${allocPct}%` }}
-                  />
+                  <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-bg-elevated">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary-coral to-primary-gold rounded-full"
+                      style={{ width: `${allocPct}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+
+          <div className="w-full lg:w-[260px] xl:w-[280px] shrink-0 rounded-xl border border-border-subtle/70 bg-bg-inset/60 p-3.5 shadow-xs flex flex-col justify-between">
+            <VaultAllocationChart balances={effectiveBalances} totalUsdValue={totalUsdValue} />
+          </div>
         </div>
       )}
     </SectionCard>

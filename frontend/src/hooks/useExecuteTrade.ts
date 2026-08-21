@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 import { BN } from 'bn.js'
 import { toast } from 'react-hot-toast'
+import { toastSuccess, toastError } from '@/lib/toast'
 import { useTransactionStore } from '@/stores'
 import { api, getAuthToken } from '@/lib/api'
 import { ensureWalletAuthenticated, isTokenExpired } from '@/services/apis/rest-api/auth.service'
@@ -140,14 +141,14 @@ export function useExecuteTrade() {
 
               // If vault is in Fundraising status and current user is manager, auto-activate if min raise met
               try {
-                let vaultAccount: { status?: { fundraising?: object; active?: object; Fundraising?: object; Active?: object } | number; manager?: PublicKey } | null = null
+                let vaultAccount: { status?: unknown; manager?: PublicKey } | null = null
                 if (program.account && 'vaultState' in program.account) {
-                  vaultAccount = await (program.account as unknown as { vaultState: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object; Fundraising?: object; Active?: object } | number; manager?: PublicKey }> } }).vaultState.fetch(vaultPubkey).catch((e) => {
+                  vaultAccount = await (program.account as unknown as { vaultState: { fetch: (pk: PublicKey) => Promise<{ status?: unknown; manager?: PublicKey }> } }).vaultState.fetch(vaultPubkey).catch((e) => {
                     console.error('fetch vaultState failed', e)
                     return null
                   })
                 } else if (program.account && 'vault' in program.account) {
-                  vaultAccount = await (program.account as unknown as { vault: { fetch: (pk: PublicKey) => Promise<{ status?: { fundraising?: object; active?: object; Fundraising?: object; Active?: object } | number; manager?: PublicKey }> } }).vault.fetch(vaultPubkey).catch((e) => {
+                  vaultAccount = await (program.account as unknown as { vault: { fetch: (pk: PublicKey) => Promise<{ status?: unknown; manager?: PublicKey }> } }).vault.fetch(vaultPubkey).catch((e) => {
                     console.error('fetch vault failed', e)
                     return null
                   })
@@ -159,9 +160,9 @@ export function useExecuteTrade() {
                   let isFundraising = false
                   if (vaultAccount.status !== undefined && vaultAccount.status !== null) {
                     if (typeof vaultAccount.status === 'object') {
-                      isFundraising = 'fundraising' in vaultAccount.status || 'Fundraising' in vaultAccount.status
+                      isFundraising = 'fundraising' in (vaultAccount.status as Record<string, unknown>) || 'Fundraising' in (vaultAccount.status as Record<string, unknown>)
                     } else if (typeof vaultAccount.status === 'string') {
-                      isFundraising = vaultAccount.status.toLowerCase() === 'fundraising'
+                      isFundraising = (vaultAccount.status as string).toLowerCase() === 'fundraising'
                     } else {
                       isFundraising = vaultAccount.status === 0
                     }
@@ -323,8 +324,11 @@ export function useExecuteTrade() {
         }
 
         moveToHistory(txId)
+        toastSuccess(`Swapped ${params.amountIn} ${params.inputToken} for ~${params.amountOut.toFixed(4)} ${params.outputToken}`)
       } catch (err) {
-        updateStatus(txId, 'failed', err instanceof Error ? err.message : 'Trade failed')
+        const errorMsg = err instanceof Error ? err.message : 'Trade failed'
+        updateStatus(txId, 'failed', errorMsg)
+        toastError(errorMsg)
         throw err
       } finally {
         setIsLoading(false)

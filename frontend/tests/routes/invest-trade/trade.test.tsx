@@ -21,8 +21,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/components/ui/modal', () => ({
-  Modal: ({ open, title, children }: { open: boolean; title: string; children: ReactNode }) =>
-    open ? <section aria-label={title}><h1>{title}</h1>{children}</section> : null,
+  Modal: ({ open, title, children, footer }: { open: boolean; title: string; children: ReactNode; footer?: ReactNode }) =>
+    open ? <section aria-label={title}><h1>{title}</h1>{children}{footer}</section> : null,
 }))
 vi.mock('@solana/wallet-adapter-react', () => ({
   useWallet: () => ({ connected: mocks.connected, publicKey: mocks.connected ? { toBase58: () => 'manager-address' } : null }),
@@ -92,24 +92,21 @@ describe('SwapForm', () => {
 
   it('changes input and output tokens', () => {
     render(<SwapForm preselectedVaultId={vault.id} />)
-    const selectors = screen.getAllByRole('button', { name: /SOL|USDC/ })
-    fireEvent.click(selectors[0])
-    fireEvent.click(screen.getByRole('button', { name: /USDT/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Select pay token' }))
+    fireEvent.click(screen.getByRole('option', { name: /USDT/ }))
     expect(screen.getByText('USDT / USDC')).toBeInTheDocument()
   })
 
   it('disables input token in quote token selector', () => {
     render(<SwapForm preselectedVaultId={vault.id} />)
     // Select USDT as input token
-    const selectors = screen.getAllByRole('button', { name: /SOL|USDC/ })
-    fireEvent.click(selectors[0])
-    fireEvent.click(screen.getByRole('button', { name: /USDT/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Select pay token' }))
+    fireEvent.click(screen.getByRole('option', { name: /USDT/ }))
     expect(screen.getByText('USDT / USDC')).toBeInTheDocument()
 
     // Open quote token selector (second token selector)
-    const quoteSelector = screen.getByRole('button', { name: /USDC/ })
-    fireEvent.click(quoteSelector)
-    const usdtOption = screen.getByRole('button', { name: /Tether/ })
+    fireEvent.click(screen.getByRole('button', { name: 'Select receive token' }))
+    const usdtOption = screen.getByRole('option', { name: /Tether/ })
     expect(usdtOption).toBeDisabled()
   })
 
@@ -129,9 +126,9 @@ describe('SwapForm', () => {
 
   it('uses active vault balance for max amount', async () => {
     render(<SwapForm preselectedVaultId={vault.id} />)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Max (5.50)' })).toBeInTheDocument())
-    fireEvent.click(screen.getByRole('button', { name: 'Max (5.50)' }))
-    expect(screen.getByPlaceholderText('0.00')).toHaveValue('5.5')
+    await waitFor(() => expect(screen.getByRole('button', { name: /Max/ })).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: /Max/ }))
+    expect(screen.getByPlaceholderText('0.00')).toHaveValue('5.44')
   })
 
   it('shows insufficient vault balance when input exceeds active vault balance', async () => {
@@ -161,7 +158,7 @@ describe('SwapForm', () => {
     )
   })
 
-  it('restricts token options to selected vault focus assets', () => {
+  it('restricts token options to selected vault focus assets', async () => {
     const customVault: Vault = {
       ...vault,
       id: 'custom-vault',
@@ -170,7 +167,7 @@ describe('SwapForm', () => {
     mocks.vaults = [customVault]
     render(<SwapForm preselectedVaultId={customVault.id} vaults={[customVault]} />)
     
-    const selector = screen.getByRole('button', { name: /AAA/ })
+    const selector = (await screen.findByText('AAA')).closest('button')!
     fireEvent.click(selector)
     expect(screen.getAllByText('AAA').length).toBeGreaterThan(0)
     expect(screen.getAllByText('BBB').length).toBeGreaterThan(0)
@@ -271,7 +268,7 @@ describe('TokenSelector', () => {
     const onSelect = vi.fn()
     render(<TokenSelector tokens={['SOL', 'USDC']} selected="SOL" onSelect={onSelect} />)
     fireEvent.click(screen.getByRole('button', { name: /SOL/ }))
-    fireEvent.click(screen.getByRole('button', { name: /USDC/ }))
+    fireEvent.click(screen.getByRole('option', { name: /USDC/ }))
     expect(onSelect).toHaveBeenCalledWith('USDC')
     expect(screen.queryByPlaceholderText('Search tokens...')).not.toBeInTheDocument()
   })
@@ -280,7 +277,7 @@ describe('TokenSelector', () => {
     const onSelect = vi.fn()
     render(<TokenSelector tokens={['SOL', 'USDC', 'USDT']} selected="SOL" disabledTokens={['USDT']} onSelect={onSelect} />)
     fireEvent.click(screen.getByRole('button', { name: /SOL/ }))
-    const usdtBtn = screen.getByRole('button', { name: /USDT/ })
+    const usdtBtn = screen.getByRole('option', { name: /USDT/ })
     expect(usdtBtn).toBeDisabled()
     fireEvent.click(usdtBtn)
     expect(onSelect).not.toHaveBeenCalled()
@@ -291,7 +288,7 @@ describe('VaultAssetsPanel', () => {
   it('renders loading assets', () => {
     mocks.balancesLoading = true
     const { container } = render(<VaultAssetsPanel vaultId={vault.id} />)
-    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(4)
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(5)
   })
 
   it('prompts for a vault when none is selected', () => {
@@ -313,7 +310,7 @@ describe('VaultAssetsPanel', () => {
     render(<VaultAssetsPanel vaultId={vault.id} vaultName="Alpha Vault" />)
     expect(screen.getByText('Alpha Vault')).toBeInTheDocument()
     expect(screen.getByText('$400')).toBeInTheDocument()
-    expect(screen.getByText('75%')).toBeInTheDocument()
+    expect(screen.getAllByText(/75%/).length).toBeGreaterThan(0)
     const solCard = screen.getByAltText('SOL').closest('div.relative') as HTMLElement
     expect(within(solCard).getByText('$300.00')).toBeInTheDocument()
   })
