@@ -17,6 +17,7 @@ import {
 } from '@/lib/transactions'
 import { useTransactionStore } from '@/stores'
 import { useQueryClient } from '@tanstack/react-query'
+import { formatError } from '@/lib/errors'
 
 interface DepositParams {
   vaultAddress: string
@@ -320,7 +321,7 @@ export function useDeposit() {
         updateStatus(txId, 'success')
         return signature
       } catch (err: unknown) {
-        let message = err instanceof Error ? err.message : 'Deposit failed'
+        let message = formatError(err, 'Deposit failed')
         const sendTxErr = err as { getLogs?: () => string[]; logs?: string[] }
         const logs = (typeof sendTxErr?.getLogs === 'function' ? sendTxErr.getLogs() : sendTxErr?.logs) || []
         const insufficientLog = logs.find((l) => l.includes('insufficient lamports') || l.includes('custom program error: 0x1'))

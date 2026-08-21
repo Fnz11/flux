@@ -17,6 +17,7 @@ import {
 } from '@/lib/transactions'
 import { useTransactionStore } from '@/stores'
 import { useQueryClient } from '@tanstack/react-query'
+import { formatError } from '@/lib/errors'
 
 interface WithdrawParams {
   vaultAddress: string
@@ -258,9 +259,9 @@ export function useWithdraw() {
         updateStatus(txId, 'success')
         return signature
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Withdrawal failed'
+        const message = formatError(err, 'Withdrawal failed')
         updateStatus(txId, 'failed', message)
-        throw err
+        throw new Error(message)
       }
     },
     [wallet, connection, addTransaction, updateStatus],

@@ -15,10 +15,10 @@ import {
   sendTransaction,
   confirmTransactionHelper,
   getAssociatedTokenAddressSync,
-  createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
   TOKEN_PROGRAM_ID,
 } from '@/lib/transactions'
+import { formatError } from '@/lib/errors'
 import type { SyncTradeRequest, TradeType } from '@/types'
 
 import { getTokenMeta } from '@/constants/tokens'
@@ -326,10 +326,10 @@ export function useExecuteTrade() {
         moveToHistory(txId)
         toastSuccess(`Swapped ${params.amountIn} ${params.inputToken} for ~${params.amountOut.toFixed(4)} ${params.outputToken}`)
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Trade failed'
+        const errorMsg = formatError(err, 'Trade failed')
         updateStatus(txId, 'failed', errorMsg)
         toastError(errorMsg)
-        throw err
+        throw new Error(errorMsg)
       } finally {
         setIsLoading(false)
       }

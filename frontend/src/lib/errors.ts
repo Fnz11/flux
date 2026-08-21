@@ -1,4 +1,4 @@
-const ANCHOR_VAULT_ERRORS: Record<number, string> = {
+export const ANCHOR_VAULT_ERRORS: Record<number, string> = {
   6000: 'Only the vault manager can perform this action (Unauthorized)',
   6001: 'Invalid Pyth price feed account',
   6002: 'Math overflow or underflow detected',
@@ -19,15 +19,49 @@ const ANCHOR_VAULT_ERRORS: Record<number, string> = {
   6017: 'Invalid price feed for token mint',
   6018: 'Vault is currently paused',
   6019: 'Share token mint mismatch',
+  6020: 'Too many output mints allowed',
 }
 
-const ANCHOR_FRAMEWORK_ERRORS: Record<number, string> = {
+export const ANCHOR_VAULT_ERROR_NAMES: Record<string, string> = {
+  Unauthorized: 'Only the vault manager can perform this action (Unauthorized)',
+  InvalidPythFeed: 'Invalid Pyth price feed account',
+  MathOverflow: 'Math overflow or underflow detected',
+  StalePrice: 'Pyth price is too old / stale',
+  VaultLocked: 'Vault is currently in Fundraising phase and not active yet',
+  MinRaiseNotMet: 'Minimum raise amount not met to activate vault',
+  LockupActive: 'Withdrawal lockup period has not ended yet',
+  InsufficientVaultBalance: 'Insufficient vault balance for operation',
+  InvalidTradeParams: 'Invalid trade parameters',
+  InvalidAmount: 'Amount must be greater than zero',
+  FeeTooHigh: 'Fee exceeds maximum allowed (100%)',
+  InvalidMint: 'Invalid token mint: token is not in vault focus assets whitelist',
+  SubtractionUnderflow: 'Subtraction underflow',
+  MultiplicationOverflow: 'Multiplication overflow',
+  DivisionByZero: 'Division by zero',
+  CastOverflow: 'Type cast overflow',
+  PriceConfidenceTooWide: 'Price confidence interval is too wide',
+  InvalidPriceFeedForMint: 'Invalid price feed for token mint',
+  VaultPaused: 'Vault is currently paused',
+  ShareMintMismatch: 'Share token mint mismatch',
+  TooManyOutputMints: 'Too many output mints allowed',
+}
+
+export const ANCHOR_FRAMEWORK_ERRORS: Record<number, string> = {
   3000: 'Account missing',
   3001: 'Account does not exist',
   3002: 'Failed to serialize account',
   3003: 'Failed to deserialize account',
   3007: 'Account owned by wrong program',
   3012: 'Account not initialized on-chain',
+}
+
+export const ANCHOR_FRAMEWORK_ERROR_NAMES: Record<string, string> = {
+  AccountMissing: 'Account missing',
+  AccountDoesNotExist: 'Account does not exist',
+  AccountDidNotSerialize: 'Failed to serialize account',
+  AccountDidNotDeserialize: 'Failed to deserialize account structure',
+  AccountOwnedByWrongProgram: 'Account owned by wrong program',
+  AccountNotInitialized: 'Vault or oracle account is not initialized on-chain',
 }
 
 export function formatError(err: unknown, fallback: string = 'An unexpected error occurred'): string {
@@ -47,7 +81,10 @@ export function formatError(err: unknown, fallback: string = 'An unexpected erro
     return 'Transaction rejected by user'
   }
 
-  if (str.includes('0x1') || str.includes('insufficient lamports') || str.includes('Insufficient funds')) {
+  if (
+    /custom program error:\s*0x1\b/i.test(str) ||
+    /\b(?:insufficient lamports|insufficient funds)\b/i.test(str)
+  ) {
     return 'Insufficient SOL in wallet to pay transaction fees or rent'
   }
 
@@ -57,7 +94,7 @@ export function formatError(err: unknown, fallback: string = 'An unexpected erro
     if (rawMsg) return rawMsg
   }
 
-  const customNumMatch = str.match(/(?:Custom|Error Number):\s*(\d+)/i)
+  const customNumMatch = str.match(/(?:"?Custom"?|Error Number):\s*(\d+)/i)
   if (customNumMatch && customNumMatch[1]) {
     const code = parseInt(customNumMatch[1], 10)
     if (ANCHOR_VAULT_ERRORS[code]) return ANCHOR_VAULT_ERRORS[code]
@@ -74,26 +111,9 @@ export function formatError(err: unknown, fallback: string = 'An unexpected erro
   const codeNameMatch = str.match(/Error Code:\s*([a-zA-Z0-9_]+)/i)
   if (codeNameMatch && codeNameMatch[1]) {
     const name = codeNameMatch[1].trim()
-    switch (name) {
-      case 'InvalidMint':
-        return 'Invalid token mint: token is not in vault focus assets whitelist'
-      case 'VaultLocked':
-        return 'Vault is currently in Fundraising phase and not active yet'
-      case 'MinRaiseNotMet':
-        return 'Minimum raise amount not met'
-      case 'AccountNotInitialized':
-        return 'Vault or oracle account is not initialized on-chain'
-      case 'AccountOwnedByWrongProgram':
-        return 'Account owned by wrong program'
-      case 'AccountDidNotDeserialize':
-        return 'Failed to deserialize account structure'
-      case 'Unauthorized':
-        return 'Only the vault manager can perform this action'
-      case 'InsufficientVaultBalance':
-        return 'Insufficient vault balance for operation'
-      default:
-        return `Contract error: ${name}`
-    }
+    if (ANCHOR_VAULT_ERROR_NAMES[name]) return ANCHOR_VAULT_ERROR_NAMES[name]
+    if (ANCHOR_FRAMEWORK_ERROR_NAMES[name]) return ANCHOR_FRAMEWORK_ERROR_NAMES[name]
+    return `Contract error: ${name}`
   }
 
   const cleaned = str.replace(/^Error:\s*/i, '').trim()
