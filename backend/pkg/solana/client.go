@@ -189,7 +189,9 @@ func (c *Client) GetAccountInfo(ctx context.Context, pubkey solana.PublicKey) (*
 	defer cancel()
 
 	result, err := c.execute(func() (any, error) {
-		res, err := c.rpcClient.GetAccountInfo(ctx, pubkey)
+		res, err := c.rpcClient.GetAccountInfoWithOpts(ctx, pubkey, &rpc.GetAccountInfoOpts{
+			Commitment: rpc.CommitmentConfirmed,
+		})
 		if err != nil {
 			return nil, err
 		}

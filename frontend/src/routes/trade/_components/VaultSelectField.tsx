@@ -33,7 +33,7 @@ export function VaultSelectField({ vaults, isLoading, onVaultChange }: VaultSele
                       const isFundraising = sel.status?.toLowerCase() === 'fundraising'
                       return (
                         <span className="flex items-center gap-1.5 truncate">
-                          {isFundraising && <Lock className="size-3 text-status-warning shrink-0" />}
+                          {isFundraising && <Lock className="size-3 text-status-warn shrink-0" />}
                           <span className="truncate">{sel.metadata?.displayName || `Vault ${sel.id.slice(0, 8)}`}</span>
                         </span>
                       )
@@ -52,7 +52,7 @@ export function VaultSelectField({ vaults, isLoading, onVaultChange }: VaultSele
                         <div className="flex items-center justify-between w-full gap-2">
                           <span className="truncate">{v.metadata.displayName || `Vault ${v.id.slice(0, 8)}`}</span>
                           {isFundraising ? (
-                            <span className="flex items-center gap-1 text-[10px] text-status-warning bg-status-warning/10 px-1.5 py-0.5 rounded border border-status-warning/20 shrink-0">
+                            <span className="flex items-center gap-1 text-[10px] text-status-warn bg-status-warn/10 px-1.5 py-0.5 rounded border border-status-warn/20 shrink-0">
                               <Lock className="size-2.5" />
                               Fundraising
                             </span>

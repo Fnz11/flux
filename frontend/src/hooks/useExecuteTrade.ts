@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react'
+import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { PublicKey, TransactionInstruction } from '@solana/web3.js'
 import { BN } from 'bn.js'
@@ -56,7 +56,8 @@ function resolveMint(symbolOrMint: string): PublicKey {
 
 export function useExecuteTrade() {
   const [isLoading, setIsLoading] = useState(false)
-  const wallet = useAnchorWallet()
+  const anchorWallet = useAnchorWallet()
+  const { signMessage } = useWallet()
   const { connection } = useConnection()
   const queryClient = useQueryClient()
   const addTransaction = useTransactionStore((s) => s.addTransaction)
@@ -84,9 +85,9 @@ export function useExecuteTrade() {
 
         let signature: string | null = null
 
-        if (wallet?.publicKey) {
+        if (anchorWallet?.publicKey) {
           try {
-            const program = await getProgram(wallet, connection)
+            const program = await getProgram(anchorWallet, connection)
             if (program && program.idl.instructions?.length) {
               const targetAddress = params.vaultAddress || params.vaultId
               if (!targetAddress) {
@@ -155,20 +156,25 @@ export function useExecuteTrade() {
                 console.log('vaultAccount fetched:', vaultAccount)
 
                 if (vaultAccount) {
-                  const isFundraising =
-                    (vaultAccount.status && typeof vaultAccount.status === 'object' && ('fundraising' in vaultAccount.status || 'Fundraising' in vaultAccount.status)) ||
-                    vaultAccount.status === 0
+                  let isFundraising = false
+                  if (vaultAccount.status !== undefined && vaultAccount.status !== null) {
+                    if (typeof vaultAccount.status === 'object') {
+                      isFundraising = 'fundraising' in vaultAccount.status || 'Fundraising' in vaultAccount.status
+                    } else if (typeof vaultAccount.status === 'string') {
+                      isFundraising = vaultAccount.status.toLowerCase() === 'fundraising'
+                    } else {
+                      isFundraising = vaultAccount.status === 0
+                    }
+                  }
                   
-                  const isManager = vaultAccount.manager ? vaultAccount.manager.equals(wallet.publicKey) : true
-                  if (!isFundraising) toast.error('Vault is not in fundraising state: ' + JSON.stringify(vaultAccount.status))
-                  if (!isManager) toast.error('You are not the manager')
+                  const isManager = vaultAccount.manager ? vaultAccount.manager.equals(anchorWallet.publicKey) : true
                   console.log('isFundraising:', isFundraising, 'isManager:', isManager, 'has activateVault:', !!program.methods?.activateVault)
                   
                   if (isFundraising && isManager && program.methods?.activateVault) {
                     const activateIx = await program.methods
                       .activateVault()
                       .accounts({
-                        manager: wallet.publicKey,
+                        manager: anchorWallet.publicKey,
                         vault: vaultPubkey,
                       })
                       .instruction()
@@ -187,7 +193,7 @@ export function useExecuteTrade() {
               if (!inputAtaInfo) {
                 ixs.push(
                   createAssociatedTokenAccountInstruction(
-                    wallet.publicKey,
+                    anchorWallet.publicKey,
                     vaultInputAta,
                     vaultAuthorityPda,
                     inputMintPubkey,
@@ -206,7 +212,7 @@ export function useExecuteTrade() {
               if (!outputAtaInfo) {
                 ixs.push(
                   createAssociatedTokenAccountInstruction(
-                    wallet.publicKey,
+                    anchorWallet.publicKey,
                     vaultOutputAta,
                     vaultAuthorityPda,
                     outputMintPubkey,
@@ -234,7 +240,7 @@ export function useExecuteTrade() {
               const tradeIx = await program.methods
                 .executeTradePyth(amountInBn, minAmountOutBn)
                 .accounts({
-                  manager: wallet.publicKey,
+                  manager: anchorWallet.publicKey,
                   vault: vaultPubkey,
                   vaultAuthority: vaultAuthorityPda,
                   vaultInputTokenAccount: vaultInputAta,
@@ -249,7 +255,7 @@ export function useExecuteTrade() {
               ixs.push(tradeIx)
 
               const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
-              signature = await sendTransaction(connection, tx, wallet)
+              signature = await sendTransaction(connection, tx, anchorWallet)
               if (signature) {
                 await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
               }
@@ -282,11 +288,11 @@ export function useExecuteTrade() {
         }
 
         try {
-          if (wallet?.publicKey) {
-            const userAddr = wallet.publicKey.toBase58()
+          if (anchorWallet?.publicKey) {
+            const userAddr = anchorWallet.publicKey.toBase58()
             const currentToken = getAuthToken()
-            if ((!currentToken || isTokenExpired(currentToken)) && 'signMessage' in wallet && typeof (wallet as unknown as { signMessage?: (msg: Uint8Array) => Promise<Uint8Array> }).signMessage === 'function') {
-              await ensureWalletAuthenticated(userAddr, (wallet as unknown as { signMessage: (msg: Uint8Array) => Promise<Uint8Array> }).signMessage).catch(() => {})
+            if ((!currentToken || isTokenExpired(currentToken)) && signMessage) {
+              await ensureWalletAuthenticated(userAddr, signMessage).catch(() => {})
             }
           }
           await api.post('/trades/sync', syncPayload)
@@ -324,7 +330,7 @@ export function useExecuteTrade() {
         setIsLoading(false)
       }
     },
-    [wallet, connection, queryClient, addTransaction, updateStatus, confirmTransaction, moveToHistory],
+    [anchorWallet, signMessage, connection, queryClient, addTransaction, updateStatus, confirmTransaction, moveToHistory],
   )
 
   return { execute, isLoading }

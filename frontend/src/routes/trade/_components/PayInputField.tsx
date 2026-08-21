@@ -33,7 +33,7 @@ export function PayInputField({
       render={({ field }) => (
         <FormItem className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-150 hover:border-white/20 focus-within:border-primary-coral/50 space-y-0">
           <div className="flex items-center justify-between">
-            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">You pay</FormLabel>
+            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">You Pay</FormLabel>
             <Button
               type="button"
               variant="ghost"
@@ -48,7 +48,6 @@ export function PayInputField({
             <FormControl>
               <DecimalInput
                 {...field}
-                id="pay-amount"
                 placeholder="0.00"
                 maxDecimals={9}
                 className="flex-1 bg-transparent font-mono text-2xl font-bold tracking-tight text-text-primary placeholder:text-text-muted border-0 h-auto p-0 focus-visible:ring-0 rounded-none shadow-none"
@@ -59,6 +58,7 @@ export function PayInputField({
               selected={inputToken}
               onSelect={onInputTokenChange}
               disabledTokens={disabledTokens}
+              aria-label="Select pay token"
             />
           </div>
           <FormMessage className="mt-1" />

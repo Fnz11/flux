@@ -212,7 +212,7 @@ async function installBrowserMocks(page: Page) {
 }
 
 export const test = base.extend<Fixtures>({
-  api: async ({ page }, use) => {
+  api: [async ({ page }, use) => {
     const overrides = new Map<string, Reply>()
     const requests: ApiController['requests'] = []
     await page.route('**/api/v1/**', async (route) => {
@@ -242,8 +242,8 @@ export const test = base.extend<Fixtures>({
     })
     await installBrowserMocks(page)
     await use({ set: (method, path, reply) => overrides.set(`${method.toUpperCase()} ${path}`, reply), reset: () => overrides.clear(), requests })
-  },
-  wallet: async ({ page, api: _api }, use) => {
+  }, { auto: true }],
+  wallet: [async ({ page, api: _api }, use) => {
     await use({
       connect: async () => {
         await page.getByRole('button', { name: 'Connect Wallet' }).first().click()
@@ -255,8 +255,8 @@ export const test = base.extend<Fixtures>({
         await page.getByRole('button', { name: 'Disconnect' }).click()
       },
     })
-  },
-  ws: async ({ page, api: _api }, use) => {
+  }, { auto: true }],
+  ws: [async ({ page, api: _api }, use) => {
     await use({
       send: (message) =>
         page.evaluate((value) => {
@@ -269,7 +269,7 @@ export const test = base.extend<Fixtures>({
           return win.__mockSockets.flatMap((socket) => socket.sent.map((msg) => JSON.parse(msg)))
         }),
     })
-  },
+  }, { auto: true }],
 })
 
 export { expect }

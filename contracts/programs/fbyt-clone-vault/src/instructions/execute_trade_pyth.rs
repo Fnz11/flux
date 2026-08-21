@@ -91,22 +91,24 @@ pub fn handler(ctx: Context<ExecuteTradePyth>, amount_in: u64, min_amount_out: u
         crate::errors::VaultError::InvalidTradeParams
     );
 
-    require!(
-        ctx.accounts.vault_input_token_account.amount >= amount_in,
-        crate::errors::VaultError::InsufficientVaultBalance
-    );
-
     let is_input_native = ctx.accounts.vault_input_mint.key() == anchor_spl::token::spl_token::native_mint::ID;
+    let vault_authority_key = ctx.accounts.vault_authority.key();
+    let is_vault_input_mint_authority = ctx.accounts.vault_input_mint
+        .mint_authority
+        .contains(&vault_authority_key);
+
+    if is_input_native || is_vault_input_mint_authority {
+        require!(
+            ctx.accounts.vault_input_token_account.amount >= amount_in,
+            crate::errors::VaultError::InsufficientVaultBalance
+        );
+    }
+
     if !is_input_native {
         // Only burn if vault_authority is the mint authority of the input token.
         // Burning requires the token account authority (vault_authority owns the ATA)
         // AND the mint must allow burning by vault_authority (i.e. it's a vault-native token).
         // For external tokens (e.g. USDC) this guard prevents a failing CPI.
-        let vault_authority_key = ctx.accounts.vault_authority.key();
-        let is_vault_input_mint_authority = ctx.accounts.vault_input_mint
-            .mint_authority
-            .contains(&vault_authority_key);
-
         if is_vault_input_mint_authority {
             let burn_in = anchor_spl::token_interface::Burn {
                 mint: ctx.accounts.vault_input_mint.to_account_info(),
@@ -155,31 +157,9 @@ pub fn handler(ctx: Context<ExecuteTradePyth>, amount_in: u64, min_amount_out: u
         }
     }
 
-    let value_in_in_quote = if is_quote_to_base {
-        amount_in
-    } else {
-        amount_out
-    };
-
-    let value_out_in_quote = if ctx.accounts.vault_output_mint.key() == vault.deposit_mint {
-        amount_out
-    } else {
-        amount_in
-    };
-
-    if value_out_in_quote >= value_in_in_quote {
-        let diff = value_out_in_quote - value_in_in_quote;
-        vault.total_assets_deposited = vault
-            .total_assets_deposited
-            .checked_add(diff)
-            .ok_or(crate::errors::VaultError::MathOverflow)?;
-    } else {
-        let diff = value_in_in_quote - value_out_in_quote;
-        vault.total_assets_deposited = vault
-            .total_assets_deposited
-            .checked_sub(diff)
-            .ok_or(crate::errors::VaultError::MathOverflow)?;
-    }
+    // The trade is synthetic and executed exactly at the Pyth oracle price.
+    // Therefore, the total value of the vault's assets (measured in deposit_mint) remains perfectly constant.
+    // No adjustment to vault.total_assets_deposited is needed.
 
     vault.last_trade_at = clock.unix_timestamp;
 

@@ -35,6 +35,11 @@ import {
   Clock,
   Sparkles,
   PieChart,
+  Tag,
+  ImageIcon,
+  Lock,
+  Unlock,
+  TrendingUp,
 } from 'lucide-react'
 
 export const VAULT_DETAIL_TABS = ['Overview', 'Performance', 'Holdings', 'Trades', 'Fees'] as const
@@ -63,6 +68,9 @@ function formatLockupPeriod(lockup?: number): string {
   }
   return `${lockup} Day${lockup === 1 ? '' : 's'}`
 }
+
+const DEFAULT_VAULT_BANNER =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="240" viewBox="0 0 800 240"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%2313141c"/><stop offset="50%" stop-color="%231f1826"/><stop offset="100%" stop-color="%230e0f14"/></linearGradient><linearGradient id="acc" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23FF5733"/><stop offset="100%" stop-color="%23FFC300"/></linearGradient></defs><rect width="800" height="240" fill="url(%23bg)"/><circle cx="120" cy="120" r="80" fill="none" stroke="url(%23acc)" stroke-width="2" opacity="0.25"/><circle cx="680" cy="120" r="100" fill="none" stroke="url(%23acc)" stroke-width="1.5" opacity="0.15"/><path d="M0,180 Q200,120 400,160 T800,140 L800,240 L0,240 Z" fill="url(%23acc)" opacity="0.08"/><text x="400" y="110" text-anchor="middle" fill="%23FFFFFF" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="700" letter-spacing="1">FLUX VAULT PROTOCOL</text><text x="400" y="145" text-anchor="middle" fill="%23FF5733" font-family="monospace" font-size="13" font-weight="600" letter-spacing="2">AUTOMATED SOLANA EXECUTION</text></svg>'
 
 export function VaultDetailView({
   id,
@@ -130,13 +138,14 @@ export function VaultDetailView({
   }
 
   const focusAssets = vault.metadata?.focusAssets || []
+  const tags = vault.metadata?.tags && vault.metadata.tags.length > 0 ? vault.metadata.tags : ['Solana', 'Vault', 'Alpha']
+  const coverImageUrl = vault.metadata?.coverImageUrl || DEFAULT_VAULT_BANNER
   const isManager = Boolean(
     walletAddress &&
     vault.managerAddress &&
     walletAddress.toLowerCase() === vault.managerAddress.toLowerCase(),
   )
   const showManagerControls = !isInvestorView && isManager
-
   const displayName = vault.metadata?.displayName || `Vault ${id.slice(0, 8)}`
 
   return (
@@ -185,6 +194,17 @@ export function VaultDetailView({
               {displayName}
             </span>
             <StatusBadge status={vault.status} />
+            <span className="inline-flex items-center gap-1 rounded-full border border-border-subtle bg-bg-inset/80 px-2.5 py-0.5 text-xs font-medium text-text-secondary">
+              {vault.vaultType === 'closed' ? (
+                <>
+                  <Lock className="size-3 text-primary-amber" /> Closed Vault
+                </>
+              ) : (
+                <>
+                  <Unlock className="size-3 text-status-success" /> Open Vault
+                </>
+              )}
+            </span>
             {showManagerControls && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-coral/25 bg-primary-coral/15 px-2.5 py-0.5 text-xs font-semibold font-sans text-primary-coral shrink-0">
                 <Shield className="size-3.5" /> Manager
@@ -192,7 +212,31 @@ export function VaultDetailView({
             )}
           </div>
         }
-        description={<AddressPill address={vault.address} />}
+        description={
+          <div className="flex flex-col gap-1.5 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <AddressPill address={vault.address} />
+              {vault.managerAddress && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-text-tertiary">
+                  <span>Manager:</span>
+                  <AddressPill address={vault.managerAddress} />
+                </span>
+              )}
+            </div>
+            {/* Tags Badge List */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-2 py-0.5 text-[11px] font-mono text-text-secondary hover:text-text-primary hover:border-primary-coral/30 transition-colors"
+                >
+                  <Tag className="size-2.5 text-primary-coral" />
+                  <span>#{tag.replace(/^#/, '')}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        }
         rightContent={
           <div className="flex flex-wrap items-center gap-2">
             {focusAssets.length > 0 && (
@@ -221,55 +265,97 @@ export function VaultDetailView({
           </div>
         }
       >
-        {/* 4-Card Top Metrics Grid matching app Card theme */}
-        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
-            <div className="flex items-center justify-between text-text-tertiary">
-              <span className="text-xs font-medium">Assets Under Management (TVL)</span>
-              <DollarSign className="size-3.5 text-primary-coral" />
+        {/* Top Info Banner / Avatar & Metrics */}
+        <div className="space-y-4">
+          {/* Always rendered Vault Media/Cover Image Header */}
+          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-bg-inset/30 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <img
+              src={coverImageUrl}
+              alt={displayName}
+              className="size-20 sm:size-24 rounded-xl object-cover border border-white/15 shadow-lg shrink-0 bg-bg-inset"
+            />
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="flex items-center gap-2 text-xs font-semibold text-primary-coral">
+                <ImageIcon className="size-3.5" />
+                <span>Vault Cover & Image</span>
+              </div>
+              <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
+                {vault.metadata?.description || 'Non-custodial Solana automated vault portfolio & execution console.'}
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded bg-bg-surface/90 px-2 py-0.5 text-[10px] font-mono text-text-secondary border border-border-subtle"
+                  >
+                    #{tag.replace(/^#/, '')}
+                  </span>
+                ))}
+              </div>
             </div>
-            <p className="mt-2 font-mono text-2xl font-bold text-text-primary">
-              ${(vault.tvl || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-            <p className="mt-1 text-[11px] text-text-muted">Total vault deposits & liquidity</p>
-          </Card>
+          </div>
 
-          <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
-            <div className="flex items-center justify-between text-text-tertiary">
-              <span className="text-xs font-medium">Fee Rates</span>
-              <Percent className="size-3.5 text-primary-gold" />
-            </div>
-            <p className="mt-2 font-mono text-2xl font-bold text-text-primary">
-              {bpsToPercent(vault.performanceFeeBps)}
-            </p>
-            <p className="mt-1 text-[11px] text-text-muted">
-              {bpsToPercent(vault.managementFeeBps)} Management / {vault.performanceFeeBps} BPS Perf
-            </p>
-          </Card>
+          {/* 5-Card Top Metrics Grid */}
+          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+            <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
+              <div className="flex items-center justify-between text-text-tertiary">
+                <span className="text-xs font-medium">AUM (TVL)</span>
+                <DollarSign className="size-3.5 text-primary-coral" />
+              </div>
+              <p className="mt-2 font-mono text-xl sm:text-2xl font-bold text-text-primary">
+                ${(vault.tvl || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="mt-1 text-[11px] text-text-muted">Total vault liquidity</p>
+            </Card>
 
-          <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
-            <div className="flex items-center justify-between text-text-tertiary">
-              <span className="text-xs font-medium">Active Depositors</span>
-              <Users className="size-3.5 text-status-success" />
-            </div>
-            <p className="mt-2 font-mono text-2xl font-bold text-text-primary">
-              {vault.investorCount ?? 0}
-            </p>
-            <p className="mt-1 text-[11px] text-text-muted">Unique investor portfolios</p>
-          </Card>
+            <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
+              <div className="flex items-center justify-between text-text-tertiary">
+                <span className="text-xs font-medium">Min Raise Amount</span>
+                <TrendingUp className="size-3.5 text-primary-amber" />
+              </div>
+              <p className="mt-2 font-mono text-xl sm:text-2xl font-bold text-text-primary">
+                ${(vault.minRaiseAmount ?? 10).toLocaleString()} <span className="text-xs font-normal text-text-tertiary">USD</span>
+              </p>
+              <p className="mt-1 text-[11px] text-text-muted">Minimum funding threshold</p>
+            </Card>
 
-          <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
-            <div className="flex items-center justify-between text-text-tertiary">
-              <span className="text-xs font-medium">Terms & Lockup</span>
-              <Clock className="size-3.5 text-status-info" />
-            </div>
-            <p className="mt-2 font-mono text-2xl font-bold text-text-primary">
-              {formatLockupPeriod(vault.lockupPeriod)}
-            </p>
-            <p className="mt-1 text-[11px] text-text-muted">
-              Min deposit ${(vault.minRaiseAmount ?? 10).toLocaleString()} USD
-            </p>
-          </Card>
+            <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
+              <div className="flex items-center justify-between text-text-tertiary">
+                <span className="text-xs font-medium">Fee Rates</span>
+                <Percent className="size-3.5 text-primary-gold" />
+              </div>
+              <p className="mt-2 font-mono text-xl sm:text-2xl font-bold text-text-primary">
+                {bpsToPercent(vault.performanceFeeBps)}
+              </p>
+              <p className="mt-1 text-[11px] text-text-muted">
+                {bpsToPercent(vault.managementFeeBps)} Mgmt / {vault.performanceFeeBps} BPS Perf
+              </p>
+            </Card>
+
+            <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
+              <div className="flex items-center justify-between text-text-tertiary">
+                <span className="text-xs font-medium">Active Depositors</span>
+                <Users className="size-3.5 text-status-success" />
+              </div>
+              <p className="mt-2 font-mono text-xl sm:text-2xl font-bold text-text-primary">
+                {vault.investorCount ?? 0}
+              </p>
+              <p className="mt-1 text-[11px] text-text-muted">Unique investor accounts</p>
+            </Card>
+
+            <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center justify-between text-text-tertiary">
+                <span className="text-xs font-medium">Withdrawal Lockup</span>
+                <Clock className="size-3.5 text-status-info" />
+              </div>
+              <p className="mt-2 font-mono text-xl sm:text-2xl font-bold text-text-primary">
+                {formatLockupPeriod(vault.lockupPeriod)}
+              </p>
+              <p className="mt-1 text-[11px] text-text-muted">
+                {vault.vaultType === 'closed' ? 'Closed execution vault' : 'Open participation'}
+              </p>
+            </Card>
+          </div>
         </div>
       </SectionCard>
 

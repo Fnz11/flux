@@ -44,6 +44,11 @@
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "VaultState"
               }
             ]
           }
@@ -88,6 +93,11 @@
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "VaultState"
               }
             ]
           }
@@ -131,6 +141,11 @@
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "VaultState"
               }
             ]
@@ -221,6 +236,11 @@
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "VaultState"
               }
             ]
           }
@@ -264,6 +284,11 @@
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "VaultState"
               }
             ]
@@ -464,6 +489,11 @@
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "VaultState"
               }
             ]
           }
@@ -569,6 +599,10 @@
               {
                 "kind": "account",
                 "path": "manager"
+              },
+              {
+                "kind": "account",
+                "path": "share_token_mint"
               }
             ]
           }
@@ -643,10 +677,7 @@
         {
           "name": "allowed_output_mints",
           "type": {
-            "array": [
-              "pubkey",
-              4
-            ]
+            "vec": "pubkey"
           }
         }
       ]
@@ -687,6 +718,11 @@
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "VaultState"
               }
             ]
@@ -737,6 +773,11 @@
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "VaultState"
               }
             ]
           }
@@ -785,6 +826,11 @@
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "VaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "VaultState"
               }
             ]
@@ -1093,6 +1139,11 @@
       "code": 6019,
       "name": "ShareMintMismatch",
       "msg": "Share token mint mismatch"
+    },
+    {
+      "code": 6020,
+      "name": "TooManyOutputMints",
+      "msg": "Too many output mints allowed."
     }
   ],
   "types": [
@@ -1480,15 +1531,6 @@
             "type": "pubkey"
           },
           {
-            "name": "allowed_output_mints",
-            "type": {
-              "array": [
-                "pubkey",
-                4
-              ]
-            }
-          },
-          {
             "name": "min_raise_amount",
             "type": "u64"
           },
@@ -1555,6 +1597,12 @@
           {
             "name": "last_fee_accrual_at",
             "type": "i64"
+          },
+          {
+            "name": "allowed_output_mints",
+            "type": {
+              "vec": "pubkey"
+            }
           },
           {
             "name": "_reserved",

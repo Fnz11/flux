@@ -5,7 +5,7 @@ test.describe('WebSocket Realtime', () => {
     await page.goto('/trade')
     await wallet.connect()
 
-    await expect(page.getByRole('heading', { name: 'Trade Console', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'AMM Trade Console', exact: true })).toBeVisible()
 
     // Send a WebSocket message mimicking a price update or ticker notification
     await ws.send({

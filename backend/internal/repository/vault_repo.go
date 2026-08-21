@@ -160,6 +160,10 @@ func (r *vaultRepo) UpdateMetadata(ctx context.Context, address string, metadata
 	return getDB(ctx, r.db).Model(&models.Vault{}).Where("address = ?", address).Update("metadata", metaBytes).Error
 }
 
+func (r *vaultRepo) UpdateStatus(ctx context.Context, vaultID string, status string) error {
+	return getDB(ctx, r.db).Model(&models.Vault{}).Where("id = ?", vaultID).Update("status", status).Error
+}
+
 func (r *vaultRepo) List(ctx context.Context, filter domain.VaultListFilter) ([]domain.VaultDetail, int64, error) {
 	db := getDB(ctx, r.db)
 	query := db.Model(&models.Vault{}).Preload("Manager")

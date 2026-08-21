@@ -15,9 +15,10 @@ interface TokenSelectorProps {
   onSelect: (token: string) => void
   label?: string
   disabledTokens?: string[]
+  'aria-label'?: string
 }
 
-export function TokenSelector({ tokens, selected, onSelect, label, disabledTokens }: TokenSelectorProps) {
+export function TokenSelector({ tokens, selected, onSelect, label, disabledTokens, 'aria-label': ariaLabel }: TokenSelectorProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const isMobile = useIsMobile()
@@ -70,7 +71,7 @@ export function TokenSelector({ tokens, selected, onSelect, label, disabledToken
       </div>
 
       {/* Token Items List */}
-      <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 max-sm:max-h-none sm:max-h-64">
+      <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 max-sm:max-h-none sm:max-h-64" role="listbox">
         {filtered.length === 0 ? (
           <EmptyState
             size="xs"
@@ -87,6 +88,8 @@ export function TokenSelector({ tokens, selected, onSelect, label, disabledToken
               <button
                 key={token}
                 type="button"
+                role="option"
+                aria-selected={isSelected}
                 disabled={isDisabled}
                 className={cn(
                   'flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 text-left transition-colors',
@@ -123,6 +126,7 @@ export function TokenSelector({ tokens, selected, onSelect, label, disabledToken
       <Button
         variant="outline"
         type="button"
+        aria-label={ariaLabel}
         onClick={() => setOpen(!open)}
         className="h-10 px-3 min-w-[120px] justify-between gap-2.5 rounded-xl border-border-subtle bg-bg-elevated/80 hover:bg-bg-elevated hover:border-border-medium transition-colors shadow-xs cursor-pointer"
       >

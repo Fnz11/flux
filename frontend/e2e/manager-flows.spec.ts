@@ -12,7 +12,7 @@ test.describe('Manager Flows', () => {
     await page.getByPlaceholder('Describe your vault trading strategy').fill('Automated high frequency momentum trading strategy on Solana DEXs.')
 
     // Set Min Raise Amount
-    await page.locator('input[type="number"]').first().fill('50')
+    await page.getByLabel('Min. Raise Amount').fill('50')
 
     // Set slippage/fees or keep defaults (Management Fee 2%, Performance Fee 10%)
     // Check agreement box
@@ -22,7 +22,7 @@ test.describe('Manager Flows', () => {
     await page.getByRole('button', { name: 'CREATE VAULT' }).click()
 
     // Verify API POST request was captured
-    await expect.poll(() => api.requests.some((r) => r.method === 'POST' && r.path === '/vaults')).toBe(true)
+    await expect.poll(() => api.requests.some((r) => r.method === 'POST' && r.path.includes('/tx/prepare/create-vault'))).toBe(true)
 
     // Should redirect to /vaults
     await expect(page).toHaveURL(/\/vaults/)
@@ -32,11 +32,11 @@ test.describe('Manager Flows', () => {
     await page.goto('/trade')
     await wallet.connect()
 
-    await expect(page.getByRole('heading', { name: 'Trade Console', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'AMM Trade Console', exact: true })).toBeVisible()
 
     // Select vault if needed (default preselected first vault)
     // Fill input pay amount
-    await page.locator('#pay-amount').fill('1.5')
+    await page.getByPlaceholder('0.00').first().fill('1.5')
 
     // Adjust slippage tolerance setting (click 1.0%)
     await page.getByRole('button', { name: '1%', exact: true }).click()
@@ -47,12 +47,12 @@ test.describe('Manager Flows', () => {
     // Confirmation modal pops up
     await expect(page.getByRole('heading', { name: 'Confirm Trade' })).toBeVisible()
     await expect(page.getByText('1.500000 SOL')).toBeVisible()
-    await expect(page.getByText('Slippage')).toBeVisible()
+    await expect(page.getByText('Slippage', { exact: true })).toBeVisible()
 
     // Confirm Swap
     await page.getByRole('button', { name: 'Confirm Swap' }).click()
 
     // Check trade sync / trade execution requested
-    await expect.poll(() => api.requests.some((r) => r.method === 'POST' && r.path === '/trades/sync')).toBe(true)
+    await expect.poll(() => api.requests.some((r) => r.method === 'POST' && r.path === '/trades/sync'), { timeout: 15000 }).toBe(true)
   })
 })

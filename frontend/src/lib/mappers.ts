@@ -41,6 +41,8 @@ export interface RawApiVault {
   minRaiseAmount?: number
   lockup_period?: number
   lockupPeriod?: number
+  vault_type?: 'open' | 'closed'
+  vaultType?: 'open' | 'closed'
   investors?: number
   investor_count?: number
   investorCount?: number
@@ -124,6 +126,7 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
     pnlPercent: typeof raw.pnl_percent === 'number' ? raw.pnl_percent : typeof raw.pnlPercent === 'number' ? raw.pnlPercent : (raw.pnl ?? 0),
     minRaiseAmount: typeof raw.min_raise_amount === 'number' ? raw.min_raise_amount : typeof raw.minRaiseAmount === 'number' ? raw.minRaiseAmount : 1,
     lockupPeriod: typeof raw.lockup_period === 'number' ? raw.lockup_period : typeof raw.lockupPeriod === 'number' ? raw.lockupPeriod : 7,
+    vaultType: raw.vaultType ?? raw.vault_type ?? 'open',
     investorCount: typeof raw.investor_count === 'number' ? raw.investor_count : typeof raw.investorCount === 'number' ? raw.investorCount : (raw.investors ?? 0),
   }
   if (Array.isArray(raw.sparkline)) {

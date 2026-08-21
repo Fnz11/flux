@@ -36,6 +36,7 @@ services:
     container_name: fbyt-contracts
     ports:
       - "8899:8899" # Solana RPC port
+      - "8900:8900"
     security_opt:
       - seccomp:unconfined
     restart: on-failure:3

@@ -28,6 +28,7 @@ export function ReceiveSection({
           selected={outputToken}
           onSelect={onOutputTokenChange}
           disabledTokens={disabledTokens}
+          aria-label="Select receive token"
         />
       </div>
     </div>

@@ -102,11 +102,18 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
 
   const maxBalance = useMemo(() => {
     if (!vaultId || isLoadingBalances) return null
-    if (currentAsset) return currentAsset.amount
-    if (selectedVault && selectedVault.tvl > 0 && inputToken.toUpperCase() === 'SOL') {
-      return selectedVault.tvl / 150
+    let max = 0
+    if (currentAsset) {
+      max = currentAsset.amount
+    } else if (selectedVault && selectedVault.tvl > 0 && inputToken.toUpperCase() === 'SOL') {
+      max = selectedVault.tvl / 150
     }
-    return 0
+    
+    // Reserve ~0.06 SOL for VaultState PDA rent exemption if swapping native SOL
+    if ((inputToken.toUpperCase() === 'SOL' || inputToken === 'So11111111111111111111111111111111111111112') && max > 0) {
+      max = Math.max(0, max - 0.06)
+    }
+    return max
   }, [vaultId, isLoadingBalances, currentAsset, selectedVault, inputToken])
 
   const handleSetMax = useCallback(() => {
@@ -212,6 +219,7 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     vaults,
     isLoadingVaults,
     vaultId,
+    selectedVault,
     slippage,
     inputToken,
     setInputToken: handleInputTokenChange,
@@ -289,12 +297,16 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
             }
           >
             {isVaultFundraising && selectedVault && (
-              <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-status-warning/30 bg-status-warning/10 p-3 text-xs text-status-warning">
+              <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-status-warn/25 bg-status-warn/10 p-3 text-xs text-status-warn">
                 <Lock className="size-4 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold">Vault Locked — Fundraising Phase</p>
+                  <p className="font-semibold text-status-warn">
+                    {isManager ? 'Vault Ready for Activation' : 'Vault Locked — Fundraising Phase'}
+                  </p>
                   <p className="text-[11px] text-text-secondary mt-0.5">
-                    This vault has not reached its minimum raise target ({selectedVault.minRaiseAmount ?? '0'} {selectedVault.metadata?.focusAssets?.[0] ?? 'SOL'}) or been activated yet. Trading will unlock once the target is met.
+                    {isManager 
+                      ? `This vault is in Fundraising phase. Your first trade will automatically activate it as long as the target (${selectedVault.minRaiseAmount ?? '0'} ${selectedVault.metadata?.focusAssets?.[0] ?? 'SOL'}) is met.`
+                      : `This vault has not reached its minimum raise target (${selectedVault.minRaiseAmount ?? '0'} ${selectedVault.metadata?.focusAssets?.[0] ?? 'SOL'}) or been activated yet. Trading will unlock once the target is met.`}
                   </p>
                 </div>
               </div>

@@ -145,7 +145,7 @@ export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
             </SortableTableHead>
             <SortableTableHead
               column="trade_type"
-              currentSort={sortBy}
+              currentSort={sortBy as any}
               currentOrder={sortOrder}
               onSort={handleSort}
               className="py-3 px-4"
@@ -155,7 +155,7 @@ export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
             <TableHead className="py-3 px-4">PAIR</TableHead>
             <SortableTableHead
               column="amount_in"
-              currentSort={sortBy}
+              currentSort={sortBy as any}
               currentOrder={sortOrder}
               onSort={handleSort}
               align="right"
@@ -165,7 +165,7 @@ export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
             </SortableTableHead>
             <SortableTableHead
               column="amount_out"
-              currentSort={sortBy}
+              currentSort={sortBy as any}
               currentOrder={sortOrder}
               onSort={handleSort}
               align="right"
@@ -175,7 +175,7 @@ export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
             </SortableTableHead>
             <SortableTableHead
               column="price_at_execution"
-              currentSort={sortBy}
+              currentSort={sortBy as any}
               currentOrder={sortOrder}
               onSort={handleSort}
               align="right"
@@ -203,9 +203,9 @@ export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
             sortedTrades.map((t) => {
               const isBuy = t.trade_type?.toLowerCase() === 'buy'
               const dateStr = formatDateTime(t.executed_at)
-              const tokenIn = t.token_in_symbol || t.input_token || ''
-              const tokenOut = t.token_out_symbol || t.output_token || ''
-              const signature = t.tx_signature || t.transaction_signature || ''
+              const tokenIn = (t as any).token_in_symbol || t.input_token || ''
+              const tokenOut = (t as any).token_out_symbol || t.output_token || ''
+              const signature = (t as any).tx_signature || t.transaction_signature || ''
               return (
                 <TableRow key={t.id} className="hover:bg-white/[0.02]">
                   <TableCell className="py-3 px-4 font-mono text-xs text-text-secondary whitespace-nowrap">

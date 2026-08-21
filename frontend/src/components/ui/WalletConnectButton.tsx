@@ -134,7 +134,7 @@ export function WalletConnectButton() {
       </Button>
 
       <Modal open={isOpen} onOpenChange={setIsOpen} title="Connect Wallet">
-        <div className="space-y-3 py-2">
+        <div className="space-y-3">
           <p className="text-xs text-text-tertiary">
             Select a Solana wallet to connect to Flux platform:
           </p>

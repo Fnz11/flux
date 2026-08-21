@@ -25,7 +25,7 @@ test.describe('Auth and Navigation Flow', () => {
 
     // Default mode is Manager, navigate to /trade
     await page.getByRole('link', { name: 'Trade' }).click()
-    await expect(page.getByRole('heading', { name: 'Trade Console', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'AMM Trade Console', exact: true })).toBeVisible()
     await expect(page).toHaveURL(/\/trade/)
 
     // Switch mode to Invest via App Mode toggle in Sidebar

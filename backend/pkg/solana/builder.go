@@ -324,6 +324,14 @@ func BuildDepositTx(programID solana.PublicKey, p DepositParams) (*PreparedTrans
 		vaultTokenAta,
 	))
 
+	// Ensure investor share token account ATA is created
+	instructions = append(instructions, buildCreateIdempotentATAIx(
+		p.Investor,
+		p.Investor,
+		p.ShareTokenMint,
+		investorShareAta,
+	))
+
 	instructions = append(instructions, solana.NewInstruction(programID, accounts, buf.Bytes()))
 
 	tx, err := solana.NewTransaction(

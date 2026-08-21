@@ -31,6 +31,7 @@ type VaultRepository interface {
 	ExistsByAddress(ctx context.Context, address string) (bool, error)
 	Create(ctx context.Context, vault *VaultDetail) error
 	UpdateMetadata(ctx context.Context, address string, metadata interface{}) error
+	UpdateStatus(ctx context.Context, vaultID string, status string) error
 	List(ctx context.Context, filter VaultListFilter) ([]VaultDetail, int64, error)
 	GetVaultBalances(ctx context.Context, vaultIDOrAddress string) ([]VaultBalance, error)
 	UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error

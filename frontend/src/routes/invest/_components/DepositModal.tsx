@@ -201,6 +201,56 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
         if (!o) resetModalState()
       }}
       title={step === 0 ? 'Deposit' : step === 1 ? 'Confirm Deposit' : 'Deposit Complete'}
+      footer={
+        step === 0 ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetModalState}
+              className="flex-1 h-10 rounded-xl text-xs font-semibold border-white/10 hover:bg-white/5"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={onNextStep}
+              variant="default"
+              disabled={isInsufficient}
+              className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              <span>{isInsufficient ? 'Insufficient Balance' : 'Next'}</span>
+              {!isInsufficient && <ArrowRight className="size-3.5" />}
+            </Button>
+          </>
+        ) : step === 1 ? (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setStep(0)}
+              className="flex-1 h-10 rounded-xl text-xs font-semibold border-white/10 hover:bg-white/5"
+            >
+              Back
+            </Button>
+            <Button
+              variant="default"
+              onClick={onConfirm}
+              disabled={loading}
+              className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)]"
+            >
+              {loading ? 'Confirming...' : 'Confirm & Sign'}
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="default"
+            onClick={resetModalState}
+            className="w-full h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)]"
+          >
+            Done
+          </Button>
+        )
+      }
     >
       {step === 0 && (
         <Form {...form}>
@@ -339,27 +389,6 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
                 <p className="font-mono text-xs font-semibold text-status-success">0.00% (Free)</p>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="mt-5 flex gap-3 pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetModalState}
-                className="flex-1 h-10 rounded-xl text-xs font-semibold border-white/10 hover:bg-white/5"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="default"
-                disabled={isInsufficient}
-                className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] flex items-center justify-center gap-1.5 disabled:opacity-50"
-              >
-                <span>{isInsufficient ? 'Insufficient Balance' : 'Next'}</span>
-                {!isInsufficient && <ArrowRight className="size-3.5" />}
-              </Button>
-            </div>
           </form>
         </Form>
       )}
@@ -404,24 +433,6 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
               <span>{errorMessage}</span>
             </div>
           )}
-
-          <div className="flex gap-3 pt-1">
-            <Button
-              variant="outline"
-              onClick={() => setStep(0)}
-              className="flex-1 h-10 rounded-xl text-xs font-semibold border-white/10 hover:bg-white/5"
-            >
-              Back
-            </Button>
-            <Button
-              variant="default"
-              onClick={onConfirm}
-              disabled={loading}
-              className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)]"
-            >
-              {loading ? 'Confirming...' : 'Confirm & Sign'}
-            </Button>
-          </div>
         </div>
       )}
 
@@ -441,14 +452,6 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
           <div className="rounded-xl border border-border-subtle bg-bg-inset p-3.5">
             {signature && <SolscanLink signature={signature} />}
           </div>
-
-          <Button
-            variant="default"
-            onClick={resetModalState}
-            className="w-full h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)]"
-          >
-            Done
-          </Button>
         </div>
       )}
     </Modal>

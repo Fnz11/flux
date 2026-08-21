@@ -8,7 +8,7 @@ export const TOKENS = ALL_TOKENS
 
 export function getSupportedDepositTokens(vault?: Vault): TokenInfo[] {
   const depositMint =
-    vault?.metadata?.depositMint ||
+    (vault?.metadata as any)?.depositMint ||
     (vault as unknown as { deposit_mint?: string })?.deposit_mint ||
     (vault as unknown as { depositMint?: string })?.depositMint
   if (depositMint) {

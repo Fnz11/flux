@@ -44,6 +44,7 @@ export interface Vault {
   pnlPercent?: number
   minRaiseAmount?: number
   lockupPeriod?: number
+  vaultType?: 'open' | 'closed'
   investorCount?: number
   sparkline?: number[]
 }

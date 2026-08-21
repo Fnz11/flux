@@ -50,6 +50,11 @@ export type FbytCloneVault = {
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "vaultState"
               }
             ]
           }
@@ -94,6 +99,11 @@ export type FbytCloneVault = {
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "vaultState"
               }
             ]
           }
@@ -137,6 +147,11 @@ export type FbytCloneVault = {
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "vaultState"
               }
             ]
@@ -227,6 +242,11 @@ export type FbytCloneVault = {
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "vaultState"
               }
             ]
           }
@@ -270,6 +290,11 @@ export type FbytCloneVault = {
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "vaultState"
               }
             ]
@@ -470,6 +495,11 @@ export type FbytCloneVault = {
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "vaultState"
               }
             ]
           }
@@ -575,6 +605,10 @@ export type FbytCloneVault = {
               {
                 "kind": "account",
                 "path": "manager"
+              },
+              {
+                "kind": "account",
+                "path": "shareTokenMint"
               }
             ]
           }
@@ -649,10 +683,7 @@ export type FbytCloneVault = {
         {
           "name": "allowedOutputMints",
           "type": {
-            "array": [
-              "pubkey",
-              4
-            ]
+            "vec": "pubkey"
           }
         }
       ]
@@ -693,6 +724,11 @@ export type FbytCloneVault = {
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "vaultState"
               }
             ]
@@ -743,6 +779,11 @@ export type FbytCloneVault = {
                 "kind": "account",
                 "path": "vault.creator",
                 "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
+                "account": "vaultState"
               }
             ]
           }
@@ -791,6 +832,11 @@ export type FbytCloneVault = {
               {
                 "kind": "account",
                 "path": "vault.creator",
+                "account": "vaultState"
+              },
+              {
+                "kind": "account",
+                "path": "vault.share_token_mint",
                 "account": "vaultState"
               }
             ]
@@ -1099,6 +1145,11 @@ export type FbytCloneVault = {
       "code": 6019,
       "name": "shareMintMismatch",
       "msg": "Share token mint mismatch"
+    },
+    {
+      "code": 6020,
+      "name": "tooManyOutputMints",
+      "msg": "Too many output mints allowed."
     }
   ],
   "types": [
@@ -1486,15 +1537,6 @@ export type FbytCloneVault = {
             "type": "pubkey"
           },
           {
-            "name": "allowedOutputMints",
-            "type": {
-              "array": [
-                "pubkey",
-                4
-              ]
-            }
-          },
-          {
             "name": "minRaiseAmount",
             "type": "u64"
           },
@@ -1561,6 +1603,12 @@ export type FbytCloneVault = {
           {
             "name": "lastFeeAccrualAt",
             "type": "i64"
+          },
+          {
+            "name": "allowedOutputMints",
+            "type": {
+              "vec": "pubkey"
+            }
           },
           {
             "name": "reserved",

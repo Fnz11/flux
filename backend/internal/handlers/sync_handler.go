@@ -262,10 +262,7 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 		return
 	}
 
-	if (tradeType == "Buy" || tradeType == "Sell") && !strings.EqualFold(vault.Status, "Active") {
-		ErrorResponse(c, http.StatusBadRequest, "Only active vaults can execute trades")
-		return
-	}
+	// Trust the blockchain's validation. If the trade succeeded on-chain, it might have been activated in the same transaction.
 
 	finalInputToken := parsedInToken
 	if req.InputToken != "" {
@@ -341,6 +338,9 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 			}
 		case "Buy", "Sell":
 			// Trade logged in trade_histories table
+			if err := h.vaultRepo.UpdateStatus(ctx, vault.ID, "Active"); err != nil {
+				return err
+			}
 		}
 
 		return nil

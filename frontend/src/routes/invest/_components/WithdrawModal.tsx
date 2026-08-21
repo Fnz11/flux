@@ -81,7 +81,33 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
   }
 
   return (
-    <Modal open={open} onOpenChange={(o) => { if (!o) handleClose() }} title="Withdraw">
+    <Modal
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) handleClose()
+      }}
+      title="Withdraw"
+      footer={
+        position && (
+          <>
+            <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+              {signature ? 'Close' : 'Cancel'}
+            </Button>
+            {!signature && (
+              <Button
+                type="button"
+                onClick={form.handleSubmit(handleWithdraw)}
+                variant="default"
+                disabled={loading}
+                className="flex-1"
+              >
+                {loading ? 'Withdrawing...' : 'Withdraw'}
+              </Button>
+            )}
+          </>
+        )
+      }
+    >
       {isLoadingData ? (
         <div className="py-2 space-y-4">
           <div className="h-4 w-40 animate-pulse rounded-xl bg-bg-inset" />
@@ -103,7 +129,7 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
         />
       ) : (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleWithdraw)}>
+          <form onSubmit={form.handleSubmit(handleWithdraw)} className="space-y-4">
             <p className="text-sm text-text-tertiary">Available: {position.sharesOwned.toFixed(6)} shares</p>
 
             <div className="mt-4">
@@ -159,22 +185,6 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
                 <SolscanLink signature={signature} />
               </div>
             )}
-
-            <div className="mt-6 flex gap-3">
-              <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
-                {signature ? 'Close' : 'Cancel'}
-              </Button>
-              {!signature && (
-                <Button
-                  type="submit"
-                  variant="default"
-                  disabled={loading}
-                  className="flex-1"
-                >
-                  {loading ? 'Withdrawing...' : 'Withdraw'}
-                </Button>
-              )}
-            </div>
           </form>
         </Form>
       )}

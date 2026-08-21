@@ -33,8 +33,22 @@ export function ConfirmationDialog({
   isLoading,
 }: ConfirmationDialogProps) {
   return (
-    <Modal open={open} onOpenChange={(o) => { if (!o) onClose() }} title="Confirm Trade">
-      <div className="mt-4 space-y-3 rounded-xl bg-bg-inset p-4">
+    <Modal
+      open={open}
+      onOpenChange={(o) => { if (!o) onClose() }}
+      title="Confirm Trade"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="flex-1">
+            Cancel
+          </Button>
+          <Button variant="default" onClick={onConfirm} disabled={isLoading} className="flex-1">
+            {isLoading ? 'Confirming...' : 'Confirm Swap'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3 rounded-xl bg-bg-inset/70 border border-white/10 p-4">
         <ConfirmationRow
           label="Pay"
           value={
@@ -85,15 +99,6 @@ export function ConfirmationDialog({
       <p className="mt-3 text-xs text-text-tertiary">
         This transaction will be signed by your wallet. Review all details before confirming.
       </p>
-
-      <div className="mt-5 flex justify-end gap-3">
-        <Button variant="outline" onClick={onClose} disabled={isLoading}>
-          Cancel
-        </Button>
-        <Button variant="default" onClick={onConfirm} disabled={isLoading}>
-          {isLoading ? 'Confirming...' : 'Confirm Swap'}
-        </Button>
-      </div>
     </Modal>
   )
 }

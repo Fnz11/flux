@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -267,6 +268,14 @@ func (s *TxPrepareService) PrepareDeposit(ctx context.Context, dto PrepareDeposi
 		}
 
 		accInfo, err := s.client.GetAccountInfo(ctx, vaultPk)
+		if err != nil {
+			log.Printf("PrepareDeposit: GetAccountInfo error: %v", err)
+		} else if accInfo == nil || accInfo.Value == nil {
+			log.Printf("PrepareDeposit: GetAccountInfo returned nil or empty value for vault %s", vaultPk)
+		} else if len(accInfo.Value.Data.GetBinary()) < 137 {
+			log.Printf("PrepareDeposit: GetAccountInfo returned data too small (%d bytes) for vault %s", len(accInfo.Value.Data.GetBinary()), vaultPk)
+		}
+
 		if err == nil && accInfo != nil && accInfo.Value != nil && len(accInfo.Value.Data.GetBinary()) >= 137 {
 			data := accInfo.Value.Data.GetBinary()
 			// VaultState layout:
@@ -292,6 +301,7 @@ func (s *TxPrepareService) PrepareDeposit(ctx context.Context, dto PrepareDeposi
 					}
 				}
 			}
+			log.Printf("PrepareDeposit: Read on-chain VaultState. depositMint: %s, shareTokenMint: %s", depositMintPk, shareTokenMintPk)
 		}
 	}
 	if blockhash.IsZero() {
@@ -376,7 +386,7 @@ func (s *TxPrepareService) PrepareWithdraw(ctx context.Context, dto PrepareWithd
 		withdrawMintPk = pkgSolana.NativeMint
 	}
 
-	shareTokenMintPda, _, err := solana.FindProgramAddress([][]byte{
+	shareTokenMintPk, _, err := solana.FindProgramAddress([][]byte{
 		[]byte("share_mint"),
 		vaultPk.Bytes(),
 	}, s.programID)
@@ -392,6 +402,26 @@ func (s *TxPrepareService) PrepareWithdraw(ctx context.Context, dto PrepareWithd
 			blockhash = details.Blockhash
 			lastValidHeight = details.LastValidBlockHeight
 		}
+
+		accInfo, err := s.client.GetAccountInfo(ctx, vaultPk)
+		if err == nil && accInfo != nil && accInfo.Value != nil && len(accInfo.Value.Data.GetBinary()) >= 137 {
+			data := accInfo.Value.Data.GetBinary()
+			offset := 72
+			if len(data) > offset {
+				if data[offset] == 0 {
+					offset += 1
+				} else {
+					offset += 33
+				}
+				offset += 32 // skip deposit_mint
+				if len(data) >= offset+32 {
+					onChainMint := solana.PublicKeyFromBytes(data[offset : offset+32])
+					if !onChainMint.IsZero() {
+						shareTokenMintPk = onChainMint
+					}
+				}
+			}
+		}
 	}
 	if blockhash.IsZero() {
 		blockhash = solana.HashFromBytes([]byte("11111111111111111111111111111111"))
@@ -401,7 +431,7 @@ func (s *TxPrepareService) PrepareWithdraw(ctx context.Context, dto PrepareWithd
 		Investor:         investorPk,
 		Vault:            vaultPk,
 		WithdrawMint:     withdrawMintPk,
-		ShareTokenMint:   shareTokenMintPda,
+		ShareTokenMint:   shareTokenMintPk,
 		SharesToBurn:     dto.SharesToBurn,
 		RecentBlockhash:  blockhash,
 		ComputeUnitLimit: 200000,
