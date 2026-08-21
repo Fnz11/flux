@@ -64,7 +64,7 @@ describe('payout widgets', () => {
   it('passes vault filter changes to parent', () => {
     const onSelectVault = vi.fn()
     render(<FeeHistory isLoading={false} filteredFees={fees} vaults={vaults} selectedVaultId="ALL" onSelectVault={onSelectVault} />)
-    fireEvent.change(screen.getByLabelText('vault filter'), { target: { value: 'vault-123456789' } })
+    fireEvent.change(screen.getAllByLabelText('vault filter')[0], { target: { value: 'vault-123456789' } })
     expect(onSelectVault).toHaveBeenCalledWith('vault-123456789')
   })
 

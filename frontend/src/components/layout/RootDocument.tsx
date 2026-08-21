@@ -10,6 +10,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { Toaster } from 'react-hot-toast'
 import { HeroAmbient } from '@/components/ui/HeroAmbient'
 import { RootBootstrap } from '@/components/providers/RootBootstrap'
+import { AppPreloader } from '@/components/ui/AppPreloader'
 
 export function RootDocument({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="min-h-screen bg-bg-void font-sans text-text-primary antialiased relative overflow-hidden">
+        <AppPreloader />
         <QueryClientProvider client={queryClient}>
           <WalletProvider>
             <TooltipProvider>

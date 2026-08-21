@@ -139,6 +139,7 @@ func (s *PortfolioService) loadPortfolioFromDB(ctx context.Context, userID uuid.
 			SharesOwned:        p.SharesOwned,
 			TotalInvestedValue: p.TotalInvestedValue,
 			AverageEntryPrice:  p.AverageEntryPrice,
+			CreatedAt:          p.CreatedAt,
 		})
 		vaultIDs = append(vaultIDs, p.VaultID)
 		tvlByVault[p.VaultID] = p.Vault.TVL

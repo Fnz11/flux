@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { Vault } from '@/types'
-import { Table, TableBody } from '@/components/ui/table'
+import { Table, TableBody, Pagination } from '@/components/ui/table'
 import { VaultRow } from './VaultRow'
 import { VaultTableHeader } from './VaultTableHeader'
 
@@ -12,9 +12,30 @@ export interface VaultsTableProps {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
   onSort: (column: SortColumn) => void
+  page?: number
+  totalPages?: number
+  totalItems?: number
+  pageSize?: number
+  pageSizeOptions?: number[]
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
+  isLoading?: boolean
 }
 
-export function VaultsTable({ vaults, sortBy, sortOrder, onSort }: VaultsTableProps) {
+export function VaultsTable({
+  vaults,
+  sortBy,
+  sortOrder,
+  onSort,
+  page,
+  totalPages,
+  totalItems,
+  pageSize,
+  pageSizeOptions = [5, 10, 20, 50],
+  onPageChange,
+  onPageSizeChange,
+  isLoading,
+}: VaultsTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null)
 
   const rowVirtualizer = useVirtualizer({
@@ -40,7 +61,26 @@ export function VaultsTable({ vaults, sortBy, sortOrder, onSort }: VaultsTablePr
       : 0
 
   return (
-    <Table containerRef={tableContainerRef} className="min-w-[720px]" containerClassName="min-h-[480px]">
+    <Table
+      containerRef={tableContainerRef}
+      className="min-w-[720px]"
+      containerClassName="min-h-[480px]"
+      footer={
+        totalPages && totalPages > 0 && onPageChange ? (
+          <Pagination
+            page={page ?? 1}
+            totalPages={totalPages}
+            totalItems={totalItems ?? vaults.length}
+            pageSize={pageSize ?? 10}
+            pageSizeOptions={pageSizeOptions}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+            itemLabel="vaults"
+            isLoading={isLoading}
+          />
+        ) : undefined
+      }
+    >
       <VaultTableHeader sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
       <TableBody>
         {paddingTop > 0 && (

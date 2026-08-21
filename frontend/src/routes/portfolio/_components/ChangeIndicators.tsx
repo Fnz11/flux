@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils'
 
 function toNum(val: string): number | null {
+  if (!val) return null
   const n = parseFloat(val)
-  return isNaN(n) ? null : n
+  return Number.isFinite(n) && !isNaN(n) ? n : null
 }
 
 export function ChangeBadge({ value }: { value: string }) {
@@ -15,7 +16,7 @@ export function ChangeBadge({ value }: { value: string }) {
           ? 'bg-bg-inset text-text-tertiary'
           : n >= 0
           ? 'bg-emerald-500/15 text-emerald-400'
-          : 'bg-amber-500/15 text-amber-400',
+          : 'bg-rose-500/15 text-rose-400',
       )}
     >
       {n === null ? '—' : `${n >= 0 ? '▲' : '▼'} ${Math.abs(n).toFixed(2)}%`}
@@ -33,7 +34,7 @@ export function ChangeText({ value }: { value: string }) {
           ? 'text-text-tertiary'
           : n >= 0
           ? 'text-emerald-400'
-          : 'text-amber-400',
+          : 'text-rose-400',
       )}
     >
       {n === null ? '—' : `${n >= 0 ? '▲' : '▼'} ${Math.abs(n).toFixed(2)}%`}

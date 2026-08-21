@@ -65,26 +65,52 @@ export interface FormatCurrencyOptions {
   prefix?: string
 }
 
+export interface CurrencyParts {
+  sign: '+' | '-' | ''
+  symbol: string
+  integer: string
+  fraction: string
+  full: string
+}
+
 /**
- * Formats a numeric value into USD currency string (e.g. "$1,234.56" or "+$1,234.56").
+ * Splits a decimal string or number into integer and fraction parts with rounding & formatting.
  */
-export function formatCurrency(
-  amount?: number | null,
+export function formatCurrencyParts(
+  value?: string | number | null,
   options: FormatCurrencyOptions = {},
-): string {
-  if (amount === undefined || amount === null || Number.isNaN(amount)) return '$0.00'
+): CurrencyParts {
   const { decimals = 2, showSign = false, prefix = '$' } = options
-  const absFormatted = Math.abs(amount).toLocaleString('en-US', {
+  const num = typeof value === 'number' ? value : value ? parseFloat(String(value)) : 0
+  const isFiniteNum = Number.isFinite(num) && !isNaN(num)
+  const safeNum = isFiniteNum ? num : 0
+
+  const sign: '+' | '-' | '' = safeNum > 0 && showSign ? '+' : safeNum < 0 ? '-' : ''
+  const abs = Math.abs(safeNum)
+  const formattedAbs = abs.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })
 
-  if (showSign) {
-    const sign = amount > 0 ? '+' : amount < 0 ? '-' : ''
-    return `${sign}${prefix}${absFormatted}`
-  }
+  const [intPart, fracPart = '00'] = formattedAbs.split('.')
 
-  return `${amount < 0 ? '-' : ''}${prefix}${absFormatted}`
+  return {
+    sign,
+    symbol: prefix,
+    integer: intPart,
+    fraction: fracPart,
+    full: `${sign}${prefix}${formattedAbs}`,
+  }
+}
+
+/**
+ * Formats a numeric value into USD currency string (e.g. "$1,234.56", "+$1,234.56", or "-$1,234.56").
+ */
+export function formatCurrency(
+  amount?: string | number | null,
+  options: FormatCurrencyOptions = {},
+): string {
+  return formatCurrencyParts(amount, options).full
 }
 
 export interface FormatNumberOptions {

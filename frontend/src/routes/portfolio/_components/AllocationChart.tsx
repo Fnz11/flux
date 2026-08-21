@@ -1,66 +1,89 @@
 import { lazy, Suspense } from 'react'
 import { PieChart } from 'lucide-react'
-
-const AllocationChartInner = lazy(() => import('./AllocationChartInner').then(m => ({ default: m.AllocationChartInner })))
-
-interface AllocationChartProps {
-  data: { name: string; value: number; color: string }[]
-  isLoading?: boolean
-}
-
+import { SectionCard } from '@/components/ui/SectionCard'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
 
-export function AllocationChart({ data, isLoading }: AllocationChartProps) {
+const AllocationChartInner = lazy(() =>
+  import('./AllocationChartInner').then((m) => ({ default: m.AllocationChartInner }))
+)
+
+interface AllocationChartProps {
+  data: { name: string; value: number; color?: string }[]
+  isLoading?: boolean
+  className?: string
+}
+
+export function AllocationChart({ data, isLoading, className }: AllocationChartProps) {
+  const totalValue = data.reduce((sum, d) => sum + d.value, 0)
+  const formattedTotal = totalValue.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+
   if (isLoading) {
     return (
-      <div className="h-full flex flex-col justify-between rounded-xl border border-border-subtle bg-bg-elevated/40 p-5 min-h-[360px]">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-24 rounded-md" />
-          <Skeleton className="h-4 w-16 rounded-full" />
-        </div>
-        <div className="flex flex-1 items-center justify-center gap-8 py-6">
-          {/* Circular Donut Skeleton Ring */}
-          <div className="relative size-36 rounded-full border-8 border-bg-inset animate-pulse flex items-center justify-center">
-            <Skeleton className="size-16 rounded-full" />
+      <SectionCard
+        icon={<PieChart className="size-4 text-primary-gold" />}
+        title="Vault Allocation"
+        description="Capital distribution across your invested vaults"
+        className={`h-full flex flex-col justify-between ${className || ''}`}
+        contentClassName="flex-1 flex flex-col justify-center min-h-[360px]"
+      >
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 py-4">
+          <div className="relative size-60 lg:size-64 rounded-full border-8 border-bg-inset animate-pulse flex items-center justify-center">
+            <Skeleton className="size-32 rounded-full" />
           </div>
-          {/* Legend Items Skeleton */}
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
+          <div className="space-y-3 flex-1 w-full">
+            {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Skeleton className="size-2.5 rounded-full" />
-                <Skeleton className="h-3.5 w-14 rounded" />
-                <Skeleton className="h-3.5 w-10 rounded" />
+                <Skeleton className="h-4 w-28 rounded" />
+                <Skeleton className="h-4 w-14 rounded ml-auto" />
               </div>
             ))}
           </div>
         </div>
-      </div>
-    )
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="h-full flex flex-col justify-between rounded-xl border border-border-subtle bg-bg-elevated/40 p-5 min-h-[360px]">
-        <h3 className="text-base font-semibold text-text-primary">Allocation</h3>
-        <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
-          <div className="size-12 rounded-full border border-border-subtle bg-bg-inset/50 flex items-center justify-center mb-3 text-text-tertiary">
-            <PieChart className="size-5" />
-          </div>
-          <p className="text-sm font-medium text-text-secondary">No active position allocation</p>
-          <p className="mt-1 text-xs text-text-muted max-w-[200px]">Asset distribution will automatically render when you deposit into vaults</p>
-        </div>
-      </div>
+      </SectionCard>
     )
   }
 
   return (
-    <div className="h-full flex flex-col justify-between rounded-xl border border-border-subtle bg-bg-elevated/40 p-5 min-h-[360px]">
-      <h3 className="text-base font-semibold text-text-primary">Allocation</h3>
-      <div className="mt-2 flex flex-1 items-center justify-center gap-6">
-        <Suspense fallback={<div className="h-[220px] w-[220px] animate-pulse rounded-xl bg-bg-inset" />}>
-          <AllocationChartInner data={data} />
-        </Suspense>
-      </div>
-    </div>
+    <SectionCard
+      icon={<PieChart className="size-4 text-primary-gold" />}
+      title="Vault Allocation"
+      description="Capital distribution across your invested vaults"
+      className={`h-full flex flex-col justify-between ${className || ''}`}
+      contentClassName="flex-1 flex flex-col justify-center min-h-[360px]"
+      rightContent={
+        totalValue > 0 ? (
+          <div className="text-right">
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary block">
+              TOTAL INVESTED
+            </span>
+            <span className="font-mono text-sm font-bold text-text-primary">
+              ${formattedTotal}
+            </span>
+          </div>
+        ) : null
+      }
+    >
+      {data.length === 0 ? (
+        <div className="py-12 flex flex-1 items-center justify-center">
+          <EmptyState
+            icon={<PieChart className="size-5" />}
+            title="No active position allocation"
+            description="Deposit into vaults to see your investment distribution and allocation breakdown."
+            size="md"
+          />
+        </div>
+      ) : (
+        <div className="flex flex-1 items-center w-full h-full">
+          <Suspense fallback={<div className="h-[300px] w-full animate-pulse rounded-xl bg-bg-inset" />}>
+            <AllocationChartInner data={data as { name: string; value: number; color: string }[]} />
+          </Suspense>
+        </div>
+      )}
+    </SectionCard>
   )
 }

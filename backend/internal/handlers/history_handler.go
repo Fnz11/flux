@@ -16,9 +16,12 @@ func NewHistoryHandler(repo domain.HistoryRepository) *HistoryHandler {
 }
 
 var validHistoryRanges = map[string]bool{
+	"1d":  true,
 	"7d":  true,
 	"30d": true,
 	"90d": true,
+	"1y":  true,
+	"all": true,
 }
 
 func (h *HistoryHandler) GetVaultSparkline(c *gin.Context) {

@@ -253,7 +253,7 @@ describe('invest summaries and cards', () => {
     render(<VaultInvestCard vault={vault} />)
     expect(screen.getByText('Alpha Vault')).toBeInTheDocument()
     expect(screen.getByText('Active')).toBeInTheDocument()
-    expect(screen.getAllByRole('link')).toHaveLength(2)
+    expect(screen.getAllByRole('link')).toHaveLength(1)
     expect(screen.getByRole('link', { name: 'Deposit' })).toHaveAttribute('href', `/invest/vaults/${vault.id}`)
   })
 

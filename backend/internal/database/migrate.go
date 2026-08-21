@@ -35,6 +35,10 @@ func AutoMigrate(db *gorm.DB) error {
 			ALTER TABLE IF EXISTS trade_histories ALTER COLUMN output_token TYPE varchar(64);
 			CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_histories_sig_exec ON trade_histories (transaction_signature, executed_at);
 			CREATE UNIQUE INDEX IF NOT EXISTS uq_portfolios_user_vault ON portfolios (user_id, vault_id);
+			UPDATE portfolios
+			SET total_invested_value = total_invested_value * 75.33197084,
+			    average_entry_price = 75.33197084
+			WHERE average_entry_price <= 1.0 AND total_invested_value > 0 AND total_invested_value < 100;
 		`)
 	}
 

@@ -18,6 +18,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { DepositModal } from '@/routes/invest/_components/DepositModal'
 import { WithdrawModal } from '@/routes/invest/_components/WithdrawModal'
 import { VaultOverview } from './VaultOverview'
+import { getWithdrawEligibility } from '@/lib/eligibility'
 import { VaultPerformanceSection } from './VaultPerformanceSection'
 import { VaultAssetsTab } from './VaultAssetsTab'
 import { VaultTradesTab } from './VaultTradesTab'
@@ -36,7 +37,6 @@ import {
   Sparkles,
   PieChart,
   Tag,
-  ImageIcon,
   Lock,
   Unlock,
   TrendingUp,
@@ -95,6 +95,11 @@ export function VaultDetailView({
           (vault?.id && p.vaultId && p.vaultId.toLowerCase() === vault.id.toLowerCase()),
       ),
     [positions, id, vault?.address, vault?.id],
+  )
+
+  const withdrawEligibility = useMemo(
+    () => getWithdrawEligibility(vault, position, wallet.connected),
+    [vault, position, wallet.connected],
   )
 
   const [activeTab, setActiveTab] = useState<VaultDetailTab>(defaultTab)
@@ -187,7 +192,14 @@ export function VaultDetailView({
 
       {/* Main Cockpit SectionCard */}
       <SectionCard
-        icon={<Sparkles className="size-4 text-primary-coral" />}
+        icon={
+          <img
+            src={coverImageUrl}
+            alt={displayName}
+            className="size-11 sm:size-12 rounded-xl object-cover border border-white/15 shadow-md bg-bg-inset shrink-0"
+          />
+        }
+        iconWrapperClassName="size-11 sm:size-12 rounded-xl p-0 border-0 overflow-hidden shrink-0 bg-transparent"
         title={
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-base font-bold tracking-tight text-text-primary">
@@ -214,6 +226,11 @@ export function VaultDetailView({
         }
         description={
           <div className="flex flex-col gap-1.5 pt-1">
+            {vault.metadata?.description && (
+              <p className="text-xs text-text-secondary line-clamp-1 leading-relaxed">
+                {vault.metadata.description}
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <AddressPill address={vault.address} />
               {vault.managerAddress && (
@@ -224,17 +241,19 @@ export function VaultDetailView({
               )}
             </div>
             {/* Tags Badge List */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-2 py-0.5 text-[11px] font-mono text-text-secondary hover:text-text-primary hover:border-primary-coral/30 transition-colors"
-                >
-                  <Tag className="size-2.5 text-primary-coral" />
-                  <span>#{tag.replace(/^#/, '')}</span>
-                </span>
-              ))}
-            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] border border-white/10 px-2 py-0.5 text-[11px] font-mono text-text-secondary hover:text-text-primary hover:border-primary-coral/30 transition-colors"
+                  >
+                    <Tag className="size-2.5 text-primary-coral" />
+                    <span>#{tag.replace(/^#/, '')}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         }
         rightContent={
@@ -257,8 +276,9 @@ export function VaultDetailView({
               variant="outline"
               size="sm"
               onClick={() => setWithdrawOpen(true)}
-              disabled={!position || position.sharesOwned <= 0}
-              className="h-8 text-xs"
+              disabled={!withdrawEligibility.canExecute}
+              title={withdrawEligibility.reason ?? 'Withdraw shares from this vault'}
+              className="h-8 text-xs disabled:cursor-not-allowed"
             >
               Withdraw
             </Button>
@@ -267,34 +287,6 @@ export function VaultDetailView({
       >
         {/* Top Info Banner / Avatar & Metrics */}
         <div className="space-y-4">
-          {/* Always rendered Vault Media/Cover Image Header */}
-          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-bg-inset/30 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <img
-              src={coverImageUrl}
-              alt={displayName}
-              className="size-20 sm:size-24 rounded-xl object-cover border border-white/15 shadow-lg shrink-0 bg-bg-inset"
-            />
-            <div className="space-y-1.5 min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-primary-coral">
-                <ImageIcon className="size-3.5" />
-                <span>Vault Cover & Image</span>
-              </div>
-              <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
-                {vault.metadata?.description || 'Non-custodial Solana automated vault portfolio & execution console.'}
-              </p>
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded bg-bg-surface/90 px-2 py-0.5 text-[10px] font-mono text-text-secondary border border-border-subtle"
-                  >
-                    #{tag.replace(/^#/, '')}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
           {/* 5-Card Top Metrics Grid */}
           <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
             <Card className="p-4 border-white/10 bg-bg-inset/40 backdrop-blur-md">
@@ -370,7 +362,9 @@ export function VaultDetailView({
               variant="outline"
               size="sm"
               onClick={() => setWithdrawOpen(true)}
-              className="h-8 text-xs"
+              disabled={!withdrawEligibility.canExecute}
+              title={withdrawEligibility.reason ?? 'Withdraw shares from this vault'}
+              className="h-8 text-xs disabled:cursor-not-allowed"
             >
               Withdraw Shares
             </Button>

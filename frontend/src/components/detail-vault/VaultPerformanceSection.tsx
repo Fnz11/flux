@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, memo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getVaultSparkline, type VaultSparklineRange } from '@/services/apis/rest-api/vault_sparkline.service'
-import { MetricChart, type ChartSeries, type ChartView } from '@/components/ui/metric-chart'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { Card } from '@/components/ui/card'
@@ -13,19 +12,9 @@ export interface VaultPerformanceSectionProps {
   vault: Vault
 }
 
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-})
-
 export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps) {
   const [range, setRange] = useState<VaultSparklineRange>('30d')
-  const [view, setView] = useState<ChartView>('curve')
+  const [view, setView] = useState<'curve' | 'bar'>('curve')
 
   const { data: sparklineData = [], isLoading } = useQuery({
     queryKey: ['vaultSparklineFull', vault.id, range],
@@ -35,10 +24,22 @@ export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps)
 
   const seriesData = useMemo(() => {
     if (sparklineData.length > 0) {
-      return sparklineData.map((pt) => ({
-        date: pt.date || '',
-        value: pt.value,
-      }))
+      return sparklineData.map((pt) => {
+        let label = pt.date || ''
+        try {
+          const d = new Date(pt.date)
+          if (!isNaN(d.getTime())) {
+            label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          }
+        } catch {
+          // fallback to raw
+        }
+        return {
+          rawDate: pt.date || '',
+          date: label,
+          value: pt.value,
+        }
+      })
     }
     if (!vault.tvl || vault.tvl <= 0) return []
     const pointsCount = range === '7d' ? 7 : range === '90d' ? 90 : 30
@@ -47,19 +48,12 @@ export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps)
     return Array.from({ length: pointsCount }).map((_, i) => {
       const d = new Date(now - (pointsCount - 1 - i) * dayMs)
       return {
-        date: d.toISOString(),
+        rawDate: d.toISOString(),
+        date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         value: vault.tvl,
       }
     })
   }, [sparklineData, vault.tvl, range])
-
-  const chartSeries: ChartSeries[] = useMemo(() => [
-    {
-      name: 'TVL',
-      data: seriesData,
-      color: '#FF6B35',
-    },
-  ], [seriesData])
 
   const firstVal = seriesData.length > 0 ? seriesData[0].value : 0
   const lastVal = seriesData.length > 0 ? seriesData[seriesData.length - 1].value : (vault.tvl || 0)
@@ -86,7 +80,7 @@ export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps)
               type="button"
               onClick={() => setView('curve')}
               aria-label="Curve chart view"
-              className={`rounded-lg p-1 text-xs transition-colors ${
+              className={`rounded-lg p-1 text-xs transition-colors cursor-pointer ${
                 view === 'curve'
                   ? 'bg-bg-elevated text-primary-coral shadow-sm'
                   : 'text-text-tertiary hover:text-text-primary'
@@ -98,7 +92,7 @@ export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps)
               type="button"
               onClick={() => setView('bar')}
               aria-label="Bar chart view"
-              className={`rounded-lg p-1 text-xs transition-colors ${
+              className={`rounded-lg p-1 text-xs transition-colors cursor-pointer ${
                 view === 'bar'
                   ? 'bg-bg-elevated text-primary-coral shadow-sm'
                   : 'text-text-tertiary hover:text-text-primary'
@@ -132,7 +126,7 @@ export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps)
           </Card>
 
           <Card className="p-4 border-white/8 bg-bg-inset/30">
-            <p className="text-xs text-text-tertiary">Status & Capacity</p>
+            <p className="text-xs text-text-tertiary">Status &amp; Capacity</p>
             <p className="mt-1 font-mono text-2xl font-bold text-text-primary">
               {vault.status}
             </p>
@@ -160,19 +154,7 @@ export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps)
             </div>
           ) : (
             <div className="w-full h-80">
-              <MetricChart
-                series={chartSeries}
-                view={view}
-                height={320}
-                yFormatter={(val) => `$${currencyFormatter.format(val)}`}
-                xFormatter={(dateStr) => {
-                  try {
-                    return dateFormatter.format(new Date(dateStr))
-                  } catch {
-                    return dateStr
-                  }
-                }}
-              />
+              <VaultPerformanceChartInner data={seriesData} view={view} />
             </div>
           )}
         </div>
@@ -180,3 +162,144 @@ export function VaultPerformanceSection({ vault }: VaultPerformanceSectionProps)
     </SectionCard>
   )
 }
+
+function PerformanceTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
+  if (!active || !payload?.length || payload[0]?.value === undefined) return null
+  const val = payload[0].value
+  const formatted = Math.abs(val).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  const isNeg = val < 0
+  const sign = isNeg ? '-' : ''
+
+  return (
+    <div className="rounded-xl border border-border-medium bg-bg-elevated/95 px-3 py-2 shadow-2xl backdrop-blur-md">
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="size-2 rounded-full bg-primary-coral" />
+        <span className="text-[11px] font-medium text-text-tertiary">{label}</span>
+      </div>
+      <p className="text-sm font-bold font-mono text-text-primary">
+        {sign}${formatted}
+      </p>
+    </div>
+  )
+}
+
+const VaultPerformanceChartInner = memo(function VaultPerformanceChartInner({
+  data,
+  view,
+}: {
+  data: { date: string; value: number }[]
+  view: 'curve' | 'bar'
+}) {
+  const [Recharts, setRecharts] = useState<typeof import('recharts') | null>(null)
+
+  useEffect(() => {
+    let active = true
+    import('recharts')
+      .then((mod) => {
+        if (active) setRecharts(mod)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  if (!Recharts) {
+    return <div className="h-full w-full animate-pulse rounded-xl bg-bg-inset" />
+  }
+
+  const {
+    AreaChart,
+    Area,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    CartesianGrid,
+  } = Recharts
+
+  const values = data.map((d) => d.value)
+  const minVal = Math.min(...values)
+  const maxVal = Math.max(...values)
+  const isFlat = maxVal - minVal < 0.01
+
+  const yDomain = isFlat
+    ? [Math.max(0, minVal * 0.8), maxVal * 1.2 || 100]
+    : [Math.max(0, minVal * 0.95), maxVal * 1.05]
+
+  if (view === 'bar') {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+          <XAxis
+            dataKey="date"
+            tick={{ fill: '#737373', fontSize: 11 }}
+            axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: '#737373', fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+            domain={yDomain}
+            tickFormatter={(v) => `$${v.toLocaleString()}`}
+          />
+          <Tooltip
+            content={<PerformanceTooltip />}
+            cursor={{ fill: 'rgba(255, 255, 255, 0.04)' }}
+          />
+          <Bar
+            dataKey="value"
+            fill="#FF6B35"
+            radius={[4, 4, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    )
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="vaultPerformanceGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FF6B35" stopOpacity={0.35} />
+            <stop offset="100%" stopColor="#FF6B35" stopOpacity={0.0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+        <XAxis
+          dataKey="date"
+          tick={{ fill: '#737373', fontSize: 11 }}
+          axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+          tickLine={false}
+        />
+        <YAxis
+          tick={{ fill: '#737373', fontSize: 11 }}
+          axisLine={false}
+          tickLine={false}
+          domain={yDomain}
+          tickFormatter={(v) => `$${v.toLocaleString()}`}
+        />
+        <Tooltip
+          content={<PerformanceTooltip />}
+          cursor={{ stroke: 'rgba(255, 107, 53, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+        />
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke="#FF6B35"
+          strokeWidth={2.5}
+          fill="url(#vaultPerformanceGrad)"
+          activeDot={{ r: 5, fill: '#FF6B35', stroke: '#1c1917', strokeWidth: 2 }}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  )
+})

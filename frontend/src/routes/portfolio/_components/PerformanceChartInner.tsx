@@ -49,13 +49,18 @@ export const PerformanceChartInner = memo(function PerformanceChartInner({ data 
             tickLine={false}
             tickFormatter={(v) => `$${v.toLocaleString()}`}
           />
-          <Tooltip content={<PerformanceCustomTooltip />} />
+          <Tooltip
+            content={<PerformanceCustomTooltip />}
+            cursor={{ stroke: 'rgba(250, 154, 99, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+          />
           <Area
             type="monotone"
             dataKey="value"
             stroke="#FA9A63"
             strokeWidth={2}
             fill="url(#performanceGradient)"
+            baseValue="dataMin"
+            activeDot={{ r: 5, fill: '#FA9A63', stroke: '#1c1917', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

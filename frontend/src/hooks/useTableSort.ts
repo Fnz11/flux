@@ -20,9 +20,9 @@ export function useTableSort<T extends string = string>(options: UseTableSortOpt
   } = options
 
   const [internalSortBy, setInternalSortBy] = useState<T | undefined>(controlledSortBy)
-  const [internalSortOrder, setInternalSortOrder] = useState<SortOrder | undefined>(controlledSortOrder)
+  const [internalSortOrder, setInternalSortOrder] = useState<SortOrder | undefined>(controlledSortOrder ?? (controlledSortBy ? defaultOrder : undefined))
 
-  const isControlled = controlledSortBy !== undefined || onSortChange !== undefined
+  const isControlled = Boolean(onSortChange)
   const sortBy = isControlled ? controlledSortBy : internalSortBy
   const sortOrder = isControlled ? controlledSortOrder : internalSortOrder
 

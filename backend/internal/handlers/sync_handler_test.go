@@ -57,6 +57,16 @@ func (m *mockSyncVaultRepo) ExistsByAddress(ctx context.Context, address string)
 	return ok, nil
 }
 
+func (m *mockSyncVaultRepo) UpdateStatus(ctx context.Context, vaultID string, status string) error {
+	for _, v := range m.vaults {
+		if v.ID == vaultID {
+			v.Status = status
+			return nil
+		}
+	}
+	return nil
+}
+
 func (m *mockSyncVaultRepo) GetVaultBalances(ctx context.Context, vaultAddressOrID string) ([]domain.VaultBalance, error) {
 	return nil, nil
 }

@@ -68,6 +68,10 @@ export interface RawApiPortfolioPosition {
   pnl?: number
   pnlPercent?: number
   pnl_percent?: number
+  createdAt?: string
+  created_at?: string
+  investedAt?: string
+  invested_at?: string
 }
 
 export interface RawApiConfig {
@@ -136,17 +140,50 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
 }
 
 export function mapApiPortfolioToPortfolio(raw: RawApiPortfolioPosition | null | undefined): PortfolioPosition {
-  if (!raw) return {} as PortfolioPosition
+  if (!raw) {
+    return {
+      vaultId: '',
+      vaultAddress: '',
+      vaultName: '',
+      sharesOwned: 0,
+      totalInvested: 0,
+      averageEntryPrice: 0,
+      currentValue: 0,
+      pnl: 0,
+      pnlPercent: 0,
+    }
+  }
+
+  const sharesOwned = typeof raw.sharesOwned === 'number' ? raw.sharesOwned : Number(raw.shares_owned ?? 0)
+  let totalInvested = typeof raw.totalInvested === 'number' ? raw.totalInvested : Number(raw.total_invested_value ?? 0)
+  let averageEntryPrice = typeof raw.averageEntryPrice === 'number' ? raw.averageEntryPrice : Number(raw.average_entry_price ?? 0)
+  const currentValue = typeof raw.currentValue === 'number' ? raw.currentValue : Number(raw.current_value ?? 0)
+
+  // Frontend safety guard: if legacy backend entry price is 1.0 (token quantity rather than USD)
+  // and current value is in USD (e.g. currentValue > totalInvested * 5), calibrate totalInvested to USD entry value
+  if (averageEntryPrice <= 1.01 && totalInvested > 0 && currentValue > totalInvested * 5 && sharesOwned > 0) {
+    const impliedSharePrice = currentValue / sharesOwned
+    totalInvested = sharesOwned * impliedSharePrice
+    averageEntryPrice = impliedSharePrice
+  }
+
+  const pnl = currentValue - totalInvested
+  const pnlPercent = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0
+
+  const createdAt = raw.invested_at ?? raw.investedAt ?? raw.created_at ?? raw.createdAt ?? undefined
+
   return {
     vaultId: raw.vaultId ?? raw.vault_id ?? '',
     vaultAddress: raw.vaultAddress ?? raw.vault_address ?? '',
     vaultName: raw.vaultName ?? raw.vault_name ?? '',
-    sharesOwned: typeof raw.sharesOwned === 'number' ? raw.sharesOwned : Number(raw.shares_owned ?? 0),
-    totalInvested: typeof raw.totalInvested === 'number' ? raw.totalInvested : Number(raw.total_invested_value ?? 0),
-    averageEntryPrice: typeof raw.averageEntryPrice === 'number' ? raw.averageEntryPrice : Number(raw.average_entry_price ?? 0),
-    currentValue: typeof raw.currentValue === 'number' ? raw.currentValue : Number(raw.current_value ?? 0),
-    pnl: typeof raw.pnl === 'number' ? raw.pnl : Number(raw.pnl ?? 0),
-    pnlPercent: typeof raw.pnlPercent === 'number' ? raw.pnlPercent : Number(raw.pnl_percent ?? 0),
+    sharesOwned,
+    totalInvested,
+    averageEntryPrice,
+    currentValue,
+    pnl,
+    pnlPercent,
+    createdAt,
+    investedAt: createdAt,
   }
 }
 

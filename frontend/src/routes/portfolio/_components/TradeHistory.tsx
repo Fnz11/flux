@@ -1,8 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { ApiTrade, TradeType } from '@/types'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui/table'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, SortableTableHead, Pagination } from '@/components/ui/table'
 import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
-import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -10,6 +9,7 @@ import { SectionCard } from '@/components/ui/SectionCard'
 import { TokenIcon } from '@/components/ui/TokenIcon'
 import { History } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
+import { useTableSort } from '@/hooks/useTableSort'
 
 interface TradeHistoryProps {
   trades: ApiTrade[]
@@ -25,27 +25,76 @@ const FILTER_MAP: Record<FilterTab, TradeType[] | null> = {
   Withdrawals: ['Withdraw'],
 }
 
-const PAGE_SIZE = 10
+type TradeSortColumn = 'executed_at' | 'trade_type' | 'pair' | 'amount_in' | 'price_at_execution'
+
+const PAGE_SIZE = 8
 
 const typeColor: Record<TradeType, string> = {
   Buy: 'text-status-success',
   Sell: 'text-status-error',
   Deposit: 'text-status-info',
-  Withdraw: 'text-status-warn',
+  Withdraw: 'text-status-purple',
 }
 
 export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('All')
-  const [page, setPage] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
   const filterArr = FILTER_MAP[activeFilter]
   const filterSet = filterArr ? new Set(filterArr) : null
-  const filtered = filterSet
-    ? trades.filter((t) => filterSet.has(t.trade_type))
-    : trades
+  const filteredTrades = useMemo(() => {
+    return filterSet ? trades.filter((t) => filterSet.has(t.trade_type)) : trades
+  }, [trades, filterSet])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const { sortBy, sortOrder, handleSort } = useTableSort<TradeSortColumn>({
+    sortBy: 'executed_at',
+    defaultOrder: 'desc',
+    allowClear: true,
+  })
+
+  const sortedTrades = useMemo(() => {
+    if (!sortBy || !sortOrder) return filteredTrades
+
+    return [...filteredTrades].sort((a, b) => {
+      let aVal: number | string = 0
+      let bVal: number | string = 0
+
+      switch (sortBy) {
+        case 'executed_at': {
+          const timeA = new Date(a.executed_at || (a as any).created_at || 0).getTime()
+          const timeB = new Date(b.executed_at || (b as any).created_at || 0).getTime()
+          aVal = isNaN(timeA) ? 0 : timeA
+          bVal = isNaN(timeB) ? 0 : timeB
+          break
+        }
+        case 'trade_type':
+          aVal = String(a.trade_type || '').toLowerCase()
+          bVal = String(b.trade_type || '').toLowerCase()
+          break
+        case 'pair':
+          aVal = `${a.input_token}/${a.output_token}`.toLowerCase()
+          bVal = `${b.input_token}/${b.output_token}`.toLowerCase()
+          break
+        case 'amount_in':
+          aVal = Number(a.amount_in || (a as any).amount || 0)
+          bVal = Number(b.amount_in || (b as any).amount || 0)
+          break
+        case 'price_at_execution':
+          aVal = Number(a.price_at_execution || (a as any).price || 0)
+          bVal = Number(b.price_at_execution || (b as any).price || 0)
+          break
+      }
+
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      }
+      return sortOrder === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number)
+    })
+  }, [filteredTrades, sortBy, sortOrder])
+
+  const totalPages = Math.max(1, Math.ceil(sortedTrades.length / pageSize))
+  const paged = sortedTrades.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <SectionCard
@@ -58,7 +107,7 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
           value={activeFilter}
           onValueChange={(val) => {
             setActiveFilter(val as FilterTab)
-            setPage(0)
+            setPage(1)
           }}
         >
           <SelectTrigger className="h-8 w-28 rounded-xl border border-border-subtle bg-bg-inset px-2.5 text-xs font-semibold text-text-primary hover:border-primary-coral/40 cursor-pointer">
@@ -75,19 +124,73 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
         </Select>
       }
     >
-      <div className="flex flex-col flex-1 justify-between gap-3">
-        <Table containerClassName="min-h-[440px] flex-1">
-          <TableHeader>
-            <TableRow>
-              <TableHead>DATE</TableHead>
-              <TableHead>TYPE</TableHead>
-              <TableHead>PAIR</TableHead>
-              <TableHead className="text-right">AMOUNT</TableHead>
-              <TableHead className="text-right">PRICE</TableHead>
-              <TableHead>STATUS</TableHead>
-              <TableHead className="text-right">TX</TableHead>
-            </TableRow>
-          </TableHeader>
+      <Table
+        containerClassName="max-h-[480px] min-h-[400px] flex-1"
+        footer={
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={sortedTrades.length}
+            pageSize={pageSize}
+            pageSizeOptions={[5, 8, 15, 30]}
+            onPageChange={setPage}
+            onPageSizeChange={(newSize: number) => {
+              setPageSize(newSize)
+              setPage(1)
+            }}
+            itemLabel="trades"
+            isLoading={isLoading}
+          />
+        }
+      >
+        <TableHeader>
+          <TableRow>
+            <SortableTableHead
+              column="executed_at"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            >
+              DATE
+            </SortableTableHead>
+            <SortableTableHead
+              column="trade_type"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            >
+              TYPE
+            </SortableTableHead>
+            <SortableTableHead
+              column="pair"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            >
+              PAIR
+            </SortableTableHead>
+            <SortableTableHead
+              column="amount_in"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+            >
+              AMOUNT
+            </SortableTableHead>
+            <SortableTableHead
+              column="price_at_execution"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+            >
+              PRICE
+            </SortableTableHead>
+            <TableHead>STATUS</TableHead>
+            <TableHead className="text-right">TX</TableHead>
+          </TableRow>
+        </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRowSkeleton
@@ -104,72 +207,44 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
                 minHeight="min-h-[360px]"
               />
             ) : (
-              paged.map((trade) => (
-                <TableRow key={trade.id}>
-                  <TableCell className="whitespace-nowrap text-text-tertiary">
-                    {formatDate(trade.executed_at, { timeZone: 'UTC' })}
-                  </TableCell>
-                  <TableCell className={cn('font-medium', typeColor[trade.trade_type])}>
-                    {trade.trade_type}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex items-center -space-x-1.5">
-                        <TokenIcon symbol={trade.input_token} className="size-4" />
-                        <TokenIcon symbol={trade.output_token} className="size-4" />
+              paged.map((trade) => {
+                const actionColor = typeColor[trade.trade_type] || 'text-text-primary'
+
+                return (
+                  <TableRow key={trade.id}>
+                    <TableCell className="whitespace-nowrap font-mono text-xs text-text-tertiary">
+                      {formatDate(trade.executed_at, { timeZone: 'UTC' })}
+                    </TableCell>
+                    <TableCell className={cn('font-semibold', actionColor)}>
+                      {trade.trade_type}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex items-center -space-x-1.5">
+                          <TokenIcon symbol={trade.input_token} className="size-4" />
+                          <TokenIcon symbol={trade.output_token} className="size-4" />
+                        </div>
+                        <span className="font-medium text-text-primary">{trade.input_token}/{trade.output_token}</span>
                       </div>
-                      <span>{trade.input_token}/{trade.output_token}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {trade.amount_in.toFixed(4)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    ${trade.price_at_execution.toFixed(4)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status="success" label="Confirmed" />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <SolscanLink signature={trade.transaction_signature} />
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                    <TableCell className={cn('text-right font-mono font-medium', actionColor)}>
+                      {Number(trade.amount_in || 0).toFixed(4)}
+                    </TableCell>
+                    <TableCell className={cn('text-right font-mono font-medium', actionColor)}>
+                      ${Number(trade.price_at_execution || 0).toFixed(4)}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status="success" label="Confirmed" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <SolscanLink signature={trade.transaction_signature} />
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
-
-        {/* Fixed pagination footer slot */}
-        <div className="h-9 flex items-center justify-center gap-2 border-t border-border-subtle/50 pt-2 shrink-0">
-          {totalPages > 1 && !isLoading ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
-                className="h-7 text-xs"
-              >
-                Prev
-              </Button>
-              <span className="text-xs text-text-muted font-mono">{page + 1} / {totalPages}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                disabled={page >= totalPages - 1}
-                className="h-7 text-xs"
-              >
-                Next
-              </Button>
-            </>
-          ) : (
-            <span className="text-xs text-text-muted/60 font-mono">
-              {isLoading ? 'Loading records...' : `${filtered.length} total records`}
-            </span>
-          )}
-        </div>
-      </div>
     </SectionCard>
   )
 }

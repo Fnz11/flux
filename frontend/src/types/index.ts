@@ -60,6 +60,8 @@ export interface PortfolioPosition {
   currentValue: number
   pnl: number
   pnlPercent: number
+  createdAt?: string
+  investedAt?: string
 }
 
 // ── App config ──

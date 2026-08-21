@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/flux-protocol/backend/internal/models"
@@ -23,6 +24,8 @@ type positionResponse struct {
 	CurrentValue       decimal.Decimal `json:"current_value"`
 	PnL                decimal.Decimal `json:"pnl"`
 	PnLPercent         decimal.Decimal `json:"pnl_percent"`
+	CreatedAt          string          `json:"created_at,omitempty"`
+	InvestedAt         string          `json:"invested_at,omitempty"`
 }
 
 type portfolioData struct {
@@ -87,6 +90,10 @@ func (h *PortfolioHandler) GetPortfolio(c *gin.Context) {
 		if err != nil {
 			continue
 		}
+		var createdAtStr string
+		if !d.CreatedAt.IsZero() {
+			createdAtStr = d.CreatedAt.Format(time.RFC3339)
+		}
 		positions = append(positions, positionResponse{
 			VaultID:            vid,
 			VaultAddress:       d.VaultAddress,
@@ -97,6 +104,8 @@ func (h *PortfolioHandler) GetPortfolio(c *gin.Context) {
 			CurrentValue:       d.CurrentValue,
 			PnL:                d.PnL,
 			PnLPercent:         d.PnLPercent,
+			CreatedAt:          createdAtStr,
+			InvestedAt:         createdAtStr,
 		})
 	}
 
@@ -123,6 +132,10 @@ func (h *PortfolioHandler) getPortfolioFromService(c *gin.Context, wallet string
 		if name == "" {
 			name = d.VaultAddress
 		}
+		var createdAtStr string
+		if !d.CreatedAt.IsZero() {
+			createdAtStr = d.CreatedAt.Format(time.RFC3339)
+		}
 		positions = append(positions, positionResponse{
 			VaultID:            vid,
 			VaultAddress:       d.VaultAddress,
@@ -133,6 +146,8 @@ func (h *PortfolioHandler) getPortfolioFromService(c *gin.Context, wallet string
 			CurrentValue:       d.CurrentValue,
 			PnL:                d.PnL,
 			PnLPercent:         d.PnLPercent,
+			CreatedAt:          createdAtStr,
+			InvestedAt:         createdAtStr,
 		})
 	}
 

@@ -61,7 +61,7 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
       {/* PNL */}
       <TableCell className={cn(
         'py-4 px-4 whitespace-nowrap font-mono font-semibold',
-        isPositivePnl ? 'text-emerald-400' : 'text-rose-400',
+        isPositivePnl ? 'text-status-success' : 'text-status-error',
         sortBy === 'pnl' && 'bg-primary-coral/5'
       )}>
         {formatPercent(pnl)}

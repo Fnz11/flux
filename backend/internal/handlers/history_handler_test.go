@@ -57,7 +57,7 @@ func TestHistoryHandler_GetVaultSparkline_Validation(t *testing.T) {
 		{
 			name:           "invalid range",
 			id:             "abc",
-			path:           "/api/v1/vaults/abc/sparkline?range=1y",
+			path:           "/api/v1/vaults/abc/sparkline?range=999d",
 			expectedStatus: http.StatusBadRequest,
 			expectedErrMsg: "invalid range parameter",
 		},
@@ -215,7 +215,7 @@ func TestHistoryHandler_GetPortfolioHistory_Validation(t *testing.T) {
 		},
 		{
 			name:           "invalid range",
-			path:           "/api/v1/portfolio/history?wallet=" + testWallet + "&range=1y",
+			path:           "/api/v1/portfolio/history?wallet=" + testWallet + "&range=999d",
 			expectedStatus: http.StatusBadRequest,
 			expectedErrMsg: "invalid range parameter",
 		},

@@ -58,7 +58,7 @@ describe('VaultsTable', () => {
 
   it('formats negative PNL without plus sign', () => {
     render(<VaultsTable vaults={[makeVault({ pnlPercent: -3.456 })]} onSort={vi.fn()} />)
-    expect(screen.getByText('-3.46%')).toHaveClass('text-rose-400')
+    expect(screen.getByText('-3.46%')).toHaveClass('text-status-error')
   })
 
   it('sorts by click', () => {

@@ -31,6 +31,7 @@
   --color-status-warning: #FFB300;
   --color-status-error: #FF334B;
   --color-status-info: #2979FF;
+  --color-status-purple: #B388FF;
 
   --color-text-primary: #FAFAFA;
   --color-text-secondary: rgba(255, 255, 255, 0.70);
@@ -97,4 +98,30 @@ body {
   font-family: var(--font-serif);
   letter-spacing: 0.04em !important;
   text-transform: capitalize !important;
+}
+
+/* Custom Sleek Dark Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(17, 17, 19, 0.75);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) rgba(17, 17, 19, 0.75);
 }

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -26,6 +27,7 @@ type PortfolioDetail struct {
 	CurrentValue       decimal.Decimal
 	PnL                decimal.Decimal
 	PnLPercent         decimal.Decimal
+	CreatedAt          time.Time
 }
 
 type PortfolioSummary struct {

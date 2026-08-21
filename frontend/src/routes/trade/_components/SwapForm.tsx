@@ -20,6 +20,7 @@ import { ReceiveSection } from './ReceiveSection'
 import { SlippageField } from './SlippageField'
 import { SwapActionButton } from './SwapActionButton'
 import { RouteDetails } from './RouteDetails'
+import { getTradeEligibility } from '@/lib/eligibility'
 
 import type { Vault } from '@/types'
 
@@ -236,6 +237,11 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     minReceived,
     isVaultFundraising: selectedVault?.status?.toLowerCase() === 'fundraising',
     isManager: selectedVault?.managerAddress?.toLowerCase() === wallet.publicKey?.toBase58().toLowerCase(),
+    tradeEligibility: getTradeEligibility(
+      selectedVault,
+      selectedVault?.managerAddress?.toLowerCase() === wallet.publicKey?.toBase58().toLowerCase(),
+      wallet.connected,
+    ),
     priceData,
     isExecuting,
     walletConnected: wallet.connected,
@@ -256,6 +262,7 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
     selectedVault,
     isVaultFundraising,
     isManager,
+    tradeEligibility,
     slippage,
     inputToken,
     setInputToken,
@@ -335,13 +342,15 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
               <SlippageField />
 
               <SwapActionButton
-                disabled={!vaultId || !inputNum || !walletConnected || isExecuting || isInsufficientBalance || (isVaultFundraising && !isManager)}
+                disabled={!tradeEligibility.canExecute || !inputNum || !walletConnected || isExecuting || isInsufficientBalance}
                 isExecuting={isExecuting}
                 walletConnected={walletConnected}
                 isInsufficientBalance={isInsufficientBalance}
-                isVaultFundraising={isVaultFundraising && !isManager}
+                isVaultFundraising={isVaultFundraising}
+                isManager={isManager}
                 hasVault={Boolean(vaultId)}
                 hasAmount={Boolean(inputNum)}
+                reason={tradeEligibility.reason}
               />
             </form>
           </SectionCard>

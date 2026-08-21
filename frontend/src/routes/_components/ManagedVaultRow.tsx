@@ -2,47 +2,72 @@ import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { AddressPill } from '@/components/ui/AddressPill'
 import { VaultSparkline } from '../vaults/_components/VaultSparkline'
 import { cn } from '@/lib/utils'
 import type { Vault } from '@/types'
-
 import { formatCurrency, formatDate } from '@/lib/format'
 
 export function ManagedVaultRow({ vault }: { vault: Vault }) {
   const sparkline = vault.sparkline ?? []
   const pnl = vault.pnlPercent ?? 0
   const isPositive = pnl >= 0
+  const colorClass = isPositive ? 'text-status-success' : 'text-status-error'
   const displayName = vault.metadata.displayName || `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`
+
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
   return (
-    <TableRow className="hover:bg-bg-elevated/60 transition-colors">
-      <TableCell className="py-3.5 px-5 font-semibold text-text-primary whitespace-nowrap text-xs">
-        {displayName}
+    <TableRow className="group hover:bg-bg-elevated/80 transition-colors">
+      <TableCell className="py-4 px-6 whitespace-nowrap">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 shrink-0">
+            <AvatarFallback seed={vault.address || vault.id || displayName}>{initials}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-semibold text-sm flex items-center gap-2">
+              <span className="text-text-primary">{displayName}</span>
+              <StatusBadge status={vault.status} />
+            </div>
+            <div className="mt-0.5">
+              {vault.managerAddress ? (
+                <AddressPill prefix="by " address={vault.managerAddress} length={4} />
+              ) : (
+                <span className="text-xs text-text-tertiary font-mono">by You</span>
+              )}
+            </div>
+          </div>
+        </div>
       </TableCell>
-      <TableCell className="py-3.5 px-4 whitespace-nowrap">
+      <TableCell className="py-4 px-4 whitespace-nowrap">
         <StatusBadge status={vault.status} />
       </TableCell>
-      <TableCell className="py-3.5 px-4 font-mono whitespace-nowrap text-xs text-text-primary">
+      <TableCell className={cn('py-4 px-4 text-right font-mono whitespace-nowrap text-xs font-medium', colorClass)}>
         {formatCurrency(vault.tvl)}
       </TableCell>
-      <TableCell className={cn(
-        'py-3.5 px-4 font-mono font-semibold whitespace-nowrap text-xs',
-        isPositive ? 'text-emerald-400' : 'text-rose-400'
-      )}>
+      <TableCell className={cn('py-4 px-4 text-right font-mono font-semibold whitespace-nowrap text-xs', colorClass)}>
         {isPositive ? `+${pnl.toFixed(2)}%` : `${pnl.toFixed(2)}%`}
       </TableCell>
-      <TableCell className="py-3.5 px-4 font-mono text-xs text-text-tertiary whitespace-nowrap">
+      <TableCell className="py-4 px-4 text-right font-mono text-xs whitespace-nowrap text-text-tertiary">
         {formatDate(vault.createdAt)}
       </TableCell>
-      <TableCell className="py-3.5 px-4 whitespace-nowrap">
+      <TableCell className="py-4 px-4 whitespace-nowrap">
         <VaultSparkline data={sparkline} isPositive={isPositive} />
       </TableCell>
-      <TableCell className="py-3.5 px-5 text-right whitespace-nowrap">
+      <TableCell className="py-4 px-6 whitespace-nowrap text-right">
         <Link
           to="/vaults/$id"
           params={{ id: vault.id }}
-          className="inline-flex items-center justify-center size-7 rounded-lg bg-bg-inset text-text-secondary hover:text-primary-coral hover:bg-primary-coral/10 transition-colors border border-border-subtle"
+          className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-primary-coral hover:bg-primary-coral/10 transition-colors"
         >
-          <ChevronRight className="size-4" />
+          View
+          <ChevronRight className="size-3.5" />
         </Link>
       </TableCell>
     </TableRow>

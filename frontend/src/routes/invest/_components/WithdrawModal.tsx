@@ -10,8 +10,9 @@ import { DecimalInput } from '@/components/ui/DecimalInput'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Wallet } from 'lucide-react'
+import { Wallet, Lock } from 'lucide-react'
 import { withdrawSchema, type WithdrawFormValues } from '@/validations/invest'
+import { getWithdrawEligibility } from '@/lib/eligibility'
 
 interface WithdrawModalProps {
   vaultId: string
@@ -81,9 +82,10 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
     : 0
 
   const isExceeding = position ? numShares > position.sharesOwned : false
+  const withdrawEligibility = getWithdrawEligibility(vault, position, wallet.connected)
 
   const handleWithdraw = async (data: WithdrawFormValues) => {
-    if (!vault || !data.shareAmount) return
+    if (!vault || !data.shareAmount || !withdrawEligibility.canExecute) return
     if (position && Number(data.shareAmount) > position.sharesOwned) {
       form.setError('shareAmount', { message: `Amount cannot exceed ${position.sharesOwned.toFixed(6)} shares` })
       return
@@ -129,10 +131,17 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
                 type="button"
                 onClick={form.handleSubmit(handleWithdraw)}
                 variant="default"
-                disabled={loading || isExceeding || numShares <= 0}
-                className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] disabled:opacity-50"
+                disabled={loading || isExceeding || numShares <= 0 || !withdrawEligibility.canExecute}
+                title={withdrawEligibility.reason ?? undefined}
+                className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Withdrawing...' : isExceeding ? 'Exceeds Balance' : 'Withdraw'}
+                {loading
+                  ? 'Withdrawing...'
+                  : !withdrawEligibility.canExecute
+                    ? (withdrawEligibility.unlockTime ? 'Lockup Active' : 'Cannot Withdraw')
+                    : isExceeding
+                      ? 'Exceeds Balance'
+                      : 'Withdraw'}
               </Button>
             )}
           </>
@@ -161,6 +170,17 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleWithdraw)} className="space-y-4 pt-1">
+            {!withdrawEligibility.canExecute && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-status-warn/25 bg-status-warn/10 p-3 text-xs text-status-warn">
+                <Lock className="size-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Withdrawal Locked</p>
+                  <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">
+                    {withdrawEligibility.reason}
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="rounded-2xl border border-white/12 bg-bg-inset/60 backdrop-blur-md p-4 space-y-3 shadow-inner">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-text-muted">Withdraw Amount</span>

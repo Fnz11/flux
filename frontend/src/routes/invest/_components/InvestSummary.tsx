@@ -1,4 +1,4 @@
-import { Wallet, Coins, TrendingUp, ArrowUpRight } from 'lucide-react'
+import { Wallet, Coins, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
 import { usePortfolioHistoryQuery } from '@/services/hooks/useQuery/usePortfolioHistoryQuery'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -26,14 +26,13 @@ export function InvestSummary() {
   }, [])
   const hasHistory = historyValues.length > 1
 
-  let historyLine = ''
   const historyMin = Math.min(...historyValues)
   const historyMax = Math.max(...historyValues)
   const historyRange = historyMax - historyMin || 1
-  historyLine = historyValues
+  const historyLine = historyValues
     .map((val, idx) => {
-      const x = (idx / (historyValues.length - 1)) * 100
-      const y = 30 - ((val - historyMin) / historyRange) * 26 - 2
+      const x = (idx / Math.max(historyValues.length - 1, 1)) * 100
+      const y = 32 - ((val - historyMin) / historyRange) * 24 - 4
       return `${x.toFixed(1)},${y.toFixed(1)}`
     })
     .join(' ')
@@ -96,63 +95,76 @@ export function InvestSummary() {
       </Card>
 
       {/* 3. Net Profit / Loss Card */}
-      <Card className="relative flex flex-col justify-between overflow-hidden p-5 group hover:border-emerald-500/40 transition-colors">
+      <Card
+        className={cn(
+          'relative flex flex-col justify-between overflow-hidden p-5 transition-colors',
+          isPositivePnl ? 'hover:border-status-success/40' : 'hover:border-status-error/40',
+        )}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-tertiary">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <TrendingUp className="size-3.5" />
+            <div
+              className={cn(
+                'flex size-7 items-center justify-center rounded-lg border',
+                isPositivePnl
+                  ? 'bg-status-success/10 text-status-success border-status-success/20'
+                  : 'bg-status-error/10 text-status-error border-status-error/20',
+              )}
+            >
+              {isPositivePnl ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
             </div>
             <span>Net Profit / Loss</span>
           </div>
           <span
             className={cn(
-              'inline-flex items-center gap-0.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold border',
+              'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border font-mono',
               isPositivePnl
-                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                : 'bg-rose-500/15 text-rose-400 border-rose-500/30',
+                ? 'bg-status-success/15 text-status-success border-status-success/30'
+                : 'bg-status-error/15 text-status-error border-status-error/30',
             )}
           >
             {isPositivePnl ? <ArrowUpRight className="size-3" /> : '▼'}
-            {isPositivePnl ? '+' : ''}{totalPnlPercent.toFixed(2)}%
+            {isPositivePnl ? '+' : ''}{Math.abs(totalPnlPercent).toFixed(2)}%
           </span>
         </div>
 
         <div className="mt-4">
           <div className="flex items-baseline">
-            <span className={cn('text-3xl font-bold tracking-tight', isPositivePnl ? 'text-emerald-400' : 'text-rose-400')}>
+            <span className={cn('text-3xl font-bold tracking-tight', isPositivePnl ? 'text-status-success' : 'text-status-error')}>
               {isPositivePnl ? '+' : '-'}${pnl.intPart}
             </span>
-            <span className={cn('text-xl font-semibold', isPositivePnl ? 'text-emerald-500/70' : 'text-rose-500/70')}>.{pnl.decPart}</span>
+            <span className={cn('text-xl font-semibold', isPositivePnl ? 'text-status-success' : 'text-status-error')}>.{pnl.decPart}</span>
           </div>
           <p className="mt-1 text-xs text-text-tertiary">All-time yield earnings</p>
         </div>
 
-        {/* Embedded Green Area Sparkline Graph */}
-        <div className="absolute bottom-0 left-0 right-0 h-10 w-full pointer-events-none opacity-40">
-          <svg className="h-full w-full overflow-visible" viewBox="0 0 100 30" preserveAspectRatio="none">
+        {/* Embedded Sparkline Graph with Smooth Curve & Gradient */}
+        <div className="mt-3 h-8 w-full overflow-hidden opacity-60">
+          <svg className="h-full w-full overflow-visible" viewBox="0 0 100 32" preserveAspectRatio="none">
             <defs>
               <linearGradient id="investPnlGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={isPositivePnl ? '#10B981' : '#F43F5E'} stopOpacity="0.5" />
-                <stop offset="100%" stopColor={isPositivePnl ? '#10B981' : '#F43F5E'} stopOpacity="0.0" />
+                <stop offset="0%" stopColor={isPositivePnl ? '#00E676' : '#FF334B'} stopOpacity={0.4} />
+                <stop offset="100%" stopColor={isPositivePnl ? '#00E676' : '#FF334B'} stopOpacity={0.0} />
               </linearGradient>
             </defs>
             {hasHistory ? (
               <>
                 <polygon
-                  points={`0,30 ${historyLine} 100,30`}
+                  points={`0,32 ${historyLine} 100,32`}
                   fill="url(#investPnlGrad)"
                 />
                 <polyline
                   points={historyLine}
                   fill="none"
-                  stroke={isPositivePnl ? '#10B981' : '#F43F5E'}
+                  stroke={isPositivePnl ? '#00E676' : '#FF334B'}
                   strokeWidth="2"
                   strokeLinecap="round"
+                  strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
                 />
               </>
             ) : (
-              <line x1={0} y1={15} x2={100} y2={15} stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="1 3" />
+              <line x1="0" y1="16" x2="100" y2="16" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3" />
             )}
           </svg>
         </div>

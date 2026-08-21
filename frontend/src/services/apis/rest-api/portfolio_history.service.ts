@@ -1,7 +1,7 @@
 import { api } from '@/lib/api'
 import type { ApiPortfolioHistoryPoint, ApiPortfolioHistoryResponse } from '@/types'
 
-export type PortfolioHistoryRange = '7d' | '30d' | '90d'
+export type PortfolioHistoryRange = '1d' | '7d' | '30d' | '90d' | '1y' | 'all'
 
 export async function getPortfolioHistory(
   wallet: string,

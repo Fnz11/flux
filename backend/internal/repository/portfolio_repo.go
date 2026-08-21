@@ -113,6 +113,7 @@ func (r *portfolioRepo) GetByUser(ctx context.Context, userID string) ([]domain.
 			SharesOwned:        p.SharesOwned,
 			TotalInvestedValue: p.TotalInvestedValue,
 			AverageEntryPrice:  p.AverageEntryPrice,
+			CreatedAt:          p.CreatedAt,
 		}
 	}
 	return details, nil

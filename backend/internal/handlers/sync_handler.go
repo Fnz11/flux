@@ -321,12 +321,16 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 
 		switch tradeType {
 		case "Deposit":
-			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, finalAmountIn, finalAmountOut, finalPrice); err != nil {
+			solPrice := decimal.NewFromFloat(75.33197084)
+			investedUSD := finalAmountIn.Mul(solPrice)
+			entryPriceUSD := solPrice
+			if finalAmountOut.IsPositive() {
+				entryPriceUSD = investedUSD.Div(finalAmountOut)
+			}
+			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, investedUSD, finalAmountOut, entryPriceUSD); err != nil {
 				return err
 			}
-			solPrice := decimal.NewFromFloat(75.33197084)
-			tvlDelta := finalAmountIn.Mul(solPrice)
-			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta); err != nil {
+			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, investedUSD); err != nil {
 				return err
 			}
 		case "Withdraw":

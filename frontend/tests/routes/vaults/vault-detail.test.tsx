@@ -114,18 +114,18 @@ describe('vault detail route', () => {
   it('renders vault detail page with loaded vault data', () => {
     renderWithClient(<VaultDetailPage />)
     expect(screen.getByRole('heading', { name: 'Alpha Vault' })).toBeInTheDocument()
-    expect(screen.getByText('Assets Under Management (TVL)')).toBeInTheDocument()
+    expect(screen.getByText(/AUM \(TVL\)/i)).toBeInTheDocument()
     expect(screen.getByText('$125,000.00')).toBeInTheDocument()
     expect(screen.getByText('Active Depositors')).toBeInTheDocument()
-    expect(screen.getByText('42')).toBeInTheDocument()
+    expect(screen.getAllByText('42').length).toBeGreaterThan(0)
   })
 })
 
 describe('VaultOverview', () => {
   it('renders metadata, fees, assets, and description with edit link when manager', () => {
     render(<VaultOverview vault={makeVault()} isManager={true} />)
-    expect(screen.getByRole('heading', { name: 'Investment Strategy' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Protocol Parameters' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Investment Strategy/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Protocol Parameters/i })).toBeInTheDocument()
     expect(screen.getByText('15.00% Perf / 2.00% Mgmt')).toBeInTheDocument()
     expect(screen.getByText('SOL')).toBeInTheDocument()
     expect(screen.getByText('A diversified Solana strategy.')).toBeInTheDocument()

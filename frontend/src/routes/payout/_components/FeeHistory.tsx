@@ -1,9 +1,11 @@
+import { useState, useMemo } from 'react'
 import type { ApiFee, Vault } from '@/types'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/ui/table'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, SortableTableHead, Pagination } from '@/components/ui/table'
 import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { Receipt, Coins } from 'lucide-react'
+import { useTableSort } from '@/hooks/useTableSort'
 
 interface FeeHistoryProps {
   isLoading: boolean
@@ -13,11 +15,61 @@ interface FeeHistoryProps {
   onSelectVault: (id: string) => void
 }
 
+type FeeSortColumn = 'vault' | 'perf_fee' | 'mgmt_fee' | 'total'
+
 export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, onSelectVault }: FeeHistoryProps) {
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  const { sortBy, sortOrder, handleSort } = useTableSort<FeeSortColumn>({
+    sortBy: 'total',
+    defaultOrder: 'desc',
+    allowClear: true,
+  })
+
   const currentVault = vaults.find((v) => v.id === selectedVaultId)
   const displayLabel = !selectedVaultId || selectedVaultId === 'ALL'
     ? 'All Vaults'
     : currentVault?.metadata.displayName || `Vault ${selectedVaultId.slice(0, 8)}`
+
+  const sortedFees = useMemo(() => {
+    if (!sortBy || !sortOrder) return filteredFees
+
+    return [...filteredFees].sort((a, b) => {
+      let aVal: number | string = 0
+      let bVal: number | string = 0
+
+      switch (sortBy) {
+        case 'vault': {
+          const vA = vaults.find((v) => v.id === a.vault_id)?.metadata.displayName || a.vault_id
+          const vB = vaults.find((v) => v.id === b.vault_id)?.metadata.displayName || b.vault_id
+          aVal = vA.toLowerCase()
+          bVal = vB.toLowerCase()
+          break
+        }
+        case 'perf_fee':
+          aVal = a.accrued_performance_fee || 0
+          bVal = b.accrued_performance_fee || 0
+          break
+        case 'mgmt_fee':
+          aVal = a.accrued_management_fee || 0
+          bVal = b.accrued_management_fee || 0
+          break
+        case 'total':
+          aVal = a.total_accrued || 0
+          bVal = b.total_accrued || 0
+          break
+      }
+
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      }
+      return sortOrder === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number)
+    })
+  }, [filteredFees, vaults, sortBy, sortOrder])
+
+  const totalPages = Math.max(1, Math.ceil(sortedFees.length / pageSize))
+  const pagedFees = sortedFees.slice((page - 1) * pageSize, page * pageSize)
 
   return (
     <SectionCard
@@ -27,7 +79,10 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
       rightContent={
         <Select 
           value={selectedVaultId || 'ALL'} 
-          onValueChange={onSelectVault}
+          onValueChange={(val) => {
+            onSelectVault(val)
+            setPage(1)
+          }}
         >
           <SelectTrigger className="h-8 w-44 rounded-xl border border-border-subtle bg-bg-inset px-3 text-xs font-semibold text-text-primary hover:border-primary-coral/40 cursor-pointer">
             <SelectValue placeholder="All Vaults">
@@ -45,13 +100,62 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
         </Select>
       }
     >
-      <Table containerClassName="min-h-[380px]">
+      <Table
+        containerClassName="min-h-[380px]"
+        footer={
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={sortedFees.length}
+            pageSize={pageSize}
+            pageSizeOptions={[5, 10, 20, 50]}
+            onPageChange={setPage}
+            onPageSizeChange={(newSize: number) => {
+              setPageSize(newSize)
+              setPage(1)
+            }}
+            itemLabel="fees"
+            isLoading={isLoading}
+          />
+        }
+      >
         <TableHeader>
           <TableRow>
-            <TableHead>VAULT</TableHead>
-            <TableHead className="text-right">PERFORMANCE FEE</TableHead>
-            <TableHead className="text-right">MANAGEMENT FEE</TableHead>
-            <TableHead className="text-right">TOTAL ACCRUED</TableHead>
+            <SortableTableHead
+              column="vault"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+            >
+              VAULT
+            </SortableTableHead>
+            <SortableTableHead
+              column="perf_fee"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+            >
+              PERFORMANCE FEE
+            </SortableTableHead>
+            <SortableTableHead
+              column="mgmt_fee"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+            >
+              MANAGEMENT FEE
+            </SortableTableHead>
+            <SortableTableHead
+              column="total"
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+            >
+              TOTAL ACCRUED
+            </SortableTableHead>
             <TableHead className="text-right">ACTION</TableHead>
           </TableRow>
         </TableHeader>
@@ -63,7 +167,7 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
               cellAligns={['left', 'right', 'right', 'right', 'right']}
               cellWidths={['w-32', 'w-20', 'w-20', 'w-20', 'w-14']}
             />
-          ) : filteredFees.length === 0 ? (
+          ) : pagedFees.length === 0 ? (
             <TableEmpty
               colSpan={5}
               title="No accrued fees recorded yet"
@@ -71,7 +175,7 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
               minHeight="min-h-[300px]"
             />
           ) : (
-              filteredFees.map((fee) => {
+              pagedFees.map((fee) => {
                 const vault = vaults.find((v) => v.id === fee.vault_id)
                 const vaultName = vault?.metadata.displayName || `Vault ${fee.vault_id.slice(0, 8)}`
                 return (
@@ -103,8 +207,8 @@ export function FeeHistory({ isLoading, filteredFees, vaults, selectedVaultId, o
                 )
               })
             )}
-          </TableBody>
-        </Table>
+        </TableBody>
+      </Table>
     </SectionCard>
   )
 }

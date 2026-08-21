@@ -59,6 +59,14 @@ func (m *mockVaultRepository) UpdateMetadata(ctx context.Context, address string
 	return nil
 }
 
+func (m *mockVaultRepository) UpdateStatus(ctx context.Context, vaultID string, status string) error {
+	return nil
+}
+
+func (m *mockVaultRepository) UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error {
+	return nil
+}
+
 func (m *mockVaultRepository) List(ctx context.Context, filter domain.VaultListFilter) ([]domain.VaultDetail, int64, error) {
 	var filtered []domain.VaultDetail
 	for _, v := range m.vaults {
@@ -77,9 +85,7 @@ func (m *mockVaultRepository) GetVaultBalances(ctx context.Context, vaultIDOrAdd
 	return m.balances, nil
 }
 
-func (m *mockVaultRepository) UpdateTVL(ctx context.Context, vaultID string, delta decimal.Decimal) error {
-	return nil
-}
+
 
 func TestVaultHandler_ListVaults(t *testing.T) {
 	gin.SetMode(gin.TestMode)

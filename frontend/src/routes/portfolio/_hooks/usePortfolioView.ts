@@ -1,16 +1,20 @@
 import { useState, useMemo } from 'react'
 import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
 import { usePortfolioHistoryQuery } from '@/services/hooks/useQuery/usePortfolioHistoryQuery'
+import type { PortfolioHistoryRange } from '@/services/apis/rest-api/portfolio_history.service'
 import type { PortfolioPosition } from '@/types'
 
 type SortKey = 'value' | 'pnl' | 'name'
 
-export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPosition[]) {
+export function usePortfolioView(
+  walletAddressOrPositions?: string | PortfolioPosition[],
+  range: PortfolioHistoryRange = '30d',
+) {
   const isString = typeof walletAddressOrPositions === 'string'
   const walletAddress = isString ? walletAddressOrPositions : ''
   const { positions: enriched } = usePortfolioPnl(walletAddressOrPositions)
 
-  const { data: historyPoints = [] } = usePortfolioHistoryQuery(walletAddress)
+  const { data: historyPoints = [] } = usePortfolioHistoryQuery(walletAddress, range)
 
   const [sortBy, setSortBy] = useState<SortKey | undefined>(undefined)
   const [sortAsc, setSortAsc] = useState(false)
@@ -63,11 +67,15 @@ export function usePortfolioView(walletAddressOrPositions?: string | PortfolioPo
     return []
   }, [walletAddress, historyPoints, enriched])
 
-  const allocationData = enriched.map((p) => ({
-    name: p.vaultName,
-    value: p.currentValue,
-    color: '',
-  }))
+  const allocationData = useMemo(() => {
+    return [...enriched]
+      .map((p) => ({
+        name: p.vaultName,
+        value: p.currentValue,
+        color: '',
+      }))
+      .sort((a, b) => b.value - a.value)
+  }, [enriched])
 
   return {
     sortedPositions,

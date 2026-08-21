@@ -17,9 +17,12 @@ import (
 // window. Values are validated by the handler; anything unknown here is an
 // invalid-input error.
 var historyRangeDays = map[string]int{
+	"1d":  1,
 	"7d":  7,
 	"30d": 30,
 	"90d": 90,
+	"1y":  365,
+	"all": 1825,
 }
 
 type historyRepo struct {
@@ -185,11 +188,12 @@ func (r *historyRepo) queryPriceHistorySeries(db *gorm.DB, vaultID string, from,
 
 func (r *historyRepo) queryTradeHistorySeries(db *gorm.DB, wallet string, from, to time.Time) ([]domain.HistoryPoint, error) {
 	var deltas []bucketQueryResult
+	bucketExpr := historyBucketSQL(db, "executed_at", "day")
 	q := db.Table("trade_histories").
 		Joins("JOIN users ON users.id = trade_histories.actor_id").
-		Select(fmt.Sprintf("%s AS bucket, SUM(amount_in - amount_out) AS val", historyBucketSQL(db, "executed_at", "day"))).
+		Select(fmt.Sprintf("%s AS bucket, SUM(CASE WHEN trade_type = 'Deposit' THEN amount_in * COALESCE(price_at_execution, 1.0) WHEN trade_type = 'Withdraw' THEN -amount_out * COALESCE(price_at_execution, 1.0) ELSE 0.0 END) AS val", bucketExpr)).
 		Where("users.wallet_address = ? AND executed_at >= ? AND executed_at <= ?", wallet, from, to).
-		Group("bucket").Order("bucket ASC")
+		Group(bucketExpr).Order(bucketExpr + " ASC")
 	if err := q.Scan(&deltas).Error; err != nil {
 		return nil, err
 	}
@@ -220,10 +224,11 @@ func (r *historyRepo) queryPnLSummarySeries(db *gorm.DB, wallet string, from, to
 		return []domain.HistoryPoint{}, err
 	}
 	var results []bucketQueryResult
+	bucketExpr := historyBucketSQL(db, "as_of", "day")
 	q := db.Table("user_pnl_summary").
-		Select(fmt.Sprintf("%s AS bucket, SUM(current_value) AS val", historyBucketSQL(db, "as_of", "day"))).
+		Select(fmt.Sprintf("%s AS bucket, SUM(current_value) AS val", bucketExpr)).
 		Where("user_id = ? AND as_of >= ? AND as_of <= ?", userID, from, to).
-		Group("bucket").Order("bucket ASC")
+		Group(bucketExpr).Order(bucketExpr + " ASC")
 	if err := q.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -236,10 +241,11 @@ func (r *historyRepo) queryPortfolioSeries(db *gorm.DB, wallet string, from, to 
 		return []domain.HistoryPoint{}, err
 	}
 	var results []bucketQueryResult
+	bucketExpr := historyBucketSQL(db, "updated_at", "day")
 	q := db.Table("portfolios").
-		Select(fmt.Sprintf("%s AS bucket, SUM(total_invested_value) AS val", historyBucketSQL(db, "updated_at", "day"))).
+		Select(fmt.Sprintf("%s AS bucket, SUM(total_invested_value) AS val", bucketExpr)).
 		Where("user_id = ? AND updated_at >= ? AND updated_at <= ?", userID, from, to).
-		Group("bucket").Order("bucket ASC")
+		Group(bucketExpr).Order(bucketExpr + " ASC")
 	if err := q.Scan(&results).Error; err != nil {
 		return nil, err
 	}

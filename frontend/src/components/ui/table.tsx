@@ -2,22 +2,28 @@ import * as React from 'react'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EmptyState, type EmptyStateSize } from './EmptyState'
+import { Pagination, type PaginationProps } from './Pagination'
 
 export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
   containerClassName?: string
   containerRef?: React.Ref<HTMLDivElement>
+  footer?: React.ReactNode
 }
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, containerClassName, containerRef, ...props }, ref) => (
+  ({ className, containerClassName, containerRef, footer, children, ...props }, ref) => (
     <div
-      ref={containerRef}
       className={cn(
-        'relative w-full overflow-auto rounded-xl border border-border-subtle/60 bg-bg-inset/20 min-h-[480px] flex flex-col',
+        'relative w-full rounded-xl border border-border-subtle/60 bg-bg-inset/20 flex flex-col min-h-0 flex-1 overflow-hidden',
         containerClassName,
       )}
     >
-      <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
+      <div ref={containerRef} className="relative w-full overflow-auto flex-1 min-h-0">
+        <table ref={ref} className={cn('w-full caption-bottom text-sm border-collapse', className)} {...props}>
+          {children}
+        </table>
+      </div>
+      {footer}
     </div>
   ),
 )
@@ -27,7 +33,11 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('border-b border-border-subtle/60 bg-bg-inset/60', className)} {...props} />
+  <thead
+    ref={ref}
+    className={cn('sticky top-0 z-10 border-b border-border-subtle/60 bg-[#16161b]', className)}
+    {...props}
+  />
 ))
 TableHeader.displayName = 'TableHeader'
 
@@ -91,7 +101,9 @@ interface SortableTableHeadProps<T extends string = string>
   extends Omit<React.ThHTMLAttributes<HTMLTableCellElement>, 'onClick'> {
   column: T
   sortBy?: string
+  currentSort?: string
   sortOrder?: 'asc' | 'desc'
+  currentOrder?: 'asc' | 'desc'
   onSort: (column: T) => void
   align?: 'left' | 'right' | 'center'
   children: React.ReactNode
@@ -100,15 +112,19 @@ interface SortableTableHeadProps<T extends string = string>
 function SortableTableHead<T extends string = string>({
   column,
   sortBy,
+  currentSort,
   sortOrder,
+  currentOrder,
   onSort,
   align = 'left',
   className,
   children,
   ...props
 }: SortableTableHeadProps<T>) {
-  const isSorted = sortBy === column && Boolean(sortOrder)
-  const ariaSort = isSorted ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined
+  const activeSort = sortBy ?? currentSort
+  const activeOrder = sortOrder ?? currentOrder
+  const isSorted = activeSort === column && Boolean(activeOrder)
+  const ariaSort = isSorted ? (activeOrder === 'asc' ? 'ascending' : 'descending') : undefined
 
   return (
     <TableHead
@@ -124,20 +140,20 @@ function SortableTableHead<T extends string = string>({
       }}
       className={cn(
         'group cursor-pointer select-none transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-primary-coral/50',
-        isSorted ? 'text-primary-coral font-semibold' : 'hover:text-text-primary',
+        isSorted ? 'text-primary-coral font-medium' : 'hover:text-text-primary',
         className,
       )}
       {...props}
     >
       <div
         className={cn(
-          'flex items-center',
+          'flex items-center gap-1.5',
           align === 'right' && 'justify-end',
           align === 'center' && 'justify-center',
         )}
       >
-        {children}
-        <SortIcon active={isSorted} direction={isSorted ? sortOrder : undefined} />
+        <span>{children}</span>
+        <SortIcon active={isSorted} direction={isSorted ? activeOrder : undefined} />
       </div>
     </TableHead>
   )
@@ -194,5 +210,8 @@ export {
   TableEmpty,
   SortIcon,
   SortableTableHead,
+  Pagination,
 }
-export type { TableEmptyProps, SortIconProps, SortableTableHeadProps }
+export type { TableEmptyProps, SortIconProps, SortableTableHeadProps, PaginationProps }
+export { Pagination as TablePagination }
+export type { PaginationProps as TablePaginationProps }
