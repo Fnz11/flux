@@ -28,8 +28,9 @@ function VaultsListPage() {
   const currentStatus = search.status ?? 'All'
 
   const { sortBy, sortOrder, handleSort } = useTableSort<SortColumn>({
-    sortBy: search.sortBy,
-    sortOrder: search.sortOrder,
+    sortBy: search.sortBy ?? 'created_at',
+    sortOrder: search.sortOrder ?? 'desc',
+    defaultOrder: 'desc',
     onSortChange: (nextSortBy, nextSortOrder) => {
       navigate({
         search: (prev) => ({

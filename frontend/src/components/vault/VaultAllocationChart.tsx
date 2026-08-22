@@ -27,7 +27,6 @@ const TOKEN_PALETTE: Record<string, string> = {
   USDT: '#10B981',  // Emerald Teal
   JUP: '#FF6B35',   // Brand Coral Orange
   PYTH: '#C084FC',  // Rich Orchid Purple
-  BONK: '#F59E0B',  // Warm Amber
   BTC: '#F59E0B',   // Bitcoin Gold
   ETH: '#6366F1',   // Ethereum Indigo
 }

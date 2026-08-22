@@ -19,8 +19,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form'
 import { TokenIcon } from '@/components/ui/TokenIcon'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
 import type { CreateVaultFormValues } from '@/validations/vault'
 
 export interface VaultIdentitySectionProps {
@@ -84,7 +84,7 @@ export function VaultIdentitySection({
     }
   }
 
-  const filteredAssets = (focusAssetsWhitelist.length > 0 ? focusAssetsWhitelist : ['SOL', 'USDC', 'USDT', 'ETH', 'BTC']).filter(
+  const filteredAssets = (focusAssetsWhitelist.length > 0 ? focusAssetsWhitelist : DEFAULT_FOCUS_ASSETS_WHITELIST).filter(
     (asset) => asset.toLowerCase().includes(comboboxSearch.toLowerCase().trim())
   )
 

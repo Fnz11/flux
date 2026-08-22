@@ -3,6 +3,7 @@ import { Percent, Clock } from 'lucide-react'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { DecimalInput } from '@/components/ui/DecimalInput'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { FEE_WITHDRAWAL_PERIODS, type LockupPeriodUnit, type FeeWithdrawalPeriod } from '@/constants/vault'
 import type { CreateVaultFormValues } from '@/validations/vault'
@@ -79,14 +80,18 @@ export function AdvancedSettingsSection({
                       />
                     </FormControl>
 
-                    <select
+                    <Select
                       value={lockupPeriodUnit}
-                      onChange={(e) => onLockupPeriodUnitChange(e.target.value as LockupPeriodUnit)}
-                      className="rounded-lg border border-border-subtle bg-bg-inset px-3 py-1.5 text-xs font-mono text-text-primary focus:outline-none focus:border-primary-coral cursor-pointer"
+                      onValueChange={(val) => onLockupPeriodUnitChange(val as LockupPeriodUnit)}
                     >
-                      <option value="hours">Hours</option>
-                      <option value="days">Days</option>
-                    </select>
+                      <SelectTrigger className="w-28 h-10 rounded-xl border border-border-subtle bg-bg-inset px-3 text-xs font-mono text-text-primary focus:border-primary-coral cursor-pointer">
+                        <SelectValue placeholder="Unit" />
+                      </SelectTrigger>
+                      <SelectContent className="min-w-[7rem] rounded-xl border-border-medium bg-bg-elevated text-text-primary shadow-xl">
+                        <SelectItem value="hours" className="text-xs font-mono cursor-pointer">Hours</SelectItem>
+                        <SelectItem value="days" className="text-xs font-mono cursor-pointer">Days</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <p className="text-[10px] text-text-tertiary">Maximum 45 days lockup duration</p>
                   <FormMessage />

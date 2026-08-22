@@ -200,13 +200,13 @@ describe('mappers', () => {
     it('maps custom config values', () => {
       const rawConfig = {
         dust_threshold: 0.05,
-        focus_assets_whitelist: ['SOL', 'BONK'],
+        focus_assets_whitelist: ['SOL', 'JUP'],
         min_raise_amount: 100,
         lockup_period: 30,
       }
       const config = mapApiConfigToConfig(rawConfig)
       assert.equal(config.dustThreshold, 0.05)
-      assert.deepStrictEqual(config.focusAssetsWhitelist, ['SOL', 'BONK'])
+      assert.deepStrictEqual(config.focusAssetsWhitelist, ['SOL', 'JUP'])
       assert.equal(config.minRaiseAmount, 100)
       assert.equal(config.lockupPeriod, 30)
     })

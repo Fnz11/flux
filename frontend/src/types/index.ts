@@ -176,6 +176,10 @@ export interface ApiFee {
   accrued_performance_fee: number
   accrued_management_fee: number
   total_accrued: number
+  claimed_amount?: number
+  claim_tx_signature?: string
+  claimed_at?: string
+  status?: 'Claimable' | 'Claimed'
 }
 
 // ═══════════════════════════════════════

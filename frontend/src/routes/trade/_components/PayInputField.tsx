@@ -22,9 +22,10 @@ export function PayInputField({
 }: PayInputFieldProps) {
   const formattedMax =
     maxBalance !== null
-      ? Number(maxBalance) > 0 && Number(maxBalance) < 0.01
-        ? parseFloat(Number(maxBalance).toFixed(6)).toString()
-        : Number(maxBalance).toFixed(2)
+      ? Number(maxBalance).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: Number(maxBalance) < 1 && Number(maxBalance) > 0 ? 6 : 4,
+        })
       : '0.00'
 
   return (

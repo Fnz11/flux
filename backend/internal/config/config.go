@@ -8,6 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// DefaultFocusAssetsWhitelist is the single source of truth for default supported assets.
+var DefaultFocusAssetsWhitelist = []string{"SOL", "USDC", "USDT", "JUP", "PYTH"}
+
 type Config struct {
 	DatabaseURL          string
 	ServerPort           int

@@ -82,7 +82,8 @@ describe('VaultsTable', () => {
 
   it('links each action to vault details', () => {
     render(<VaultsTable vaults={[makeVault()]} onSort={vi.fn()} />)
-    expect(screen.getAllByRole('link')[0]).toHaveAttribute('href', '/vaults/vault-1')
+    const vaultLink = screen.getAllByRole('link').find((el) => el.getAttribute('href')?.startsWith('/vaults/'))
+    expect(vaultLink).toHaveAttribute('href', '/vaults/vault-1')
   })
 
   it('renders sparkline fallback when query has no points', () => {

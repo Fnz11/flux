@@ -22,6 +22,7 @@ import { SwapActionButton } from './SwapActionButton'
 import { RouteDetails } from './RouteDetails'
 import { getTradeEligibility } from '@/lib/eligibility'
 
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
 import type { Vault } from '@/types'
 
 export interface SwapFormProps {
@@ -109,11 +110,6 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     } else if (selectedVault && selectedVault.tvl > 0 && inputToken.toUpperCase() === 'SOL') {
       max = selectedVault.tvl / 150
     }
-    
-    // Reserve ~0.06 SOL for VaultState PDA rent exemption if swapping native SOL
-    if ((inputToken.toUpperCase() === 'SOL' || inputToken === 'So11111111111111111111111111111111111111112') && max > 0) {
-      max = Math.max(0, max - 0.06)
-    }
     return max
   }, [vaultId, isLoadingBalances, currentAsset, selectedVault, inputToken])
 
@@ -132,10 +128,10 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
 
   const tokens = useMemo(() => {
     const focusAssets = selectedVault?.metadata?.focusAssets
-    if (Array.isArray(focusAssets) && focusAssets.length > 0) {
-      return focusAssets
-    }
-    return config?.focusAssetsWhitelist ?? ['SOL', 'USDC', 'USDT', 'BONK', 'JUP', 'PYTH']
+    const rawList = Array.isArray(focusAssets) && focusAssets.length > 0
+      ? focusAssets
+      : (config?.focusAssetsWhitelist ?? DEFAULT_FOCUS_ASSETS_WHITELIST)
+    return rawList.filter((t) => t.toUpperCase() !== 'BONK')
   }, [selectedVault, config])
 
   useEffect(() => {

@@ -124,18 +124,28 @@ export function Sidebar() {
               <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">App Mode</p>
               <div className="flex overflow-hidden rounded-xl border border-border-medium bg-bg-inset/50 p-1 backdrop-blur-sm">
                 <Button
-                  variant={managerActive ? 'default' : 'ghost'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => handleModeSwitch(true)}
-                  className={cn('h-7 flex-1 text-[11px]', managerActive ? 'shadow-sm text-text-primary bg-bg-elevated' : 'text-text-tertiary hover:text-text-secondary')}
+                  className={cn(
+                    'h-7 flex-1 text-[11px] font-semibold transition-all',
+                    managerActive
+                      ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-white shadow-sm shadow-primary-coral/20 font-bold hover:brightness-110'
+                      : 'text-text-tertiary hover:text-text-secondary hover:bg-transparent'
+                  )}
                 >
                   Manager
                 </Button>
                 <Button
-                  variant={investActive ? 'default' : 'ghost'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => handleModeSwitch(false)}
-                  className={cn('h-7 flex-1 text-[11px]', investActive ? 'bg-primary-gold hover:bg-primary-gold/90 shadow-sm text-black' : 'text-text-tertiary hover:text-text-secondary')}
+                  className={cn(
+                    'h-7 flex-1 text-[11px] font-semibold transition-all',
+                    investActive
+                      ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-white shadow-sm shadow-primary-coral/20 font-bold hover:brightness-110'
+                      : 'text-text-tertiary hover:text-text-secondary hover:bg-transparent'
+                  )}
                 >
                   Invest
                 </Button>
@@ -144,19 +154,19 @@ export function Sidebar() {
           ) : (
             <div className="flex flex-col gap-2 items-center py-2">
               <Button
-                variant={managerActive ? 'default' : 'ghost'}
+                variant="ghost"
                 size="icon"
                 onClick={() => handleModeSwitch(true)}
-                className={cn('size-8 rounded-full', managerActive ? 'bg-bg-elevated text-text-primary' : 'text-text-tertiary')}
+                className={cn('size-8 rounded-full transition-all', managerActive ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-white shadow-sm font-bold hover:brightness-110' : 'text-text-tertiary')}
                 title="Manager Mode"
               >
                 M
               </Button>
               <Button
-                variant={investActive ? 'default' : 'ghost'}
+                variant="ghost"
                 size="icon"
                 onClick={() => handleModeSwitch(false)}
-                className={cn('size-8 rounded-full', investActive ? 'bg-primary-gold text-black' : 'text-text-tertiary')}
+                className={cn('size-8 rounded-full transition-all', investActive ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-white shadow-sm font-bold hover:brightness-110' : 'text-text-tertiary')}
                 title="Invest Mode"
               >
                 I

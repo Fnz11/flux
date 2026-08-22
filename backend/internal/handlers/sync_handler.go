@@ -327,11 +327,16 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 			if finalAmountOut.IsPositive() {
 				entryPriceUSD = investedUSD.Div(finalAmountOut)
 			}
-			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, investedUSD, finalAmountOut, entryPriceUSD); err != nil {
+			if err := h.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, finalAmountOut, investedUSD, entryPriceUSD); err != nil {
 				return err
 			}
 			if err := h.vaultRepo.UpdateTVL(ctx, vault.ID, investedUSD); err != nil {
 				return err
+			}
+			newTVL := vault.TVL.Add(investedUSD)
+			minUSD := vault.MinRaiseAmount.Mul(solPrice)
+			if (newTVL.GreaterThanOrEqual(minUSD) || newTVL.GreaterThanOrEqual(vault.MinRaiseAmount)) && strings.EqualFold(vault.Status, "Fundraising") {
+				_ = h.vaultRepo.UpdateStatus(ctx, vault.ID, "Active")
 			}
 		case "Withdraw":
 			if err := h.portfolioRepo.ReducePosition(ctx, actor.ID, vault.ID, finalAmountIn); err != nil {

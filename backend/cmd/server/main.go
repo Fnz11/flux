@@ -110,6 +110,12 @@ func main() {
 	searchHandler := handlers.NewSearchHandler(searchSvc)
 	feeHandler := handlers.NewFeeHandler(vaultRepo)
 
+	storageSvc, err := services.NewLocalStorageService("./uploads")
+	if err != nil {
+		logger.Fatalf("failed to initialize upload storage service: %v", err)
+	}
+	uploadHandler := handlers.NewUploadHandler(storageSvc, 5<<20)
+
 	draftRepo := repository.NewGormTransactionDraftRepository(db)
 	txPrepareSvc := services.NewTxPrepareService(draftRepo, vaultRepo, solanaClient)
 	txPrepareHandler := handlers.NewTxPrepareHandler(txPrepareSvc)
@@ -159,6 +165,8 @@ func main() {
 		Search:       searchHandler,
 		Fee:          feeHandler,
 		TxPrepare:    txPrepareHandler,
+		Upload:       uploadHandler,
+		UploadsDir:   "./uploads",
 		JWTSecret:    cfg.JWTSecret,
 		Redis:        redisClient,
 	})

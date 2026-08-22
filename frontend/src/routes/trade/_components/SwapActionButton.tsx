@@ -41,7 +41,7 @@ export function SwapActionButton({
         Manager Access Only
       </span>
     )
-  } else if (isVaultFundraising) {
+  } else if (isVaultFundraising && !isManager) {
     isActionDisabled = true
     label = (
       <span className="flex items-center justify-center gap-2">
@@ -50,10 +50,12 @@ export function SwapActionButton({
       </span>
     )
   } else if (!hasAmount) {
-    label = 'Enter Amount'
+    label = isVaultFundraising && isManager ? 'Enter Amount to Activate & Swap' : 'Enter Amount'
   } else if (isInsufficientBalance) {
     isActionDisabled = true
     label = 'Insufficient Vault Balance'
+  } else if (isVaultFundraising && isManager) {
+    label = 'Activate Vault & Execute Swap'
   }
 
   const tooltip =
@@ -64,13 +66,15 @@ export function SwapActionButton({
         ? 'Please select a vault'
         : !isManager
           ? 'Only the vault manager can execute trades'
-          : isVaultFundraising
+          : isVaultFundraising && !isManager
             ? 'Trading is locked during Fundraising phase'
             : isInsufficientBalance
               ? 'Entered amount exceeds vault token balance'
               : !hasAmount
                 ? 'Enter an amount to trade'
-                : 'Execute trade swap on-chain')
+                : isVaultFundraising && isManager
+                  ? 'Activate vault and execute swap on-chain'
+                  : 'Execute trade swap on-chain')
 
   return (
     <button

@@ -6,6 +6,7 @@ import type {
   VaultStatus,
   TradeType,
 } from '@/types'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
 
 export interface RawApiVault {
   id?: string
@@ -105,12 +106,21 @@ export interface RawApiTrade {
 
 export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
   if (!raw) return {} as Vault
+  const tvl = typeof raw.tvl === 'number' ? raw.tvl : parseFloat(raw.tvl || '0')
+  const minRaiseAmount = typeof raw.min_raise_amount === 'number' ? raw.min_raise_amount : typeof raw.minRaiseAmount === 'number' ? raw.minRaiseAmount : 1
+
+  let status = raw.status ?? 'Fundraising'
+  const isTargetMet = tvl >= minRaiseAmount * 75 || tvl >= minRaiseAmount
+  if (status.toLowerCase() === 'fundraising' && isTargetMet && tvl > 0) {
+    status = 'Active'
+  }
+
   const vault: Vault = {
     id: raw.id ?? '',
     address: raw.address ?? '',
     managerId: raw.managerId ?? raw.manager_id ?? '',
     managerAddress: raw.managerAddress ?? raw.manager_address ?? '',
-    status: raw.status ?? 'Fundraising',
+    status,
     metadata: {
       displayName: raw.metadata?.displayName ?? raw.metadata?.display_name ?? '',
       description: raw.metadata?.description ?? '',
@@ -191,14 +201,14 @@ export function mapApiConfigToConfig(raw: RawApiConfig | null | undefined): AppC
   if (!raw) {
     return {
       dustThreshold: 0.001,
-      focusAssetsWhitelist: ['SOL', 'USDC', 'USDT', 'BONK', 'JUP', 'PYTH'],
+      focusAssetsWhitelist: [...DEFAULT_FOCUS_ASSETS_WHITELIST],
       minRaiseAmount: 10,
       lockupPeriod: 7,
     }
   }
   return {
     dustThreshold: raw.dustThreshold ?? raw.dust_threshold ?? 0.001,
-    focusAssetsWhitelist: raw.focusAssetsWhitelist ?? raw.focus_assets_whitelist ?? ['SOL', 'USDC', 'USDT', 'BONK', 'JUP', 'PYTH'],
+    focusAssetsWhitelist: raw.focusAssetsWhitelist ?? raw.focus_assets_whitelist ?? [...DEFAULT_FOCUS_ASSETS_WHITELIST],
     minRaiseAmount: raw.minRaiseAmount ?? raw.min_raise_amount ?? 10,
     lockupPeriod: raw.lockupPeriod ?? raw.lockup_period ?? 7,
   }

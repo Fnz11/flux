@@ -6,6 +6,7 @@ import (
 
 	"github.com/flux-protocol/backend/internal/domain"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 type FeeHandler struct {
@@ -19,10 +20,12 @@ func NewFeeHandler(vaultRepo domain.VaultRepository) *FeeHandler {
 }
 
 type FeeResponse struct {
-	VaultID               string  `json:"vault_id"`
-	AccruedPerformanceFee float64 `json:"accrued_performance_fee"`
-	AccruedManagementFee  float64 `json:"accrued_management_fee"`
-	TotalAccrued          float64 `json:"total_accrued"`
+	VaultID               string          `json:"vault_id"`
+	AccruedPerformanceFee decimal.Decimal `json:"accrued_performance_fee"`
+	AccruedManagementFee  decimal.Decimal `json:"accrued_management_fee"`
+	TotalAccrued          decimal.Decimal `json:"total_accrued"`
+	ClaimedAmount         decimal.Decimal `json:"claimed_amount"`
+	Status                string          `json:"status"`
 }
 
 func (h *FeeHandler) GetVaultFees(c *gin.Context) {
@@ -55,20 +58,26 @@ func (h *FeeHandler) GetVaultFees(c *gin.Context) {
 	}
 
 	// Calculate estimated accrued fees based on vault TVL and bps
-	tvlFloat, _ := vault.TVL.Float64()
-	perfFeeBps := float64(vault.PerformanceFeeBps)
-	mgmtFeeBps := float64(vault.ManagementFeeBps)
+	perfFeeBps := decimal.NewFromInt(int64(vault.PerformanceFeeBps))
+	mgmtFeeBps := decimal.NewFromInt(int64(vault.ManagementFeeBps))
+	bpsDiv := decimal.NewFromInt(10000)
 
-	// Sample heuristic / calculation for fee breakdown
-	accruedPerf := tvlFloat * (perfFeeBps / 10000.0)
-	accruedMgmt := tvlFloat * (mgmtFeeBps / 10000.0)
-	totalAccrued := accruedPerf + accruedMgmt
+	accruedPerf := vault.TVL.Mul(perfFeeBps).Div(bpsDiv)
+	accruedMgmt := vault.TVL.Mul(mgmtFeeBps).Div(bpsDiv)
+	totalAccrued := accruedPerf.Add(accruedMgmt)
+
+	status := "Claimable"
+	if totalAccrued.IsZero() {
+		status = "Claimed"
+	}
 
 	resp := FeeResponse{
 		VaultID:               vault.ID,
 		AccruedPerformanceFee: accruedPerf,
 		AccruedManagementFee:  accruedMgmt,
 		TotalAccrued:          totalAccrued,
+		ClaimedAmount:         decimal.Zero,
+		Status:                status,
 	}
 
 	c.JSON(http.StatusOK, resp)

@@ -63,7 +63,7 @@ export function VaultsExplorer({
   const [internalStatus, setInternalStatus] = useState<StatusTab>(initialStatus)
   const [internalSearch, setInternalSearch] = useState('')
   const [viewMode, setViewMode] = useState<'table' | 'cards'>(defaultViewMode)
-  const [internalSortBy, setInternalSortBy] = useState<SortColumn>('tvl')
+  const [internalSortBy, setInternalSortBy] = useState<SortColumn>('created_at')
   const [internalSortOrder, setInternalSortOrder] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)

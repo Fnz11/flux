@@ -7,7 +7,7 @@ import { Layers, HelpCircle } from 'lucide-react'
 import { InvestmentRow } from './InvestmentRow'
 import { useTableSort } from '@/hooks/useTableSort'
 
-type PositionSortColumn = 'vaultName' | 'sharesOwned' | 'totalInvested' | 'currentValue' | 'pnlPercent'
+type PositionSortColumn = 'vaultName' | 'sharesOwned' | 'totalInvested' | 'currentValue' | 'pnlPercent' | 'created_at'
 
 export function InvestorVaultsList({ walletAddress: _walletAddress }: { walletAddress?: string }) {
   const positions = usePortfolioStore((s) => s.positions)
@@ -15,7 +15,7 @@ export function InvestorVaultsList({ walletAddress: _walletAddress }: { walletAd
   const [pageSize, setPageSize] = useState(8)
 
   const { sortBy, sortOrder, handleSort } = useTableSort<PositionSortColumn>({
-    sortBy: 'currentValue',
+    sortBy: 'created_at',
     defaultOrder: 'desc',
     allowClear: true,
   })
@@ -48,6 +48,13 @@ export function InvestorVaultsList({ walletAddress: _walletAddress }: { walletAd
           aVal = a.pnlPercent || 0
           bVal = b.pnlPercent || 0
           break
+        case 'created_at': {
+          const timeA = new Date(a.investedAt || a.createdAt || 0).getTime()
+          const timeB = new Date(b.investedAt || b.createdAt || 0).getTime()
+          aVal = isNaN(timeA) ? 0 : timeA
+          bVal = isNaN(timeB) ? 0 : timeB
+          break
+        }
       }
 
       if (typeof aVal === 'string' && typeof bVal === 'string') {

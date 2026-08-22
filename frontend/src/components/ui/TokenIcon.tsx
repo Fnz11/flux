@@ -80,13 +80,23 @@ export function TokenIcon({ symbol, meta, className = 'size-5', alt }: TokenIcon
     )
   }
 
+  if (upperSymbol === 'SHARES') {
+    return (
+      <img
+        src="/logo.png"
+        alt={imageAlt || 'Flux Shares'}
+        aria-hidden={isAriaHidden}
+        className={cn('rounded-full object-contain shrink-0 inline-block bg-white/5 p-0.5', className)}
+      />
+    )
+  }
+
   return (
-    <span
-      aria-hidden="true"
-      className={cn('rounded-full shrink-0 inline-flex items-center justify-center font-bold text-[9px] text-white', className)}
-      style={{ backgroundColor: tokenMeta.color || '#737373' }}
-    >
-      {upperSymbol.slice(0, 2)}
-    </span>
+    <img
+      src="/logo.png"
+      alt={imageAlt || 'Token'}
+      aria-hidden={isAriaHidden}
+      className={cn('rounded-full object-contain shrink-0 inline-block bg-white/5 p-0.5', className)}
+    />
   )
 }

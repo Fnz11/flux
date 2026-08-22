@@ -130,7 +130,7 @@ export function useCreateVault() {
       // 8. Wait for backend to index the vault before redirecting
       const targetVaultAddress = prep.vault_address
       if (targetVaultAddress) {
-        for (let attempt = 0; attempt < 10; attempt++) {
+        for (let attempt = 0; attempt < 20; attempt++) {
           try {
             const v = await getVault(targetVaultAddress)
             if (v && (v.id || v.address)) {
@@ -139,7 +139,7 @@ export function useCreateVault() {
           } catch {
             // Wait for background worker
           }
-          await new Promise((r) => setTimeout(r, 400))
+          await new Promise((r) => setTimeout(r, 500))
         }
       }
 

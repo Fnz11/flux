@@ -4,7 +4,7 @@ import { usePortfolioHistoryQuery } from '@/services/hooks/useQuery/usePortfolio
 import type { PortfolioHistoryRange } from '@/services/apis/rest-api/portfolio_history.service'
 import type { PortfolioPosition } from '@/types'
 
-type SortKey = 'value' | 'pnl' | 'name'
+type SortKey = 'value' | 'pnl' | 'name' | 'created_at'
 
 export function usePortfolioView(
   walletAddressOrPositions?: string | PortfolioPosition[],
@@ -16,7 +16,7 @@ export function usePortfolioView(
 
   const { data: historyPoints = [] } = usePortfolioHistoryQuery(walletAddress, range)
 
-  const [sortBy, setSortBy] = useState<SortKey | undefined>(undefined)
+  const [sortBy, setSortBy] = useState<SortKey | undefined>('created_at')
   const [sortAsc, setSortAsc] = useState(false)
 
   const toggleSort = (key: SortKey) => {
@@ -34,13 +34,20 @@ export function usePortfolioView(
   }
 
   const sortedPositions = useMemo(() => {
-    if (!sortBy) return enriched
+    const activeSort = sortBy ?? 'created_at'
     const copy = [...enriched]
     copy.sort((a, b) => {
       let cmp = 0
-      if (sortBy === 'value') cmp = a.currentValue - b.currentValue
-      else if (sortBy === 'pnl') cmp = a.pnl - b.pnl
-      else if (sortBy === 'name') cmp = a.vaultName.localeCompare(b.vaultName)
+      if (activeSort === 'value') cmp = a.currentValue - b.currentValue
+      else if (activeSort === 'pnl') cmp = a.pnl - b.pnl
+      else if (activeSort === 'name') cmp = a.vaultName.localeCompare(b.vaultName)
+      else if (activeSort === 'created_at') {
+        const timeA = new Date(a.investedAt || a.createdAt || 0).getTime()
+        const timeB = new Date(b.investedAt || b.createdAt || 0).getTime()
+        const valA = isNaN(timeA) ? 0 : timeA
+        const valB = isNaN(timeB) ? 0 : timeB
+        cmp = valA - valB
+      }
       return sortAsc ? cmp : -cmp
     })
     return copy

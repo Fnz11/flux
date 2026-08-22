@@ -238,6 +238,7 @@ export function useWithdraw() {
 
         const targetVaultId = vaultId || vaultPubkey.toBase58()
         const targetVaultAddress = vaultPubkey.toBase58()
+        const userWalletAddress = userPubkey?.toBase58()
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['vault'] }),
           queryClient.invalidateQueries({ queryKey: ['vaultBalances'] }),
@@ -253,6 +254,7 @@ export function useWithdraw() {
           queryClient.refetchQueries({ queryKey: ['vault', targetVaultId] }),
           queryClient.refetchQueries({ queryKey: ['vault', targetVaultAddress] }),
           queryClient.refetchQueries({ queryKey: ['portfolio'] }),
+          ...(userWalletAddress ? [queryClient.refetchQueries({ queryKey: ['portfolio', userWalletAddress] })] : []),
           queryClient.refetchQueries({ queryKey: ['vaultBalances', targetVaultId] }),
         ])
 

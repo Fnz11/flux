@@ -94,6 +94,13 @@ export function formatError(err: unknown, fallback: string = 'An unexpected erro
     if (rawMsg) return rawMsg
   }
 
+  const codeNameMatch = str.match(/Error Code:\s*([a-zA-Z0-9_]+)/i)
+  if (codeNameMatch && codeNameMatch[1]) {
+    const name = codeNameMatch[1].trim()
+    if (ANCHOR_VAULT_ERROR_NAMES[name]) return ANCHOR_VAULT_ERROR_NAMES[name]
+    if (ANCHOR_FRAMEWORK_ERROR_NAMES[name]) return ANCHOR_FRAMEWORK_ERROR_NAMES[name]
+  }
+
   const customNumMatch = str.match(/(?:"?Custom"?|Error Number):\s*(\d+)/i)
   if (customNumMatch && customNumMatch[1]) {
     const code = parseInt(customNumMatch[1], 10)
@@ -106,14 +113,6 @@ export function formatError(err: unknown, fallback: string = 'An unexpected erro
     const code = parseInt(hexMatch[1], 16)
     if (ANCHOR_VAULT_ERRORS[code]) return ANCHOR_VAULT_ERRORS[code]
     if (ANCHOR_FRAMEWORK_ERRORS[code]) return ANCHOR_FRAMEWORK_ERRORS[code]
-  }
-
-  const codeNameMatch = str.match(/Error Code:\s*([a-zA-Z0-9_]+)/i)
-  if (codeNameMatch && codeNameMatch[1]) {
-    const name = codeNameMatch[1].trim()
-    if (ANCHOR_VAULT_ERROR_NAMES[name]) return ANCHOR_VAULT_ERROR_NAMES[name]
-    if (ANCHOR_FRAMEWORK_ERROR_NAMES[name]) return ANCHOR_FRAMEWORK_ERROR_NAMES[name]
-    return `Contract error: ${name}`
   }
 
   const cleaned = str.replace(/^Error:\s*/i, '').trim()

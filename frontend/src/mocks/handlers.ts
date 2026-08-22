@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '../constants/tokens'
 import type {
   ApiVaultListResponse,
   ApiPortfolioResponse,
@@ -224,7 +225,7 @@ export const handlers = [
   http.get('*/api/v1/config', () => {
     return HttpResponse.json<ApiConfig>({
       dust_threshold: 0.001,
-      focus_assets_whitelist: ['SOL', 'USDC', 'USDT', 'BONK', 'JUP', 'PYTH'],
+      focus_assets_whitelist: [...DEFAULT_FOCUS_ASSETS_WHITELIST],
     })
   }),
 

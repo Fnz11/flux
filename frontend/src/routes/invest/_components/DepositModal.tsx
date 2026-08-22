@@ -23,6 +23,14 @@ interface DepositModalProps {
 
 const PERCENTAGE_PRESETS = [25, 50, 75, 100] as const
 const SOL_GAS_RESERVE = 0.005 // Keep 0.005 SOL for network fees
+const FLOAT_EPSILON = 1e-7
+
+function formatTokenAmount(val: number, decimals?: number) {
+  const precision = decimals === 9 ? 4 : 2
+  const factor = 10 ** precision
+  const floored = Math.floor(val * factor + 1e-9) / factor
+  return floored.toFixed(precision)
+}
 
 export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   const {
@@ -118,7 +126,7 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   }, [tokenBalance, selectedToken.symbol])
 
   // Is entered amount exceeding usable balance
-  const isInsufficient = usableBalance !== null && numAmount > usableBalance
+  const isInsufficient = usableBalance !== null && numAmount > usableBalance + FLOAT_EPSILON
 
   // Sync slider when amount changes manually
   useEffect(() => {
@@ -131,8 +139,9 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   const handlePercentageClick = (pct: number) => {
     setSliderValue(pct)
     if (usableBalance !== null && usableBalance > 0) {
-      const calculated = (usableBalance * (pct / 100)).toFixed(
-        selectedToken.decimals === 9 ? 4 : 2,
+      const calculated = formatTokenAmount(
+        usableBalance * (pct / 100),
+        selectedToken.decimals,
       )
       form.setValue('amount', calculated, { shouldValidate: true })
     } else {
@@ -145,8 +154,9 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   const handleSliderChange = (val: number) => {
     setSliderValue(val)
     if (usableBalance !== null && usableBalance > 0) {
-      const calculated = (usableBalance * (val / 100)).toFixed(
-        selectedToken.decimals === 9 ? 4 : 2,
+      const calculated = formatTokenAmount(
+        usableBalance * (val / 100),
+        selectedToken.decimals,
       )
       form.setValue('amount', calculated, { shouldValidate: true })
     }
@@ -161,9 +171,9 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
   }
 
   const onNextStep = form.handleSubmit((data) => {
-    if (usableBalance !== null && Number(data.amount) > usableBalance) {
+    if (usableBalance !== null && Number(data.amount) > usableBalance + FLOAT_EPSILON) {
       form.setError('amount', {
-        message: `Insufficient balance. Max usable: ${usableBalance.toFixed(selectedToken.decimals === 9 ? 4 : 2)} ${selectedToken.symbol}`,
+        message: `Insufficient balance. Max usable: ${formatTokenAmount(usableBalance, selectedToken.decimals)} ${selectedToken.symbol}`,
       })
       return
     }

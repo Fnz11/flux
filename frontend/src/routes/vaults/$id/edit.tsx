@@ -25,6 +25,7 @@ import { HeroAmbient } from '@/components/ui/HeroAmbient'
 import { SweepButton } from '@/components/ui/SweepButton'
 import { AddressPill } from '@/components/ui/AddressPill'
 import { editVaultSchema, type EditVaultForm } from '@/validations/vault'
+import { toastError } from '@/lib/toast'
 import {
   Edit3,
   Check,
@@ -108,7 +109,7 @@ export function EditVaultPage() {
     const file = e.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB limit')
+        toastError('File size exceeds 5MB limit')
         return
       }
       setImageName(file.name)

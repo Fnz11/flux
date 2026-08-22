@@ -83,4 +83,26 @@ describe('payout widgets', () => {
     expect(screen.getAllByText('.50')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Claim All' })).toBeEnabled()
   })
+
+  it('renders Claimed badge when total accrued fee is zero or claimed', () => {
+    const claimedFees: ApiFee[] = [
+      { vault_id: 'vault-123456789', accrued_performance_fee: 0, accrued_management_fee: 0, total_accrued: 0, status: 'Claimed' },
+    ]
+    render(<FeeHistory isLoading={false} filteredFees={claimedFees} vaults={vaults} selectedVaultId="ALL" onSelectVault={vi.fn()} />)
+    expect(screen.getAllByText('Claimed').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: 'Claim' })).not.toBeInTheDocument()
+  })
+
+  it('allows filtering fees by claim status tabs', () => {
+    const mixedFees: ApiFee[] = [
+      { vault_id: 'vault-123456789', accrued_performance_fee: 10, accrued_management_fee: 2, total_accrued: 12 },
+    ]
+    render(<FeeHistory isLoading={false} filteredFees={mixedFees} vaults={vaults} selectedVaultId="ALL" onSelectVault={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Claim' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Claimed' }))
+    expect(screen.getByText('No accrued fees recorded yet')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Claimable' }))
+    expect(screen.getByRole('button', { name: 'Claim' })).toBeInTheDocument()
+  })
 })
+

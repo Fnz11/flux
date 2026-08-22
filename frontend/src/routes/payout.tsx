@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { useFees } from '@/hooks/useFees'
+import { useClaimFee } from '@/hooks/useClaimFee'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PayoutSummary } from './payout/_components/PayoutSummary'
 import { FeeHistory } from './payout/_components/FeeHistory'
@@ -22,12 +24,23 @@ export const Route = createFileRoute('/payout')({
 })
 
 export function PayoutPage() {
-  const { data: vaults = [] } = useVaultsQuery()
+  const { publicKey } = useWallet()
+  const userAddress = publicKey?.toBase58()
+  const { data: allVaults = [] } = useVaultsQuery()
+
+  const vaults = useMemo(() => {
+    if (!userAddress) return allVaults
+    const owned = allVaults.filter(
+      (v) => v.managerAddress && v.managerAddress.toLowerCase() === userAddress.toLowerCase(),
+    )
+    return owned.length > 0 ? owned : allVaults
+  }, [allVaults, userAddress])
 
   const [selectedVaultId, setSelectedVaultId] = useState<string>('ALL')
 
   const vaultIds = useMemo(() => vaults.map((v) => v.id), [vaults])
   const { fees, isLoading } = useFees(vaultIds)
+  const { claimSingleFee, claimAllFees, isClaiming, claimingVaultId } = useClaimFee()
 
   const filteredFees = useMemo(() => {
     return selectedVaultId === 'ALL'
@@ -47,7 +60,13 @@ export function PayoutPage() {
       />
 
       {/* 3-Card Summary Top Metrics */}
-      <PayoutSummary totalPerf={totalPerf} totalMgmt={totalMgmt} totalFees={totalFees} />
+      <PayoutSummary
+        totalPerf={totalPerf}
+        totalMgmt={totalMgmt}
+        totalFees={totalFees}
+        onClaimAll={() => claimAllFees(vaults, filteredFees)}
+        isClaiming={isClaiming}
+      />
 
       {/* How It Works Step Cards Grid */}
       <div className="space-y-3">
@@ -96,6 +115,10 @@ export function PayoutPage() {
         vaults={vaults}
         selectedVaultId={selectedVaultId}
         onSelectVault={setSelectedVaultId}
+        onClaimFee={claimSingleFee}
+        isClaiming={isClaiming}
+        claimingVaultId={claimingVaultId}
+        userAddress={userAddress}
       />
     </div>
   )

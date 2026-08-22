@@ -17,7 +17,7 @@ export function ManagerVaultsList({ walletAddress }: { walletAddress?: string })
   const [pageSize, setPageSize] = useState(8)
 
   const { sortBy, sortOrder, handleSort } = useTableSort<ManagedVaultSortColumn>({
-    sortBy: 'tvl',
+    sortBy: 'created_at',
     defaultOrder: 'desc',
     allowClear: true,
   })

@@ -10,7 +10,7 @@ import { DecimalInput } from '@/components/ui/DecimalInput'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Wallet, Lock } from 'lucide-react'
+import { Wallet, Lock, CheckCircle2 } from 'lucide-react'
 import { withdrawSchema, type WithdrawFormValues } from '@/validations/invest'
 import { getWithdrawEligibility } from '@/lib/eligibility'
 
@@ -29,8 +29,18 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
   const { data: vaults = [], isLoading: isVaultsLoading } = useVaultsQuery()
   const { data: positions = [], isLoading: isPortfolioLoading } = usePortfolioQuery(walletAddress)
 
-  const vault = vaults.find((v) => v.id === vaultId)
-  const position = positions.find((p) => p.vaultId === vaultId)
+  const vault = vaults.find(
+    (v) =>
+      (v.id && vaultId && v.id.toLowerCase() === vaultId.toLowerCase()) ||
+      (v.address && vaultId && v.address.toLowerCase() === vaultId.toLowerCase()),
+  )
+  const position = positions.find(
+    (p) =>
+      (p.vaultId && vaultId && p.vaultId.toLowerCase() === vaultId.toLowerCase()) ||
+      (p.vaultAddress && vaultId && p.vaultAddress.toLowerCase() === vaultId.toLowerCase()) ||
+      (vault?.address && p.vaultAddress && p.vaultAddress.toLowerCase() === vault.address.toLowerCase()) ||
+      (vault?.id && p.vaultId && p.vaultId.toLowerCase() === vault.id.toLowerCase()),
+  )
 
   const [signature, setSignature] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -119,33 +129,44 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
       onOpenChange={(o) => {
         if (!o) handleClose()
       }}
-      title="Withdraw"
+      title={signature ? 'Withdraw Complete' : 'Withdraw'}
       footer={
-        position && (
+        signature ? (
+          <Button
+            variant="default"
+            onClick={handleClose}
+            className="w-full h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)]"
+          >
+            Done
+          </Button>
+        ) : position ? (
           <>
-            <Button type="button" variant="outline" onClick={handleClose} className="flex-1 h-10 rounded-xl text-xs font-semibold border-white/10 hover:bg-white/5">
-              {signature ? 'Close' : 'Cancel'}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className="flex-1 h-10 rounded-xl text-xs font-semibold border-white/10 hover:bg-white/5"
+            >
+              Cancel
             </Button>
-            {!signature && (
-              <Button
-                type="button"
-                onClick={form.handleSubmit(handleWithdraw)}
-                variant="default"
-                disabled={loading || isExceeding || numShares <= 0 || !withdrawEligibility.canExecute}
-                title={withdrawEligibility.reason ?? undefined}
-                className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading
-                  ? 'Withdrawing...'
-                  : !withdrawEligibility.canExecute
-                    ? (withdrawEligibility.unlockTime ? 'Lockup Active' : 'Cannot Withdraw')
-                    : isExceeding
-                      ? 'Exceeds Balance'
-                      : 'Withdraw'}
-              </Button>
-            )}
+            <Button
+              type="button"
+              onClick={form.handleSubmit(handleWithdraw)}
+              variant="default"
+              disabled={loading || isExceeding || numShares <= 0 || !withdrawEligibility.canExecute}
+              title={withdrawEligibility.reason ?? undefined}
+              className="flex-1 h-10 rounded-xl text-xs font-bold bg-primary-coral text-white hover:bg-primary-coral/90 shadow-[0_0_20px_rgba(255,107,74,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading
+                ? 'Withdrawing...'
+                : !withdrawEligibility.canExecute
+                  ? (withdrawEligibility.unlockTime ? 'Lockup Active' : 'Cannot Withdraw')
+                  : isExceeding
+                    ? 'Exceeds Balance'
+                    : 'Withdraw'}
+            </Button>
           </>
-        )
+        ) : null
       }
     >
       {isLoadingData ? (
@@ -158,6 +179,23 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
           <div className="flex gap-3">
             <div className="h-10 flex-1 animate-pulse rounded-xl bg-bg-inset" />
             <div className="h-10 flex-1 animate-pulse rounded-xl bg-bg-inset" />
+          </div>
+        </div>
+      ) : signature ? (
+        <div className="space-y-5 pt-1 text-center">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-status-success/15 border border-status-success/30 text-status-success">
+            <CheckCircle2 className="size-6" />
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-text-primary">Withdrawal Confirmed</h3>
+            <p className="text-xs text-text-tertiary">
+              Transaction broadcast and confirmed on Solana mainnet.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border-subtle bg-bg-inset p-3.5">
+            <SolscanLink signature={signature} />
           </div>
         </div>
       ) : !position ? (
@@ -270,12 +308,6 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
                 </span>
               </div>
             </div>
-
-            {signature && (
-              <div className="rounded-xl border border-border-subtle bg-bg-inset p-3.5">
-                <SolscanLink signature={signature} />
-              </div>
-            )}
           </form>
         </Form>
       )}

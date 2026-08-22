@@ -10,6 +10,7 @@ import { useTableSort } from '@/hooks/useTableSort'
 import * as tradeService from '@/services/apis/rest-api/trade.service'
 import type { ApiTrade } from '@/types'
 import { TokenIcon } from '@/components/ui/TokenIcon'
+import { formatTokenSymbol } from '@/constants/tokens'
 import { ArrowUpDown, ArrowRight, Radio } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDateTime } from '@/lib/format'
@@ -257,8 +258,10 @@ export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
                         : 'bg-bg-inset text-text-secondary'
 
                 const dateStr = formatDateTime(t.executed_at)
-                const tokenIn = (t as any).token_in_symbol || t.input_token || ''
-                const tokenOut = (t as any).token_out_symbol || t.output_token || ''
+                const tokenInRaw = (t as any).token_in_symbol || t.input_token || ''
+                const tokenOutRaw = (t as any).token_out_symbol || t.output_token || ''
+                const tokenIn = formatTokenSymbol(tokenInRaw, isWithdraw ? 'SHARES' : undefined)
+                const tokenOut = formatTokenSymbol(tokenOutRaw, isDeposit ? 'SHARES' : undefined)
                 const signature = (t as any).tx_signature || t.transaction_signature || ''
                 return (
                   <TableRow key={t.id} className="hover:bg-white/[0.02]">

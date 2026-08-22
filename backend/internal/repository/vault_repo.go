@@ -443,7 +443,7 @@ func (r *vaultRepo) GetVaultBalances(ctx context.Context, vaultIDOrAddress strin
 	solMint := "So11111111111111111111111111111111111111112"
 	usdcMint := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
-	solPrice := decimal.NewFromFloat(75.33197084)
+	solPrice := decimal.NewFromFloat(150.0)
 
 	holdings := make(map[string]decimal.Decimal)
 	var hasDepositTrades bool
@@ -581,12 +581,18 @@ func vaultToDetail(v *models.Vault) *domain.VaultDetail {
 	if v.Manager.WalletAddress != "" {
 		managerAddress = v.Manager.WalletAddress
 	}
+	status := v.Status
+	solPrice := decimal.NewFromFloat(75.33197084)
+	minUSD := v.MinRaiseAmount.Mul(solPrice)
+	if strings.EqualFold(status, "Fundraising") && (v.TVL.GreaterThanOrEqual(minUSD) || v.TVL.GreaterThanOrEqual(v.MinRaiseAmount)) && v.TVL.IsPositive() {
+		status = "Active"
+	}
 	return &domain.VaultDetail{
 		ID:                v.ID.String(),
 		Address:           v.Address,
 		ManagerID:         v.ManagerID.String(),
 		ManagerAddress:    managerAddress,
-		Status:            v.Status,
+		Status:            status,
 		Metadata:          v.Metadata,
 		PerformanceFeeBps: v.PerformanceFeeBps,
 		ManagementFeeBps:  v.ManagementFeeBps,

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/flux-protocol/backend/internal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 )
@@ -22,13 +23,17 @@ func (h *ConfigHandler) GetConfig(c *gin.Context) {
 	if h.cfg == nil {
 		SuccessResponse(c, gin.H{
 			"dust_threshold":         0.001,
-			"focus_assets_whitelist": []string{"SOL", "USDC", "BONK"},
+			"focus_assets_whitelist": config.DefaultFocusAssetsWhitelist,
 		})
 		return
 	}
 	dust, _ := h.cfg.DustThreshold.Float64()
+	whitelist := h.cfg.FocusAssetsWhitelist
+	if len(whitelist) == 0 {
+		whitelist = config.DefaultFocusAssetsWhitelist
+	}
 	SuccessResponse(c, gin.H{
 		"dust_threshold":         dust,
-		"focus_assets_whitelist": h.cfg.FocusAssetsWhitelist,
+		"focus_assets_whitelist": whitelist,
 	})
 }

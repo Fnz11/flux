@@ -7,6 +7,7 @@ import { SolscanLink } from '@/components/ui/SolscanLink'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { TokenIcon } from '@/components/ui/TokenIcon'
+import { formatTokenSymbol } from '@/constants/tokens'
 import { History } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -209,6 +210,8 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
             ) : (
               paged.map((trade) => {
                 const actionColor = typeColor[trade.trade_type] || 'text-text-primary'
+                const inputSym = formatTokenSymbol(trade.input_token, trade.trade_type === 'Withdraw' ? 'SHARES' : undefined)
+                const outputSym = formatTokenSymbol(trade.output_token, trade.trade_type === 'Deposit' ? 'SHARES' : undefined)
 
                 return (
                   <TableRow key={trade.id}>
@@ -224,7 +227,7 @@ export function TradeHistory({ trades, isLoading }: TradeHistoryProps) {
                           <TokenIcon symbol={trade.input_token} className="size-4" />
                           <TokenIcon symbol={trade.output_token} className="size-4" />
                         </div>
-                        <span className="font-medium text-text-primary">{trade.input_token}/{trade.output_token}</span>
+                        <span className="font-medium text-text-primary">{inputSym}/{outputSym}</span>
                       </div>
                     </TableCell>
                     <TableCell className={cn('text-right font-mono font-medium', actionColor)}>

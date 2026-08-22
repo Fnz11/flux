@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ResponsiveDrawer, useIsMobile } from '@/components/ui/ResponsiveDrawer'
 import { cn } from '@/lib/utils'
 import { TokenIcon } from '@/components/ui/TokenIcon'
-import { getTokenMeta } from '@/constants/tokens'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST, getTokenMeta } from '@/constants/tokens'
 
 interface TokenSelectorProps {
   tokens: string[]
@@ -24,7 +24,8 @@ export function TokenSelector({ tokens, selected, onSelect, label, disabledToken
   const isMobile = useIsMobile()
 
   const availableTokens = useMemo(() => {
-    return tokens && tokens.length > 0 ? tokens : ['SOL', 'USDC', 'USDT', 'JUP', 'PYTH']
+    const list = tokens && tokens.length > 0 ? tokens : DEFAULT_FOCUS_ASSETS_WHITELIST
+    return list.filter((t) => t.toUpperCase() !== 'BONK')
   }, [tokens])
 
   const filtered = useMemo(

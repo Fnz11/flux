@@ -25,7 +25,6 @@ var tradablePairs = []TokenPair{
 	{Base: "SOL", Quote: "USDT"},
 	{Base: "BTC", Quote: "USDC"},
 	{Base: "ETH", Quote: "USDC"},
-	{Base: "BONK", Quote: "USDC"},
 	{Base: "JUP", Quote: "USDC"},
 	{Base: "PYTH", Quote: "USDC"},
 }

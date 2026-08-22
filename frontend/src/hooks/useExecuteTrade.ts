@@ -15,6 +15,7 @@ import {
   sendTransaction,
   confirmTransactionHelper,
   getAssociatedTokenAddressSync,
+  createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
   TOKEN_PROGRAM_ID,
 } from '@/lib/transactions'

@@ -43,6 +43,13 @@ describe('AddressPill', () => {
     fireEvent.click(screen.getByRole('button', { name: /copy address/i }))
     await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith('ABCDEFGH12345678'))
   })
+
+  it('renders explorer link to open in new tab', () => {
+    render(<AddressPill address="ABCDEFGH12345678" showExplorer />)
+    const link = screen.getByRole('link', { name: /open in solana explorer/i })
+    expect(link).toHaveAttribute('href', expect.stringContaining('solscan.io/account/ABCDEFGH12345678'))
+    expect(link).toHaveAttribute('target', '_blank')
+  })
 })
 
 describe('StatusBadge', () => {

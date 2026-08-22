@@ -1,7 +1,9 @@
+import { DEFAULT_WHITELISTED_TOKENS } from './tokens'
+
 export const STATUS_TABS = ['All', 'Fundraising', 'Active', 'Dormant'] as const
 export type StatusTab = (typeof STATUS_TABS)[number]
 
-export const FOCUS_ASSETS = ['All', 'SOL', 'USDC', 'BTC', 'ETH'] as const
+export const FOCUS_ASSETS = ['All', ...DEFAULT_WHITELISTED_TOKENS] as const
 export type FocusAsset = (typeof FOCUS_ASSETS)[number]
 
 export const RAISE_UNITS = ['SOL', 'USDC', 'USDT'] as const

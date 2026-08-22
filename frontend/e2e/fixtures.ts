@@ -74,7 +74,7 @@ function json(body: unknown, status = 200): Reply {
 
 function defaultReply(method: string, path: string, body: unknown): Reply {
   if (method === 'GET' && path === '/config') {
-    return json({ dust_threshold: 0.001, focus_assets_whitelist: ['SOL', 'USDC', 'USDT', 'BONK', 'JUP', 'PYTH'] })
+    return json({ dust_threshold: 0.001, focus_assets_whitelist: ['SOL', 'USDC', 'USDT', 'JUP', 'PYTH'] })
   }
   if (method === 'GET' && path === '/vaults') return json({ vaults, total: vaults.length })
   if (method === 'GET' && /^\/vaults\/[^/]+$/.test(path)) {

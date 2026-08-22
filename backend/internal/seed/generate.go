@@ -19,7 +19,7 @@ type tokenSpec struct {
 }
 
 var tokenSpecs = []tokenSpec{
-	{"SOL", 150}, {"USDC", 1}, {"BONK", 0.00005}, {"JUP", 1.2},
+	{"SOL", 150}, {"USDC", 1}, {"USDT", 1}, {"JUP", 1.2},
 	{"PYTH", 0.6}, {"RAY", 2.5}, {"WBTC", 60000}, {"WETH", 3000},
 	{"tBTC", 60000},
 }

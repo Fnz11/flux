@@ -22,7 +22,7 @@ func TestBuildInitializeVaultTx(t *testing.T) {
 		PerformanceFeeBps:     1000,
 		ManagementFeeBps:      200,
 		LockupPeriodSec:       86400,
-		AllowedOutputMints:    [4]solana.PublicKey{NativeMint},
+		AllowedOutputMints:    []solana.PublicKey{NativeMint},
 		RecentBlockhash:       blockhash,
 		ComputeUnitLimit:      200000,
 		ComputeUnitPrice:      1000,

@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react'
-import { Copy, Check } from 'lucide-react'
+import { Copy, Check, ExternalLink } from 'lucide-react'
 import { Tooltip } from './tooltip'
 import { cn } from '@/lib/utils'
+import { SOLSCAN_CLUSTER } from '@/constants'
 
 export interface AddressPillProps {
   address: string
@@ -9,6 +10,7 @@ export interface AddressPillProps {
   length?: number
   showDot?: boolean
   showCopy?: boolean
+  showExplorer?: boolean
   className?: string
 }
 
@@ -18,6 +20,7 @@ export function AddressPill({
   length = 4,
   showDot = true,
   showCopy = true,
+  showExplorer = true,
   className,
 }: AddressPillProps) {
   const [copied, setCopied] = useState(false)
@@ -56,6 +59,8 @@ export function AddressPill({
       ? `${address.slice(0, length)}...${address.slice(-length)}`
       : address
 
+  const explorerUrl = `https://solscan.io/account/${address}?cluster=${SOLSCAN_CLUSTER}`
+
   return (
     <Tooltip content={<span className="break-all font-mono text-xs">{address}</span>}>
       <span
@@ -84,6 +89,19 @@ export function AddressPill({
               <Copy className="size-3" />
             )}
           </button>
+        )}
+        {showExplorer && (
+          <a
+            href={explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center text-text-tertiary hover:text-text-primary transition-colors cursor-pointer rounded p-0.5"
+            aria-label="Open in Solana explorer"
+            title="Open in Solana explorer"
+          >
+            <ExternalLink className="size-3" />
+          </a>
         )}
       </span>
     </Tooltip>

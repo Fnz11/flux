@@ -412,6 +412,7 @@ func BuildWithdrawTx(programID solana.PublicKey, p WithdrawParams) (*PreparedTra
 	// 6: share_token_mint [writable]
 	// 7: investor_share_account [writable]
 	// 8: token_program []
+	// 9: system_program []
 	accounts := solana.AccountMetaSlice{
 		solana.NewAccountMeta(p.Investor, true, true),
 		solana.NewAccountMeta(p.Vault, true, false),
@@ -422,6 +423,7 @@ func BuildWithdrawTx(programID solana.PublicKey, p WithdrawParams) (*PreparedTra
 		solana.NewAccountMeta(p.ShareTokenMint, true, false),
 		solana.NewAccountMeta(investorShareAta, true, false),
 		solana.NewAccountMeta(SplTokenProgram, false, false),
+		solana.NewAccountMeta(solana.SystemProgramID, false, false),
 	}
 
 	var instructions []solana.Instruction
@@ -432,6 +434,14 @@ func BuildWithdrawTx(programID solana.PublicKey, p WithdrawParams) (*PreparedTra
 	if p.ComputeUnitPrice > 0 {
 		instructions = append(instructions, buildComputeUnitPriceIx(p.ComputeUnitPrice))
 	}
+
+	// Ensure investor withdraw token account ATA is created
+	instructions = append(instructions, buildCreateIdempotentATAIx(
+		p.Investor,
+		p.Investor,
+		p.WithdrawMint,
+		investorTokenAta,
+	))
 
 	instructions = append(instructions, solana.NewInstruction(programID, accounts, buf.Bytes()))
 

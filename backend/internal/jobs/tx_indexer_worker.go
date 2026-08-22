@@ -89,7 +89,17 @@ func (w *TxIndexerWorker) ReconcileDraftByID(ctx context.Context, draftID uuid.U
 // TriggerAsyncReconcile triggers non-blocking fast reconciliation with quick retries
 func (w *TxIndexerWorker) TriggerAsyncReconcile(draftID uuid.UUID) {
 	go func() {
-		delays := []time.Duration{50 * time.Millisecond, 150 * time.Millisecond, 300 * time.Millisecond, 600 * time.Millisecond, 1200 * time.Millisecond, 2500 * time.Millisecond}
+		delays := []time.Duration{
+			50 * time.Millisecond,
+			150 * time.Millisecond,
+			300 * time.Millisecond,
+			600 * time.Millisecond,
+			1 * time.Second,
+			2 * time.Second,
+			3 * time.Second,
+			5 * time.Second,
+			8 * time.Second,
+		}
 		for _, delay := range delays {
 			time.Sleep(delay)
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -290,13 +300,21 @@ func (w *TxIndexerWorker) finalizeDeposit(ctx context.Context, draft *models.Tra
 					}
 				}
 
+				solPrice := decimal.NewFromFloat(75.33197084)
+				investedUSD := amountDec.Mul(solPrice)
 				if w.portfolioRepo != nil {
-					_ = w.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountDec, amountDec, decimal.NewFromInt(1))
+					_ = w.portfolioRepo.UpsertPosition(ctx, actor.ID, vault.ID, amountDec, investedUSD, solPrice)
 				}
 			}
 			solPrice := decimal.NewFromFloat(75.33197084)
 			tvlDelta := amountDec.Mul(solPrice)
 			_ = w.vaultRepo.UpdateTVL(ctx, vault.ID, tvlDelta)
+
+			newTVL := vault.TVL.Add(tvlDelta)
+			minUSD := vault.MinRaiseAmount.Mul(solPrice)
+			if (newTVL.GreaterThanOrEqual(minUSD) || newTVL.GreaterThanOrEqual(vault.MinRaiseAmount)) && strings.EqualFold(vault.Status, "Fundraising") {
+				_ = w.vaultRepo.UpdateStatus(ctx, vault.ID, "Active")
+			}
 
 			if w.eventService != nil {
 				w.eventService.DispatchPortfolioUpdate(draft.UserPubkey, vault.ID, decimal.Zero)

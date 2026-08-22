@@ -24,8 +24,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/components/ui/modal', () => ({
-  Modal: ({ open, title, children }: { open: boolean; title: string; children: ReactNode }) =>
-    open ? <section aria-label={title}><h1>{title}</h1>{children}</section> : null,
+  Modal: ({ open, title, children, footer }: { open: boolean; title: string; children: ReactNode; footer?: ReactNode }) =>
+    open ? <section aria-label={title}><h1>{title}</h1>{children}{footer}</section> : null,
 }))
 vi.mock('@/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -176,6 +176,21 @@ describe('DepositModal', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirm & Sign' })).toBeEnabled())
     expect(screen.queryByText('Deposit Complete')).not.toBeInTheDocument()
   })
+
+  it('allows 100% max allocation without showing insufficient balance', async () => {
+    render(<DepositModal vaultId={vault.id} open onClose={vi.fn()} />)
+    // Wait for balance to load
+    await waitFor(() => expect(screen.getByText(/Bal:/)).toBeInTheDocument())
+    // Click MAX button
+    const maxButtons = screen.getAllByRole('button', { name: 'MAX' })
+    fireEvent.click(maxButtons[0])
+    // The Next button should not say "Insufficient Balance" and should be clickable
+    const nextButton = screen.getByRole('button', { name: 'Next' })
+    expect(nextButton).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Insufficient Balance' })).not.toBeInTheDocument()
+    fireEvent.click(nextButton)
+    expect(await screen.findByText('Confirm Deposit')).toBeInTheDocument()
+  })
 })
 
 describe('WithdrawModal', () => {
@@ -188,15 +203,13 @@ describe('WithdrawModal', () => {
   it('rejects zero shares', async () => {
     render(<WithdrawModal vaultId={vault.id} open onClose={vi.fn()} />)
     fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '0' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }))
-    expect(await screen.findByText('Amount must be greater than 0')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled()
   })
 
   it('rejects shares exceeding the position', async () => {
     render(<WithdrawModal vaultId={vault.id} open onClose={vi.fn()} />)
     fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '11' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }))
-    expect(await screen.findByText('Amount cannot exceed 10.000000 shares')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exceeds Balance' })).toBeDisabled()
     expect(mocks.withdraw).not.toHaveBeenCalled()
   })
 

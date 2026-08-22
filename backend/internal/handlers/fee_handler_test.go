@@ -45,14 +45,14 @@ func TestFeeHandler_GetVaultFees(t *testing.T) {
 		if resp.VaultID != "vault-1" {
 			t.Errorf("expected vault_id vault-1, got %s", resp.VaultID)
 		}
-		if resp.AccruedPerformanceFee != 1000.0 {
-			t.Errorf("expected accrued_performance_fee 1000.0, got %f", resp.AccruedPerformanceFee)
+		if !resp.AccruedPerformanceFee.Equal(decimal.NewFromFloat(1000.0)) {
+			t.Errorf("expected accrued_performance_fee 1000.0, got %s", resp.AccruedPerformanceFee)
 		}
-		if resp.AccruedManagementFee != 200.0 {
-			t.Errorf("expected accrued_management_fee 200.0, got %f", resp.AccruedManagementFee)
+		if !resp.AccruedManagementFee.Equal(decimal.NewFromFloat(200.0)) {
+			t.Errorf("expected accrued_management_fee 200.0, got %s", resp.AccruedManagementFee)
 		}
-		if resp.TotalAccrued != 1200.0 {
-			t.Errorf("expected total_accrued 1200.0, got %f", resp.TotalAccrued)
+		if !resp.TotalAccrued.Equal(decimal.NewFromFloat(1200.0)) {
+			t.Errorf("expected total_accrued 1200.0, got %s", resp.TotalAccrued)
 		}
 	})
 

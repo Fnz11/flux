@@ -100,9 +100,9 @@ function MobileMenuContent({
               type="button"
               onClick={() => onModeSwitch(true)}
               className={cn(
-                'flex-1 py-2 text-xs font-semibold rounded-lg transition-[background-color,border-color,color,box-shadow] cursor-pointer',
+                'flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer',
                 isManager
-                  ? 'bg-bg-surface text-text-primary shadow-md border border-border-subtle'
+                  ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-white shadow-sm shadow-primary-coral/20 font-bold hover:brightness-110'
                   : 'text-text-tertiary hover:text-text-secondary'
               )}
             >
@@ -112,9 +112,9 @@ function MobileMenuContent({
               type="button"
               onClick={() => onModeSwitch(false)}
               className={cn(
-                'flex-1 py-2 text-xs font-semibold rounded-lg transition-[background-color,border-color,color,box-shadow] cursor-pointer',
+                'flex-1 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer',
                 !isManager
-                  ? 'bg-primary-gold text-black shadow-md'
+                  ? 'bg-gradient-to-r from-primary-coral to-primary-amber text-white shadow-sm shadow-primary-coral/20 font-bold hover:brightness-110'
                   : 'text-text-tertiary hover:text-text-secondary'
               )}
             >

@@ -6,9 +6,11 @@ interface PayoutSummaryProps {
   totalPerf: number
   totalMgmt: number
   totalFees: number
+  onClaimAll?: () => void
+  isClaiming?: boolean
 }
 
-export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummaryProps) {
+export function PayoutSummary({ totalPerf, totalMgmt, totalFees, onClaimAll, isClaiming }: PayoutSummaryProps) {
   const [perfInt, perfDec] = totalPerf.toFixed(2).split('.')
   const [mgmtInt, mgmtDec] = totalMgmt.toFixed(2).split('.')
   const [feesInt, feesDec] = totalFees.toFixed(2).split('.')
@@ -79,9 +81,11 @@ export function PayoutSummary({ totalPerf, totalMgmt, totalFees }: PayoutSummary
             </div>
             <button
               type="button"
-              className="rounded-full bg-gradient-to-r from-primary-coral to-primary-amber px-3 py-1 text-[11px] font-bold text-black shadow-md hover:brightness-110 transition-[filter] cursor-pointer"
+              disabled={isClaiming || totalFees <= 0}
+              onClick={onClaimAll}
+              className="rounded-full bg-gradient-to-r from-primary-coral to-primary-amber px-3 py-1 text-[11px] font-bold text-white shadow-md hover:brightness-110 transition-[filter] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Claim All
+              {isClaiming ? 'Claiming...' : 'Claim All'}
             </button>
           </div>
 

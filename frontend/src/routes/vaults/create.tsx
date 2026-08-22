@@ -12,6 +12,8 @@ import { usePythPrice } from '@/hooks/usePythPrice'
 import { useConfigStore } from '@/stores'
 import { generateMetadata } from '@/lib/metadata'
 import { createVaultSchema, type CreateVaultFormValues } from '@/validations/vault'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
+import { toastError } from '@/lib/toast'
 import { VaultTypeSection } from './create/_components/VaultTypeSection'
 import { VaultIdentitySection } from './create/_components/VaultIdentitySection'
 import { BasicConfigSection } from './create/_components/BasicConfigSection'
@@ -99,7 +101,7 @@ export function CreateVaultPage() {
     const file = e.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB limit')
+        toastError('File size exceeds 5MB limit')
         return
       }
       setImageName(file.name)
@@ -135,7 +137,7 @@ export function CreateVaultPage() {
       setValue('focusAssets', current.filter((a) => a !== asset), { shouldValidate: true, shouldDirty: true })
     } else {
       if (current.length >= 100) {
-        alert('You can only select up to 100 focus assets per vault.')
+        toastError('You can only select up to 100 focus assets per vault.')
         return
       }
       setValue('focusAssets', [...current, asset], { shouldValidate: true, shouldDirty: true })
@@ -189,7 +191,7 @@ export function CreateVaultPage() {
                 imageName={imageName}
                 onImageUpload={handleImageUpload}
                 onRemoveImage={handleRemoveImage}
-                focusAssetsWhitelist={config?.focusAssetsWhitelist || ['SOL', 'USDC', 'USDT', 'ETH', 'BTC']}
+                focusAssetsWhitelist={config?.focusAssetsWhitelist || DEFAULT_FOCUS_ASSETS_WHITELIST}
                 focusAssets={focusAssets}
                 onToggleFocusAsset={toggleFocusAsset}
                 tags={tags}

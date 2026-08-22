@@ -57,6 +57,8 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@pgbouncer:6432/${POSTGRES_DB:-fbyt}?sslmode=disable
       REDIS_URL: redis://redis:6379
       SOLANA_RPC_URL: http://contracts:8899
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       pgbouncer:
         condition: service_healthy
@@ -179,3 +181,4 @@ services:
 volumes:
   timescaledb_data:
   redis_data:
+  uploads_data:

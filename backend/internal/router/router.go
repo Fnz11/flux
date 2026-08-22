@@ -30,8 +30,10 @@ type HandlerSet struct {
 	Search       *handlers.SearchHandler
 	Fee          *handlers.FeeHandler
 	TxPrepare    *handlers.TxPrepareHandler
-	JWTSecret   string
-	Redis       *redis.Client
+	Upload       *handlers.UploadHandler
+	UploadsDir   string
+	JWTSecret    string
+	Redis        *redis.Client
 }
 
 func Setup(hs *HandlerSet) *gin.Engine {
@@ -171,6 +173,10 @@ func Setup(hs *HandlerSet) *gin.Engine {
 			v1.GET("/search", hs.Search.Search)
 		}
 
+		if hs.Upload != nil {
+			v1.POST("/upload/vault-cover", authMW, hs.Upload.UploadVaultCover)
+		}
+
 		txGroup := v1.Group("/tx")
 		{
 			if hs.TxPrepare != nil {
@@ -184,6 +190,13 @@ func Setup(hs *HandlerSet) *gin.Engine {
 			}
 		}
 	}
+
+	// Serve static uploads with long-term immutable caching
+	uploadsDir := hs.UploadsDir
+	if uploadsDir == "" {
+		uploadsDir = "./uploads"
+	}
+	r.Static("/uploads", uploadsDir)
 
 	// Prometheus scrape endpoint (standard top-level location).
 	r.GET("/metrics", middleware.MetricsHandler())
