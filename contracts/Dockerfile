@@ -21,6 +21,6 @@ RUN anchor build && \
     mkdir -p target/deploy && \
     cp programs/fbyt-clone-vault/target/deploy/fbyt_clone_vault.so target/deploy/fbyt_clone_vault.so
 
-EXPOSE 8899 8900
+RUN chmod +x /workspace/entrypoint.sh
 
-CMD ["solana-test-validator", "--reset", "--bpf-program", "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais", "/workspace/target/deploy/fbyt_clone_vault.so", "--account", "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "/workspace/usdc_mint.json", "--account", "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "/workspace/usdt_mint.json", "--account", "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN", "/workspace/jup_mint.json", "--account", "HZ1Jov2PwbShAi4evWKGAkgg5qUpWVKidGiEw6JH5W73", "/workspace/pyth_mint.json", "--account", "5LbY84L6Z1iFFnu9YysHFHq5tHTHYsiLUDNnqf9PNdMw", "/workspace/pyth_price_update.json"]
+CMD ["/workspace/entrypoint.sh"]

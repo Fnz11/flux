@@ -137,6 +137,30 @@ func (s *TxPrepareService) PrepareCreateVault(ctx context.Context, dto PrepareCr
 			pk = solana.MustPublicKeyFromBase58("JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN")
 		case "PYTH", "HZ1JOV2PWBSHAI4EVWKGAEGG5QUPWVKIDGIEW6JH5W73":
 			pk = solana.MustPublicKeyFromBase58("HZ1Jov2PwbShAi4evWKGAkgg5qUpWVKidGiEw6JH5W73")
+		case "RAY", "4K3DYJZVZP8EMZWUXBBCJEVWSKKK59S5ICNLY3QRKX6R":
+			pk = solana.MustPublicKeyFromBase58("4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R")
+		case "ORCA", "ORCAEKSDK7LKZ57VAAYR9QENSVEPFIU6QEMU1KEKTZE", "ORCAEKTD7LKZ57VAAYR9QENSVEPFIU6QEMU1KEKTZE":
+			pk = solana.MustPublicKeyFromBase58("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE")
+		case "KMNO", "KMNO3NJSBXFCPJTVHZCXLRM7WTT4GVFE7SUUBO9SS":
+			pk = solana.MustPublicKeyFromBase58("KMNo3nJsBXfcpJTVhZcXLW7RmTwTt4GVFE7suUBo9sS")
+		case "DRIFT", "DRIFTUPJYLTOSBWON8KOMBAEYSX54AFAVLDDWSBKSJWG7":
+			pk = solana.MustPublicKeyFromBase58("DriFtupJYLTosbwoN8koMbEYSx54aFAVLddWsbksjwg7")
+		case "JTO", "JTOJTOMEPA8BEP8AUQC6EXT5FRIJWFFMWQX2V2F9MCL":
+			pk = solana.MustPublicKeyFromBase58("jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL")
+		case "MSOL", "MSOLZYCXHDYGDZU16G5QSH3I5K3Z3KZK7YTFQCJM7SO":
+			pk = solana.MustPublicKeyFromBase58("mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So")
+		case "RENDER", "RNDRIZKT3MK1IIMDXRDWABCF7ZG7AR5T4NUD4EKHBOF":
+			pk = solana.MustPublicKeyFromBase58("rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof")
+		case "HNT", "HNTYVP6YFM1HG25TN9WGLQM12B8TQMACKNKRDU1OXWUX":
+			pk = solana.MustPublicKeyFromBase58("hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux")
+		case "NOS", "NOSXBVOACTTYDLVKY6CSB4AC8JCDQKKAAWYTX2ZMOO7":
+			pk = solana.MustPublicKeyFromBase58("nosXBVoaCTtYdLvKY6Csb4AC8JCdQKKAaWYtx2ZMoo7")
+		case "WBTC", "3NZ9JMVBMGAQOCYBIC2C7LQCJSCMGSAZ6VQQTDZCQMJH":
+			pk = solana.MustPublicKeyFromBase58("3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh")
+		case "WETH", "7VFCXTUXX5WJV5JADK17DUJ4KSGAU7UTNKJ4B963VOXS":
+			pk = solana.MustPublicKeyFromBase58("7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs")
+		case "BLZE", "BLZEEUZUBVQFHJ8ADCFPJPVPVICYVMH3HKJMRU8KUJA":
+			pk = solana.MustPublicKeyFromBase58("BLZEEuZUBVqFhj8adcCFPJvPVCiCyVmh3hkJMrU8KuJA")
 		default:
 			if parsed, pErr := solana.PublicKeyFromBase58(asset); pErr == nil {
 				pk = parsed

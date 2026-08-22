@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { DecimalInput } from '@/components/ui/DecimalInput'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { TokenSelector } from './TokenSelector'
+import { AllocationSlider } from '@/components/ui/AllocationSlider'
 
 export interface PayInputFieldProps {
   maxBalance: number | null
@@ -10,6 +11,8 @@ export interface PayInputFieldProps {
   inputToken: string
   onInputTokenChange: (token: string) => void
   disabledTokens?: string[]
+  sliderValue?: number
+  onSliderChange?: (val: number) => void
 }
 
 export function PayInputField({
@@ -19,6 +22,8 @@ export function PayInputField({
   inputToken,
   onInputTokenChange,
   disabledTokens,
+  sliderValue = 0,
+  onSliderChange,
 }: PayInputFieldProps) {
   const formattedMax =
     maxBalance !== null
@@ -62,6 +67,16 @@ export function PayInputField({
               aria-label="Select pay token"
             />
           </div>
+
+          {/* Allocation Slider with Orange Progress and Debouncer */}
+          {onSliderChange && (
+            <AllocationSlider
+              value={sliderValue}
+              onChange={onSliderChange}
+              label="Allocation"
+            />
+          )}
+
           <FormMessage className="mt-1" />
         </FormItem>
       )}

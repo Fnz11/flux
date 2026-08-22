@@ -20,8 +20,10 @@ type tokenSpec struct {
 
 var tokenSpecs = []tokenSpec{
 	{"SOL", 150}, {"USDC", 1}, {"USDT", 1}, {"JUP", 1.2},
-	{"PYTH", 0.6}, {"RAY", 2.5}, {"WBTC", 60000}, {"WETH", 3000},
-	{"tBTC", 60000},
+	{"PYTH", 0.6}, {"RAY", 2.5}, {"ORCA", 3.0}, {"KMNO", 0.15},
+	{"DRIFT", 1.5}, {"JTO", 3.2}, {"mSOL", 180}, {"RENDER", 6.5},
+	{"HNT", 7.0}, {"NOS", 4.5}, {"WBTC", 60000}, {"WETH", 3000},
+	{"BLZE", 0.02},
 }
 
 var nameAdjectives = []string{"Alpha", "Blue", "Crimson", "Quantum", "Zenith", "Nova", "Hyperion", "Everest", "Prism", "Aurora", "Titan", "Vertex", "Cosmos", "Lumen", "Omega"}

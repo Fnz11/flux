@@ -1,4 +1,5 @@
 import { memo, useEffect, useState, useMemo } from 'react'
+import { TOKENS } from '@/constants/tokens'
 
 export interface VaultAssetItem {
   symbol: string
@@ -22,13 +23,9 @@ interface ChartDataItem {
 
 // Curated high-contrast palette tuned for dark UI
 const TOKEN_PALETTE: Record<string, string> = {
-  SOL: '#8B5CF6',   // Solana Violet
-  USDC: '#38BDF8',  // Sky Blue
-  USDT: '#10B981',  // Emerald Teal
-  JUP: '#FF6B35',   // Brand Coral Orange
-  PYTH: '#C084FC',  // Rich Orchid Purple
-  BTC: '#F59E0B',   // Bitcoin Gold
-  ETH: '#6366F1',   // Ethereum Indigo
+  ...Object.fromEntries(TOKENS.map((t) => [t.symbol, t.color])),
+  BTC: '#F59E0B',
+  ETH: '#6366F1',
 }
 
 const FALLBACK_PALETTE = [

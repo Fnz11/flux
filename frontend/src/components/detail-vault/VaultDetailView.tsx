@@ -254,16 +254,13 @@ export function VaultDetailView({
                 ))}
               </div>
             )}
-          </div>
-        }
-        rightContent={
-          <div className="flex flex-wrap items-center gap-2">
+            {/* Focus Assets Badge List */}
             {focusAssets.length > 0 && (
-              <div className="flex items-center gap-1.5 mr-1">
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
                 {focusAssets.map((asset) => (
                   <span
                     key={asset}
-                    className="inline-flex items-center gap-1 rounded-full bg-bg-inset/80 px-2.5 py-0.5 text-xs font-mono text-text-secondary border border-border-subtle"
+                    className="inline-flex items-center gap-1 rounded-full bg-bg-inset/80 px-2 py-0.5 text-[11px] font-mono text-text-secondary border border-border-subtle shrink-0"
                   >
                     <TokenIcon symbol={asset} className="size-3" />
                     <span>{asset}</span>
@@ -271,7 +268,10 @@ export function VaultDetailView({
                 ))}
               </div>
             )}
-
+          </div>
+        }
+        rightContent={
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -374,20 +374,20 @@ export function VaultDetailView({
             <Card className="p-3.5 border-white/8 bg-bg-inset/30">
               <p className="text-xs text-text-tertiary">Shares Owned</p>
               <p className="mt-1 font-mono text-lg font-bold text-text-primary">
-                {position.sharesOwned.toLocaleString()}
+                {(Number(position.sharesOwned) || 0).toLocaleString()}
               </p>
               <p className="text-[11px] text-text-muted">
-                Avg Entry: ${position.averageEntryPrice?.toFixed(2) ?? '0.00'}
+                Avg Entry: ${(Number(position.averageEntryPrice) || 0).toFixed(2)}
               </p>
             </Card>
 
             <Card className="p-3.5 border-white/8 bg-bg-inset/30">
               <p className="text-xs text-text-tertiary">Current Valuation</p>
               <p className="mt-1 font-mono text-lg font-bold text-text-primary">
-                ${position.currentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${(Number(position.currentValue) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <p className="text-[11px] text-text-muted">
-                Cost Basis: ${position.totalInvested.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Cost Basis: ${(Number(position.totalInvested) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </Card>
 
@@ -395,12 +395,12 @@ export function VaultDetailView({
               <p className="text-xs text-text-tertiary">Unrealized PnL</p>
               <p
                 className={`mt-1 font-mono text-lg font-bold ${
-                  position.pnl >= 0 ? 'text-status-success' : 'text-status-error'
+                  (Number(position.pnl) || 0) >= 0 ? 'text-status-success' : 'text-status-error'
                 }`}
               >
-                {position.pnl >= 0 ? '+' : ''}${position.pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (
-                {position.pnlPercent >= 0 ? '+' : ''}
-                {position.pnlPercent.toFixed(2)}%)
+                {(Number(position.pnl) || 0) >= 0 ? '+' : ''}${(Number(position.pnl) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (
+                {(Number(position.pnlPercent) || 0) >= 0 ? '+' : ''}
+                {(Number(position.pnlPercent) || 0).toFixed(2)}%)
               </p>
               <p className="text-[11px] text-text-muted">Net returns</p>
             </Card>

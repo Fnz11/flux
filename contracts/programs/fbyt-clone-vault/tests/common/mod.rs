@@ -181,15 +181,16 @@ pub fn initialize_vault_with_params(
     management_fee_bps: u16,
     lockup_period: i64,
 ) -> (Pubkey, Pubkey, Pubkey) {
+    let share_token_mint = Keypair::new();
+
     let (vault_pda, _) = Pubkey::find_program_address(
-        &[b"vault", payer.pubkey().as_ref()],
+        &[b"vault", payer.pubkey().as_ref(), share_token_mint.pubkey().as_ref()],
         &fbyt_clone_vault::ID,
     );
     let (vault_authority_pda, _) = Pubkey::find_program_address(
         &[b"vault_authority", vault_pda.as_ref()],
         &fbyt_clone_vault::ID,
     );
-    let share_token_mint = Keypair::new();
 
     let data = fbyt_clone_vault::instruction::InitializeVault {
         min_raise_amount,

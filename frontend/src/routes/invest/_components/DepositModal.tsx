@@ -12,6 +12,7 @@ import { DecimalInput } from '@/components/ui/DecimalInput'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { TokenIcon } from '@/components/ui/TokenIcon'
+import { AllocationSlider } from '@/components/ui/AllocationSlider'
 import { depositSchema, type DepositFormValues } from '@/validations/invest'
 import { CheckCircle2, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react'
 
@@ -21,8 +22,7 @@ interface DepositModalProps {
   onClose: () => void
 }
 
-const PERCENTAGE_PRESETS = [25, 50, 75, 100] as const
-const SOL_GAS_RESERVE = 0.005 // Keep 0.005 SOL for network fees
+const SOL_GAS_RESERVE = 0.01 // Keep 0.01 SOL for ATA rent exemption & gas fees
 const FLOAT_EPSILON = 1e-7
 
 function formatTokenAmount(val: number, decimals?: number) {
@@ -352,38 +352,12 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
                 )}
               />
 
-              {/* Slider & Percentage Presets */}
-              <div className="space-y-2 pt-1 border-t border-white/5">
-                <div className="flex items-center justify-between text-[11px] text-text-muted">
-                  <span>Allocation</span>
-                  <span className="font-mono text-primary-coral font-semibold">{sliderValue}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={sliderValue}
-                  onChange={(e) => handleSliderChange(Number(e.target.value))}
-                  className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-coral focus:outline-none"
-                />
-                <div className="grid grid-cols-4 gap-1.5 pt-1">
-                  {PERCENTAGE_PRESETS.map((pct) => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() => handlePercentageClick(pct)}
-                      className={`py-1 text-[11px] font-mono rounded-lg border transition-all ${
-                        sliderValue === pct
-                          ? 'border-primary-coral/40 bg-primary-coral/15 text-primary-coral font-bold'
-                          : 'border-white/8 bg-white/[0.02] text-text-muted hover:text-text-primary hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      {pct === 100 ? 'MAX' : `${pct}%`}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Allocation Slider with Orange Progress and Debouncer */}
+              <AllocationSlider
+                value={sliderValue}
+                onChange={handleSliderChange}
+                label="Allocation"
+              />
             </div>
 
             {/* Estimated Output Feedback */}

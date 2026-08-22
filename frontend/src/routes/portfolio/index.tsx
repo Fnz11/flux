@@ -219,7 +219,7 @@ export function PortfolioPage() {
                               ${pos.currentValue.toFixed(2)}
                             </TableCell>
                             <TableCell className={cn('py-4 px-4 text-right font-mono text-xs font-semibold whitespace-nowrap', colorClass)}>
-                              {isPositive ? '+' : ''}${pos.pnl.toFixed(2)} ({pos.pnlPercent.toFixed(2)}%)
+                              {isPositive ? '+' : ''}${(Number(pos.pnl) || 0).toFixed(2)} ({(Number(pos.pnlPercent) || 0).toFixed(2)}%)
                             </TableCell>
                             <TableCell className="py-4 px-6 whitespace-nowrap text-right">
                               <Link

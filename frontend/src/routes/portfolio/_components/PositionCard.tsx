@@ -33,7 +33,7 @@ export function PositionCard({ position }: PositionCardProps) {
         <div>
           <p className="text-xs text-text-muted">PnL</p>
           <p className={cn('text-sm font-semibold', pnlColor)}>
-            ${position.pnl.toLocaleString()} ({position.pnlPercent.toFixed(2)}%)
+            ${(Number(position.pnl) || 0).toLocaleString()} ({(Number(position.pnlPercent) || 0).toFixed(2)}%)
           </p>
         </div>
       </div>

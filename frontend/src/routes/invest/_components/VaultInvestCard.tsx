@@ -10,6 +10,7 @@ import { VaultSparkline } from '@/routes/vaults/_components/VaultSparkline'
 import { formatPercent } from '@/lib/format'
 import { Users, Lock, Unlock, ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
 
 interface VaultInvestCardProps {
   vault: Vault
@@ -31,7 +32,7 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
 
   const focusAssets = vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
     ? vault.metadata.focusAssets
-    : ['SOL', 'USDC']
+    : [...DEFAULT_FOCUS_ASSETS_WHITELIST]
 
   return (
     <Card className="group relative flex flex-col justify-between p-5 hover:border-primary-coral/40 transition-all hover:shadow-[0_16px_48px_rgba(0,0,0,0.7)]">
@@ -120,10 +121,10 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
         {/* Focus Assets & Sparkline Row */}
         <div className="mt-3.5 flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1">
-            {focusAssets.slice(0, 3).map((asset) => (
+            {focusAssets.map((asset) => (
               <span
                 key={asset}
-                className="inline-flex items-center gap-1 rounded-md bg-white/[0.04] border border-white/8 px-1.5 py-0.5 text-[10px] font-mono text-text-secondary"
+                className="inline-flex items-center gap-1 rounded-md bg-white/[0.04] border border-white/8 px-1.5 py-0.5 text-[10px] font-mono text-text-secondary shrink-0"
               >
                 <TokenIcon symbol={asset} className="size-3" />
                 <span>{asset}</span>

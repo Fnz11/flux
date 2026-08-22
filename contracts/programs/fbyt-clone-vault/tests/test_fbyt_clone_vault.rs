@@ -292,6 +292,14 @@ fn test_fee_cap_enforcement_on_initialization() {
 
     // Fee == 10000 bps (performance 5000 + management 5000) must succeed
     let share_token_mint_valid = Keypair::new();
+    let (vault_pda_valid, _) = Pubkey::find_program_address(
+        &[b"vault", manager.pubkey().as_ref(), share_token_mint_valid.pubkey().as_ref()],
+        &program_id,
+    );
+    let (vault_authority_pda_valid, _) = Pubkey::find_program_address(
+        &[b"vault_authority", vault_pda_valid.as_ref()],
+        &program_id,
+    );
     let data_valid = fbyt_clone_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 5000,
@@ -303,10 +311,10 @@ fn test_fee_cap_enforcement_on_initialization() {
         program_id,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
-            AccountMeta::new(vault_pda, false),
+            AccountMeta::new(vault_pda_valid, false),
             AccountMeta::new_readonly(deposit_mint, false),
             AccountMeta::new(share_token_mint_valid.pubkey(), true),
-            AccountMeta::new_readonly(vault_authority_pda, false),
+            AccountMeta::new_readonly(vault_authority_pda_valid, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
         ],

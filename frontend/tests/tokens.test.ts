@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'vitest'
-import { TOKENS } from '../src/constants/tokens'
+import { TOKENS, DEFAULT_WHITELISTED_TOKENS } from '../src/constants/tokens'
 
 describe('TOKENS', () => {
   it('contains the supported tokens in display order', () => {
     assert.deepStrictEqual(
       TOKENS.map((token) => token.symbol),
-      ['SOL', 'USDC', 'USDT', 'JUP', 'PYTH'],
+      [...DEFAULT_WHITELISTED_TOKENS],
     )
   })
 

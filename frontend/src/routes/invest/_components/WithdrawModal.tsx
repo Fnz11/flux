@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Wallet, Lock, CheckCircle2 } from 'lucide-react'
+import { AllocationSlider } from '@/components/ui/AllocationSlider'
 import { withdrawSchema, type WithdrawFormValues } from '@/validations/invest'
 import { getWithdrawEligibility } from '@/lib/eligibility'
 
@@ -19,8 +20,6 @@ interface WithdrawModalProps {
   open: boolean
   onClose: () => void
 }
-
-const PERCENTAGE_PRESETS = [25, 50, 75, 100] as const
 
 export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
   const { execute } = useWithdraw()
@@ -259,37 +258,12 @@ export function WithdrawModal({ vaultId, open, onClose }: WithdrawModalProps) {
                 )}
               />
 
-              <div className="space-y-2 pt-1 border-t border-white/5">
-                <div className="flex items-center justify-between text-[11px] text-text-muted">
-                  <span>Allocation</span>
-                  <span className="font-mono text-primary-coral font-semibold">{sliderValue}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={sliderValue}
-                  onChange={(e) => handleSliderChange(Number(e.target.value))}
-                  className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-coral focus:outline-none"
-                />
-                <div className="grid grid-cols-4 gap-1.5 pt-1">
-                  {PERCENTAGE_PRESETS.map((pct) => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() => handlePercentageClick(pct)}
-                      className={`py-1 text-[11px] font-mono rounded-lg border transition-all ${
-                        sliderValue === pct
-                          ? 'border-primary-coral/40 bg-primary-coral/15 text-primary-coral font-bold'
-                          : 'border-white/8 bg-white/[0.02] text-text-muted hover:text-text-primary hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      {pct === 100 ? 'MAX' : `${pct}%`}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Allocation Slider with Orange Progress and Debouncer */}
+              <AllocationSlider
+                value={sliderValue}
+                onChange={handleSliderChange}
+                label="Allocation"
+              />
             </div>
 
             <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 space-y-2 text-xs">

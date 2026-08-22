@@ -9,7 +9,10 @@ import (
 )
 
 // DefaultFocusAssetsWhitelist is the single source of truth for default supported assets.
-var DefaultFocusAssetsWhitelist = []string{"SOL", "USDC", "USDT", "JUP", "PYTH"}
+var DefaultFocusAssetsWhitelist = []string{
+	"SOL", "USDC", "USDT", "JUP", "PYTH", "RAY", "ORCA", "KMNO", "DRIFT",
+	"JTO", "mSOL", "RENDER", "HNT", "NOS", "WBTC", "WETH", "BLZE",
+}
 
 type Config struct {
 	DatabaseURL          string

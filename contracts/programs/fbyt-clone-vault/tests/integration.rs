@@ -23,8 +23,10 @@ fn test_initialize_vault_basic() {
     let manager = Keypair::new();
     svm.airdrop(&manager.pubkey(), 10_000_000_000).unwrap();
 
+    let share_token_mint = Keypair::new();
+
     let (vault_pda, _vault_bump) = Pubkey::find_program_address(
-        &[b"vault", manager.pubkey().as_ref()],
+        &[b"vault", manager.pubkey().as_ref(), share_token_mint.pubkey().as_ref()],
         &program_id,
     );
     let (vault_authority_pda, _authority_bump) = Pubkey::find_program_address(
@@ -33,7 +35,6 @@ fn test_initialize_vault_basic() {
     );
 
     let deposit_mint = create_mint(&mut svm, &payer, &payer.pubkey());
-    let share_token_mint = Keypair::new();
 
     let ix = fbyt_clone_vault::instruction::InitializeVault {
         min_raise_amount: 1_000_000_000,
@@ -70,15 +71,16 @@ fn test_initialize_vault_basic() {
 fn test_vault_pda_derivation() {
     let (_svm, _payer, program_id) = setup_svm();
     let manager = Pubkey::new_unique();
+    let share_token_mint = Pubkey::new_unique();
 
     let (vault_pda, bump) = Pubkey::find_program_address(
-        &[b"vault", manager.as_ref()],
+        &[b"vault", manager.as_ref(), share_token_mint.as_ref()],
         &program_id,
     );
 
     assert!(bump <= u8::MAX);
     assert_eq!(vault_pda, Pubkey::find_program_address(
-        &[b"vault", manager.as_ref()],
+        &[b"vault", manager.as_ref(), share_token_mint.as_ref()],
         &program_id,
     ).0);
 }

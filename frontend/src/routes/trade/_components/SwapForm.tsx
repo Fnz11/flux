@@ -22,7 +22,7 @@ import { SwapActionButton } from './SwapActionButton'
 import { RouteDetails } from './RouteDetails'
 import { getTradeEligibility } from '@/lib/eligibility'
 
-import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST, isWhitelistedToken } from '@/constants/tokens'
 import type { Vault } from '@/types'
 
 export interface SwapFormProps {
@@ -150,7 +150,44 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     }
   }, [tokens, inputToken, outputToken])
 
+  const [sliderValue, setSliderValue] = useState(0)
+
   const inputNum = parseFloat(inputAmount) || 0
+
+  // Sync slider when inputAmount changes manually
+  useEffect(() => {
+    if (maxBalance && maxBalance > 0) {
+      const pct = Math.min(100, Math.max(0, Math.round((inputNum / maxBalance) * 100)))
+      setSliderValue(pct)
+    } else {
+      setSliderValue(0)
+    }
+  }, [inputNum, maxBalance])
+
+  const handlePercentageClick = useCallback((pct: number) => {
+    setSliderValue(pct)
+    if (maxBalance !== null && maxBalance > 0) {
+      const precision = inputToken === 'SOL' ? 4 : 2
+      const factor = 10 ** precision
+      const calculated = (Math.floor(maxBalance * (pct / 100) * factor + 1e-9) / factor).toFixed(precision)
+      form.setValue('inputAmount', calculated, { shouldValidate: true })
+    } else {
+      form.setValue('inputAmount', '0', { shouldValidate: true })
+    }
+  }, [maxBalance, inputToken, form])
+
+  const handleSliderChange = useCallback((val: number) => {
+    setSliderValue(val)
+    if (maxBalance !== null && maxBalance > 0) {
+      const precision = inputToken === 'SOL' ? 4 : 2
+      const factor = 10 ** precision
+      const calculated = (Math.floor(maxBalance * (val / 100) * factor + 1e-9) / factor).toFixed(precision)
+      form.setValue('inputAmount', calculated, { shouldValidate: true })
+    } else {
+      form.setValue('inputAmount', '0', { shouldValidate: true })
+    }
+  }, [maxBalance, inputToken, form])
+
   const rate = priceData.status === 'live' || priceData.status === 'stale' ? priceData.price : 0
   const outputAmount = inputNum * rate
   const minReceived = outputAmount * (1 - slippage / 100)
@@ -242,6 +279,9 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     isExecuting,
     walletConnected: wallet.connected,
     isInsufficientBalance,
+    sliderValue,
+    handleSliderChange,
+    handlePercentageClick,
     onSubmit,
     handleConfirm,
     handleVaultChange,
@@ -277,6 +317,9 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
     isExecuting,
     walletConnected,
     isInsufficientBalance,
+    sliderValue,
+    handleSliderChange,
+    handlePercentageClick,
     onSubmit,
     handleConfirm,
     handleVaultChange,
@@ -323,6 +366,8 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
                 inputToken={inputToken}
                 onInputTokenChange={setInputToken}
                 disabledTokens={[outputToken]}
+                sliderValue={sliderValue}
+                onSliderChange={handleSliderChange}
               />
 
               <SwapDirectionToggle onToggle={toggleDirection} />

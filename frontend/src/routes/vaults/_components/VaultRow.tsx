@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { TokenIcon } from '@/components/ui/TokenIcon'
 import { AddressPill } from '@/components/ui/AddressPill'
 import { formatDate, formatMinRaise, formatPercent } from '@/lib/format'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
 
 export interface VaultRowProps {
   vault: Vault
@@ -17,9 +18,9 @@ export interface VaultRowProps {
 
 export function VaultRow({ vault, sortBy }: VaultRowProps) {
   const sparkline = vault.sparkline ?? []
-  const pnl = vault.pnlPercent ?? 0
+  const pnl = typeof vault.pnlPercent === 'number' ? vault.pnlPercent : (Number(vault.pnlPercent) || 0)
   const isPositivePnl = pnl >= 0
-  const displayName = vault.metadata.displayName || `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`
+  const displayName = vault.metadata?.displayName || (vault.address && vault.address.length >= 8 ? `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}` : (vault.id ? `Vault ${vault.id}` : 'Vault'))
   const initials = displayName
     .split(' ')
     .map((n) => n[0])
@@ -27,9 +28,9 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
     .toUpperCase()
     .slice(0, 2)
 
-  const focusAssets = vault.metadata.focusAssets && vault.metadata.focusAssets.length > 0
+  const focusAssets = vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
     ? vault.metadata.focusAssets
-    : ['SOL', 'USDC']
+    : [...DEFAULT_FOCUS_ASSETS_WHITELIST]
 
   return (
     <TableRow
@@ -86,11 +87,11 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
 
       {/* ASSET */}
       <TableCell className="py-4 px-4 whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
-          {focusAssets.slice(0, 3).map((asset) => (
+        <div className="flex items-center gap-1.5 flex-wrap max-w-md">
+          {focusAssets.map((asset) => (
             <span
               key={asset}
-              className="inline-flex items-center gap-1.5 rounded-md bg-bg-inset px-2 py-0.5 text-xs font-medium text-text-secondary border border-border-subtle"
+              className="inline-flex items-center gap-1.5 rounded-md bg-bg-inset px-2 py-0.5 text-xs font-medium text-text-secondary border border-border-subtle shrink-0"
             >
               <TokenIcon symbol={asset} className="size-3.5" />
               <span>{asset}</span>

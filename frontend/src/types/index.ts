@@ -22,6 +22,7 @@ export interface Transaction {
 // ── Vault metadata ──
 export interface VaultMetadata {
   focusAssets: string[]
+  acceptedAssets?: string[]
   description: string
   displayName: string
   coverImageUrl?: string

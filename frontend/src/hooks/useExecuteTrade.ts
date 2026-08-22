@@ -170,7 +170,6 @@ export function useExecuteTrade() {
                   }
                   
                   const isManager = vaultAccount.manager ? vaultAccount.manager.equals(anchorWallet.publicKey) : true
-                  console.log('isFundraising:', isFundraising, 'isManager:', isManager, 'has activateVault:', !!program.methods?.activateVault)
                   
                   if (isFundraising && isManager && program.methods?.activateVault) {
                     const activateIx = await program.methods
@@ -181,13 +180,18 @@ export function useExecuteTrade() {
                       })
                       .instruction()
                     ixs.push(activateIx)
-                    toast.success('Added activateVault instruction!')
-                    console.log('added activateIx')
+                  }
+                } else {
+                  const accInfo = await connection.getAccountInfo(vaultPubkey)
+                  if (!accInfo || accInfo.data.length === 0) {
+                    throw new Error('This vault is not initialized on the current blockchain cluster. Please deploy or select an active vault.')
                   }
                 }
-              } catch (checkErr) {
-                toast.error('Auto-activate vault check skipped with error: ' + checkErr)
-                console.error('Auto-activate vault check skipped with error:', checkErr)
+              } catch (checkErr: any) {
+                if (checkErr?.message?.includes('not initialized')) {
+                  throw checkErr
+                }
+                console.error('Auto-activate vault check error:', checkErr)
               }
 
               // Add ATA creation for input token if missing
@@ -329,7 +333,6 @@ export function useExecuteTrade() {
       } catch (err) {
         const errorMsg = formatError(err, 'Trade failed')
         updateStatus(txId, 'failed', errorMsg)
-        toastError(errorMsg)
         throw new Error(errorMsg)
       } finally {
         setIsLoading(false)

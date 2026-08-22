@@ -57,6 +57,14 @@ fn test_init_vault_fee_at_max_boundary() {
 
     // Exactly at the cap (5000 + 5000 = 10000) is allowed
     let share_token_mint_max = Keypair::new();
+    let (vault_pda_max, _) = Pubkey::find_program_address(
+        &[b"vault", manager.pubkey().as_ref(), share_token_mint_max.pubkey().as_ref()],
+        &program_id,
+    );
+    let (vault_authority_pda_max, _) = Pubkey::find_program_address(
+        &[b"vault_authority", vault_pda_max.as_ref()],
+        &program_id,
+    );
     let data_max = fbyt_clone_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 5000,
@@ -68,10 +76,10 @@ fn test_init_vault_fee_at_max_boundary() {
         program_id,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
-            AccountMeta::new(vault_pda, false),
+            AccountMeta::new(vault_pda_max, false),
             AccountMeta::new_readonly(deposit_mint, false),
             AccountMeta::new(share_token_mint_max.pubkey(), true),
-            AccountMeta::new_readonly(vault_authority_pda, false),
+            AccountMeta::new_readonly(vault_authority_pda_max, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
             AccountMeta::new_readonly(TOKEN_PROGRAM_ID, false),
         ],
@@ -84,7 +92,7 @@ fn test_init_vault_fee_at_max_boundary() {
     );
     assert!(res_max.is_ok(), "Expected fees of exactly 10000 bps to succeed: {:?}", res_max.err());
 
-    let vault = get_vault_state(&svm, &vault_pda);
+    let vault = get_vault_state(&svm, &vault_pda_max);
     assert_eq!(vault.performance_fee_bps, 5000);
     assert_eq!(vault.management_fee_bps, 5000);
 }
@@ -216,15 +224,15 @@ fn test_init_vault_duplicate_allowed_mints() {
     let deposit_mint = create_mint(&mut svm, &manager, &manager.pubkey());
     let output_mint = create_mint(&mut svm, &manager, &manager.pubkey());
 
+    let share_token_mint = Keypair::new();
     let (vault_pda, _) = Pubkey::find_program_address(
-        &[b"vault", manager.pubkey().as_ref()],
+        &[b"vault", manager.pubkey().as_ref(), share_token_mint.pubkey().as_ref()],
         &program_id,
     );
     let (vault_authority_pda, _) = Pubkey::find_program_address(
         &[b"vault_authority", vault_pda.as_ref()],
         &program_id,
     );
-    let share_token_mint = Keypair::new();
 
     let data = fbyt_clone_vault::instruction::InitializeVault {
         min_raise_amount: 0,
@@ -282,15 +290,15 @@ fn test_init_vault_all_fields_set_correctly() {
     let mgmt_fee = 1000;
     let lockup = 86400;
 
+    let share_token_mint = Keypair::new();
     let (vault_pda, _) = Pubkey::find_program_address(
-        &[b"vault", manager.pubkey().as_ref()],
+        &[b"vault", manager.pubkey().as_ref(), share_token_mint.pubkey().as_ref()],
         &program_id,
     );
     let (vault_authority_pda, _) = Pubkey::find_program_address(
         &[b"vault_authority", vault_pda.as_ref()],
         &program_id,
     );
-    let share_token_mint = Keypair::new();
 
     let data = fbyt_clone_vault::instruction::InitializeVault {
         min_raise_amount: min_raise,

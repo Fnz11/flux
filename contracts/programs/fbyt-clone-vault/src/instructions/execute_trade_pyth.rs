@@ -63,7 +63,8 @@ pub fn handler(ctx: Context<ExecuteTradePyth>, amount_in: u64, min_amount_out: u
     let clock = Clock::get()?;
 
     require!(
-        vault.allowed_output_mints.contains(&ctx.accounts.vault_output_mint.key()) 
+        vault.allowed_output_mints.is_empty()
+        || vault.allowed_output_mints.contains(&ctx.accounts.vault_output_mint.key()) 
         || ctx.accounts.vault_output_mint.key() == vault.deposit_mint,
         crate::errors::VaultError::InvalidMint
     );

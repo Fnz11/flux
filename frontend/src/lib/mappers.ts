@@ -6,7 +6,7 @@ import type {
   VaultStatus,
   TradeType,
 } from '@/types'
-import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST, isWhitelistedToken } from '@/constants/tokens'
 
 export interface RawApiVault {
   id?: string
@@ -22,6 +22,8 @@ export interface RawApiVault {
     description?: string
     focusAssets?: string[]
     focus_assets?: string[]
+    acceptedAssets?: string[]
+    accepted_assets?: string[]
     coverImageUrl?: string
     cover_image_url?: string
     tags?: string[]
@@ -115,6 +117,40 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
     status = 'Active'
   }
 
+  let metadataObj: any = raw.metadata
+  if (typeof metadataObj === 'string') {
+    try {
+      metadataObj = JSON.parse(metadataObj)
+    } catch {
+      metadataObj = {}
+    }
+  }
+  if (!metadataObj || typeof metadataObj !== 'object') {
+    metadataObj = {}
+  }
+
+  const focusAssets = Array.isArray(metadataObj.focusAssets)
+    ? metadataObj.focusAssets
+    : Array.isArray(metadataObj.focus_assets)
+      ? metadataObj.focus_assets
+      : []
+
+  const acceptedAssets = Array.isArray(metadataObj.acceptedAssets)
+    ? metadataObj.acceptedAssets
+    : Array.isArray(metadataObj.accepted_assets)
+      ? metadataObj.accepted_assets
+      : undefined
+
+  const pnlPercent = typeof raw.pnl_percent === 'number'
+    ? raw.pnl_percent
+    : typeof raw.pnlPercent === 'number'
+      ? raw.pnlPercent
+      : raw.pnl_percent != null && !isNaN(Number(raw.pnl_percent))
+        ? Number(raw.pnl_percent)
+        : raw.pnlPercent != null && !isNaN(Number(raw.pnlPercent))
+          ? Number(raw.pnlPercent)
+          : (Number(raw.pnl) || 0)
+
   const vault: Vault = {
     id: raw.id ?? '',
     address: raw.address ?? '',
@@ -122,22 +158,25 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
     managerAddress: raw.managerAddress ?? raw.manager_address ?? '',
     status,
     metadata: {
-      displayName: raw.metadata?.displayName ?? raw.metadata?.display_name ?? '',
-      description: raw.metadata?.description ?? '',
-      focusAssets: raw.metadata?.focusAssets ?? raw.metadata?.focus_assets ?? [],
-      ...(raw.metadata && ('coverImageUrl' in raw.metadata || 'cover_image_url' in raw.metadata)
-        ? { coverImageUrl: raw.metadata.coverImageUrl ?? raw.metadata.cover_image_url ?? '' }
+      displayName: metadataObj.displayName ?? metadataObj.display_name ?? '',
+      description: metadataObj.description ?? '',
+      focusAssets: focusAssets.filter((t: any) => typeof t === 'string' && t.toUpperCase() !== 'BONK'),
+      ...(acceptedAssets
+        ? { acceptedAssets: acceptedAssets.filter((t: any) => typeof t === 'string' && t.toUpperCase() !== 'BONK') }
         : {}),
-      ...(raw.metadata && 'tags' in raw.metadata && raw.metadata.tags
-        ? { tags: raw.metadata.tags }
+      ...(metadataObj.coverImageUrl || metadataObj.cover_image_url
+        ? { coverImageUrl: metadataObj.coverImageUrl ?? metadataObj.cover_image_url }
+        : {}),
+      ...(metadataObj.tags
+        ? { tags: Array.isArray(metadataObj.tags) ? metadataObj.tags : [] }
         : {}),
     },
-    performanceFeeBps: raw.performanceFeeBps ?? raw.performance_fee_bps ?? 0,
-    managementFeeBps: raw.managementFeeBps ?? raw.management_fee_bps ?? 0,
+    performanceFeeBps: Number(raw.performanceFeeBps ?? raw.performance_fee_bps) || 0,
+    managementFeeBps: Number(raw.managementFeeBps ?? raw.management_fee_bps) || 0,
     tvl: typeof raw.tvl === 'number' ? raw.tvl : parseFloat(raw.tvl || '0'),
     createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
     updatedAt: raw.updatedAt ?? raw.updated_at ?? new Date().toISOString(),
-    pnlPercent: typeof raw.pnl_percent === 'number' ? raw.pnl_percent : typeof raw.pnlPercent === 'number' ? raw.pnlPercent : (raw.pnl ?? 0),
+    pnlPercent,
     minRaiseAmount: typeof raw.min_raise_amount === 'number' ? raw.min_raise_amount : typeof raw.minRaiseAmount === 'number' ? raw.minRaiseAmount : 1,
     lockupPeriod: typeof raw.lockup_period === 'number' ? raw.lockup_period : typeof raw.lockupPeriod === 'number' ? raw.lockupPeriod : 7,
     vaultType: raw.vaultType ?? raw.vault_type ?? 'open',
@@ -150,39 +189,27 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
 }
 
 export function mapApiPortfolioToPortfolio(raw: RawApiPortfolioPosition | null | undefined): PortfolioPosition {
-  if (!raw) {
-    return {
-      vaultId: '',
-      vaultAddress: '',
-      vaultName: '',
-      sharesOwned: 0,
-      totalInvested: 0,
-      averageEntryPrice: 0,
-      currentValue: 0,
-      pnl: 0,
-      pnlPercent: 0,
-    }
+  if (raw == null) {
+    return {} as PortfolioPosition
   }
 
   const sharesOwned = typeof raw.sharesOwned === 'number' ? raw.sharesOwned : Number(raw.shares_owned ?? 0)
-  let totalInvested = typeof raw.totalInvested === 'number' ? raw.totalInvested : Number(raw.total_invested_value ?? 0)
-  let averageEntryPrice = typeof raw.averageEntryPrice === 'number' ? raw.averageEntryPrice : Number(raw.average_entry_price ?? 0)
+  const totalInvested = typeof raw.totalInvested === 'number' ? raw.totalInvested : Number(raw.total_invested_value ?? 0)
+  const averageEntryPrice = typeof raw.averageEntryPrice === 'number' ? raw.averageEntryPrice : Number(raw.average_entry_price ?? 0)
   const currentValue = typeof raw.currentValue === 'number' ? raw.currentValue : Number(raw.current_value ?? 0)
 
-  // Frontend safety guard: if legacy backend entry price is 1.0 (token quantity rather than USD)
-  // and current value is in USD (e.g. currentValue > totalInvested * 5), calibrate totalInvested to USD entry value
-  if (averageEntryPrice <= 1.01 && totalInvested > 0 && currentValue > totalInvested * 5 && sharesOwned > 0) {
-    const impliedSharePrice = currentValue / sharesOwned
-    totalInvested = sharesOwned * impliedSharePrice
-    averageEntryPrice = impliedSharePrice
-  }
-
-  const pnl = currentValue - totalInvested
-  const pnlPercent = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0
+  const pnl = typeof raw.pnl === 'number' ? raw.pnl : raw.pnl != null && !isNaN(Number(raw.pnl)) ? Number(raw.pnl) : (currentValue - totalInvested)
+  const pnlPercent = typeof raw.pnlPercent === 'number'
+    ? raw.pnlPercent
+    : typeof raw.pnl_percent === 'number'
+      ? raw.pnl_percent
+      : raw.pnl_percent != null && !isNaN(Number(raw.pnl_percent))
+        ? Number(raw.pnl_percent)
+        : (totalInvested > 0 ? (pnl / totalInvested) * 100 : 0)
 
   const createdAt = raw.invested_at ?? raw.investedAt ?? raw.created_at ?? raw.createdAt ?? undefined
 
-  return {
+  const result: PortfolioPosition = {
     vaultId: raw.vaultId ?? raw.vault_id ?? '',
     vaultAddress: raw.vaultAddress ?? raw.vault_address ?? '',
     vaultName: raw.vaultName ?? raw.vault_name ?? '',
@@ -192,9 +219,14 @@ export function mapApiPortfolioToPortfolio(raw: RawApiPortfolioPosition | null |
     currentValue,
     pnl,
     pnlPercent,
-    createdAt,
-    investedAt: createdAt,
   }
+
+  if (createdAt !== undefined) {
+    result.createdAt = createdAt
+    result.investedAt = createdAt
+  }
+
+  return result
 }
 
 export function mapApiConfigToConfig(raw: RawApiConfig | null | undefined): AppConfig {
@@ -202,14 +234,19 @@ export function mapApiConfigToConfig(raw: RawApiConfig | null | undefined): AppC
     return {
       dustThreshold: 0.001,
       focusAssetsWhitelist: [...DEFAULT_FOCUS_ASSETS_WHITELIST],
-      minRaiseAmount: 10,
+      minRaiseAmount: 1,
       lockupPeriod: 7,
     }
   }
+  const rawList = raw.focusAssetsWhitelist ?? raw.focus_assets_whitelist
+  const whitelist = Array.isArray(rawList) && rawList.length > 0
+    ? rawList.filter((t) => t.toUpperCase() !== 'BONK')
+    : [...DEFAULT_FOCUS_ASSETS_WHITELIST]
+
   return {
     dustThreshold: raw.dustThreshold ?? raw.dust_threshold ?? 0.001,
-    focusAssetsWhitelist: raw.focusAssetsWhitelist ?? raw.focus_assets_whitelist ?? [...DEFAULT_FOCUS_ASSETS_WHITELIST],
-    minRaiseAmount: raw.minRaiseAmount ?? raw.min_raise_amount ?? 10,
+    focusAssetsWhitelist: whitelist.length > 0 ? whitelist : [...DEFAULT_FOCUS_ASSETS_WHITELIST],
+    minRaiseAmount: raw.minRaiseAmount ?? raw.min_raise_amount ?? 1,
     lockupPeriod: raw.lockupPeriod ?? raw.lockup_period ?? 7,
   }
 }

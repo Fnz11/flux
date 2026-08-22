@@ -15,14 +15,24 @@ export function getSupportedDepositTokens(vault?: Vault): TokenInfo[] {
     const meta = getTokenMeta(depositMint)
     if (meta.mint) return [meta]
   }
-  const focus = vault?.metadata?.focusAssets || []
-  if (focus.length > 0 && !focus.includes('All')) {
-    const matched = focus
+
+  const accepted =
+    (vault?.metadata as any)?.acceptedAssets ||
+    (vault?.metadata as any)?.accepted_assets ||
+    (vault as unknown as { accepted_assets?: string[] })?.accepted_assets ||
+    (vault as unknown as { acceptedAssets?: string[] })?.acceptedAssets
+
+  if (Array.isArray(accepted) && accepted.length > 0) {
+    const matched = accepted
       .map((sym) => getTokenMeta(sym))
       .filter((t) => Boolean(t.mint))
     if (matched.length > 0) return matched
   }
-  return ALL_TOKENS
+
+  // Default accepted deposit assets: SOL, USDC, USDT
+  return ['SOL', 'USDC', 'USDT']
+    .map((sym) => getTokenMeta(sym))
+    .filter((t) => Boolean(t.mint))
 }
 
 export function useDepositModal(vaultId: string) {

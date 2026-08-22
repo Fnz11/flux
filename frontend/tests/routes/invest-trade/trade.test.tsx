@@ -131,6 +131,22 @@ describe('SwapForm', () => {
     expect(screen.getByPlaceholderText('0.00')).toHaveValue('5.5')
   })
 
+  it('updates amount using percentage buttons and allocation slider', async () => {
+    render(<SwapForm preselectedVaultId={vault.id} />)
+    await waitFor(() => expect(screen.getByRole('button', { name: '50%' })).toBeInTheDocument())
+    
+    // Click 50% preset
+    fireEvent.click(screen.getByRole('button', { name: '50%' }))
+    expect(screen.getByPlaceholderText('0.00')).toHaveValue('2.7500')
+    expect(screen.getAllByText('50%').length).toBeGreaterThanOrEqual(1)
+
+    // Drag slider to 75%
+    const slider = screen.getByRole('slider')
+    fireEvent.change(slider, { target: { value: '75' } })
+    await waitFor(() => expect(screen.getByPlaceholderText('0.00')).toHaveValue('4.1250'))
+    expect(screen.getAllByText('75%').length).toBeGreaterThanOrEqual(1)
+  })
+
   it('shows insufficient vault balance when input exceeds active vault balance', async () => {
     render(<SwapForm preselectedVaultId={vault.id} />)
     fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '10' } })

@@ -54,6 +54,7 @@ describe('mappers', () => {
         pnlPercent: 0,
         minRaiseAmount: 1,
         lockupPeriod: 7,
+        vaultType: 'open',
         investorCount: 0,
       })
     })
@@ -193,7 +194,7 @@ describe('mappers', () => {
       const config = mapApiConfigToConfig(null)
       assert.equal(config.dustThreshold, 0.001)
       assert.ok(config.focusAssetsWhitelist.includes('SOL'))
-      assert.equal(config.minRaiseAmount, 10)
+      assert.equal(config.minRaiseAmount, 1)
       assert.equal(config.lockupPeriod, 7)
     })
 
