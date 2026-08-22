@@ -110,10 +110,56 @@ graph TD
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## Real-Time WebSocket Architecture & Performance Optimizations ⚡
+
+Flux delivers institutional-grade real-time market data streaming and state synchronization designed to eliminate network overhead, UI thrashing, and database bottlenecks.
+
+### 1. Zero-HTTP WebSocket Ingestion
+* **No Cache Invalidation Storms:** Rather than executing destructive `queryClient.invalidateQueries` calls upon every tick (which triggers heavy cascade HTTP polling), incoming WebSocket events mutate React Query in-memory caches directly.
+* **Modular Single-Responsibility Handlers:** Event processing is split into dedicated, isolated handlers (`vaultHandler.ts`, `portfolioSummaryHandler.ts`, `activityHandler.ts`) adhering to the Single Responsibility Principle.
+
+### 2. 200ms Micro-Interval Batch Processing
+* **Frame-Rate Protection:** High-frequency event streams (e.g. 50-100 ticks/sec from high-throughput simulation) are buffered in memory and flushed in atomic 200ms batches (~5 FPS batch updates with smooth 60 FPS rendering) via `useBatchedWebSocket`.
+* **Zero Component Re-render Thrashing:** Multiple trades, TVL shifts, and portfolio delta updates in the same interval are merged before dispatching a single atomic React Query cache update.
+
+### 3. Dynamic Viewport-Scoped Subscriptions
+* **Client-Driven Selective Routing:** Through `useVisibleVaultsWs` and `useRouteWsChannel`, clients only subscribe to channels for items currently in view (`vault:<id>`, `portfolio:<wallet>`, `user:<wallet>`).
+* **Clean Channel Diffing:** Navigating between views automatically subscribes to newly visible resources and unsubscribes from off-screen resources without tearing down persistent socket connections.
+
+### 4. Database Pre-Aggregation with PostgreSQL Materialized Views
+* **O(1) Portfolio Aggregation:** Database endpoints query the `user_pnl_summary` materialized view directly. The 3 summary metrics (`TOTAL INVESTED`, `PORTFOLIO VALUE`, `NET PROFIT / LOSS`) return pre-computed aggregates in a single row without scanning or iterating over individual position records.
+* **Authenticated Session Scope:** Private endpoints (`/api/v1/portfolio/summary`, `/api/v1/portfolio/history`, `/api/v1/transactions`) resolve the user's wallet automatically from session authentication tokens, preventing URL tampering and data scraping.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Market Simulation Engine 🚀
+
+Flux includes a standalone high-frequency market simulator designed to test high-load scenarios, multi-vault price fluctuations, simulated swaps, and investor portfolio updates.
+
+### Running the Simulator
+
+1. **Start the Simulator against a running backend:**
+   ```bash
+   cd backend
+   go run ./cmd/simulator --interval=150 --wallet=<YOUR_CONNECTED_WALLET>
+   ```
+
+2. **Available Simulator Options:**
+   | Flag | Default | Description |
+   | --- | --- | --- |
+   | `--interval` | `100` | Tick interval in milliseconds (e.g. `50`, `100`, `250`) |
+   | `--wallet` | `""` | Target user wallet to simulate live deposits, swaps, and PnL updates |
+   | `--vault` | `""` | Target specific vault ID (if empty, simulates top 10 vaults in DB) |
+   | `--ws` | `ws://localhost:8080/api/v1/ws` | WebSocket endpoint URL |
+   | `--burst` | `false` | Enable random spike volume and market volatility |
+   | `--mode` | `stream` | `stream` (feeder mode) or `client-listener` (benchmark mode) |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Tech Stack
 
 * **Frontend:** React, TanStack Start, TanStack Query, Zustand, TailwindCSS, Lucide Icons
-* **Backend:** Go (Gin), PostgreSQL (GORM), Redis, WebSockets
+* **Backend:** Go (Gin), PostgreSQL (GORM), TimescaleDB, PgBouncer, Redis, Gorilla WebSocket
 * **Smart Contracts:** Solana, Rust, Anchor Framework, Pyth Hermes Oracle
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -136,18 +182,23 @@ Follow these instructions to run the Flux platform on your local machine.
    cd flux
    ```
 
-2. **Start Backend Services:**
+2. **Start Backend Infrastructure & Server:**
    ```bash
    cd backend
-   docker-compose up -d
-   go run cmd/server/main.go
+   docker compose up -d
    ```
 
 3. **Start Frontend Dev Server:**
    ```bash
    cd ../frontend
-   npm install
-   npm run dev
+   pnpm install
+   pnpm run dev
+   ```
+
+4. **Launch the High-Frequency Simulator:**
+   ```bash
+   cd ../backend
+   go run ./cmd/simulator --interval=150 --wallet=<CONNECTED_WALLET>
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
