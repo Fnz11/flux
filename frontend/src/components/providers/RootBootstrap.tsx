@@ -1,8 +1,12 @@
 import React, { useEffect } from 'react'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useConfigStore } from '@/stores/config-store'
 import { useWebSocketStore } from '@/stores/websocket-store'
 
 export function RootBootstrap({ children }: { children: React.ReactNode }) {
+  const { publicKey } = useWallet()
+  const walletAddress = publicKey?.toBase58()
+
   useEffect(() => {
     useConfigStore.getState().fetchConfig().catch(() => {})
 
@@ -13,6 +17,12 @@ export function RootBootstrap({ children }: { children: React.ReactNode }) {
       // WS connection fallback handled in store
     }
   }, [])
+
+  useEffect(() => {
+    if (walletAddress) {
+      useWebSocketStore.getState().authenticate(walletAddress)
+    }
+  }, [walletAddress])
 
   return <>{children}</>
 }

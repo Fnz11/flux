@@ -157,6 +157,126 @@ func (h *PortfolioHandler) getPortfolioFromService(c *gin.Context, wallet string
 	})
 }
 
+type summaryResponse struct {
+	Wallet        string          `json:"wallet"`
+	VaultCount    int64           `json:"vault_count"`
+	TotalInvested decimal.Decimal `json:"total_invested"`
+	CurrentValue  decimal.Decimal `json:"current_value"`
+	UnrealizedPnL decimal.Decimal `json:"unrealized_pnl"`
+	TotalPnL      decimal.Decimal `json:"total_pnl"`
+	PnLPercent    decimal.Decimal `json:"pnl_percent"`
+	UpdatedAt     string          `json:"updated_at,omitempty"`
+}
+
+func (h *PortfolioHandler) GetPortfolioSummary(c *gin.Context) {
+	wallet := c.Param("wallet")
+	if wallet == "" {
+		if val, exists := c.Get("wallet_address"); exists {
+			if s, ok := val.(string); ok {
+				wallet = s
+			}
+		}
+	}
+	if wallet == "" {
+		ErrorResponse(c, http.StatusBadRequest, "wallet address required")
+		return
+	}
+
+	user, err := h.userRepo.FindByWallet(c.Request.Context(), wallet)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			SuccessResponse(c, summaryResponse{
+				Wallet:        wallet,
+				VaultCount:    0,
+				TotalInvested: decimal.Zero,
+				CurrentValue:  decimal.Zero,
+				UnrealizedPnL: decimal.Zero,
+				TotalPnL:      decimal.Zero,
+				PnLPercent:    decimal.Zero,
+			})
+			return
+		}
+		ErrorResponse(c, http.StatusInternalServerError, "database error")
+		return
+	}
+
+	summary, err := h.portfolioRepo.GetPortfolioSummary(c.Request.Context(), user.ID)
+	if err == nil && summary != nil {
+		totalPnL := summary.CurrentValue.Sub(summary.TotalInvested)
+		returnPct := decimal.Zero
+		if summary.TotalInvested.IsPositive() {
+			returnPct = totalPnL.Div(summary.TotalInvested).Mul(decimal.NewFromInt(100))
+		}
+
+		SuccessResponse(c, summaryResponse{
+			Wallet:        wallet,
+			VaultCount:    summary.VaultCount,
+			TotalInvested: summary.TotalInvested,
+			CurrentValue:  summary.CurrentValue,
+			UnrealizedPnL: summary.UnrealizedPnL,
+			TotalPnL:      totalPnL,
+			PnLPercent:    returnPct,
+			UpdatedAt:     summary.UpdatedAt,
+		})
+		return
+	}
+
+	// Fallback to live calculation if MV is not refreshed
+	if h.svc != nil {
+		if uid, err := uuid.Parse(user.ID); err == nil {
+			details, err := h.svc.GetPortfolio(c.Request.Context(), uid)
+			if err == nil {
+				var totalInvested, currentValue decimal.Decimal
+				for _, d := range details {
+					totalInvested = totalInvested.Add(d.TotalInvestedValue)
+					currentValue = currentValue.Add(d.CurrentValue)
+				}
+				totalPnL := currentValue.Sub(totalInvested)
+				returnPct := decimal.Zero
+				if totalInvested.IsPositive() {
+					returnPct = totalPnL.Div(totalInvested).Mul(decimal.NewFromInt(100))
+				}
+
+				SuccessResponse(c, summaryResponse{
+					Wallet:        wallet,
+					VaultCount:    int64(len(details)),
+					TotalInvested: totalInvested,
+					CurrentValue:  currentValue,
+					UnrealizedPnL: totalPnL,
+					TotalPnL:      totalPnL,
+					PnLPercent:    returnPct,
+				})
+				return
+			}
+		}
+	}
+
+	SuccessResponse(c, summaryResponse{
+		Wallet:        wallet,
+		VaultCount:    0,
+		TotalInvested: decimal.Zero,
+		CurrentValue:  decimal.Zero,
+		UnrealizedPnL: decimal.Zero,
+		TotalPnL:      decimal.Zero,
+		PnLPercent:    decimal.Zero,
+	})
+}
+
+func (h *PortfolioHandler) GetMyPortfolio(c *gin.Context) {
+	val, exists := c.Get("wallet_address")
+	if !exists {
+		ErrorResponse(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	wallet, _ := val.(string)
+	if wallet == "" {
+		ErrorResponse(c, http.StatusUnauthorized, "invalid wallet in session")
+		return
+	}
+	c.Params = append(c.Params, gin.Param{Key: "wallet", Value: wallet})
+	h.GetPortfolio(c)
+}
+
 func vaultDisplayName(v models.Vault) string {
 	if len(v.Metadata) == 0 {
 		return v.Address

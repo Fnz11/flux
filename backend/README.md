@@ -66,3 +66,33 @@ Example of a custom seed run with cleanup:
 ```bash
 go run cmd/seed/main.go --users 50 --vaults-per-user 10 --clean
 ```
+
+## High-Frequency WebSocket Simulator
+
+To test fast-changing market data, real-time UI re-renders, and WebSocket throughput under high-frequency conditions locally, use the simulator tool:
+
+```bash
+go run cmd/simulator/main.go [options]
+```
+
+### Simulator Flags:
+- `--interval <ms>`: Frequency interval between ticks in milliseconds (default: `100`).
+- `--burst`: Enable burst mode to simulate crypto volatility spikes (default: `false`).
+- `--wallet <address>`: Focus updates on a specific user's wallet address.
+- `--vault <id>`: Focus updates on a specific vault.
+- `--mode <stream|client-listener>`:
+  - `stream` (default): Broadcasts continuous trades, vault updates, and Brownian PnL walks to WebSocket channels.
+  - `client-listener`: Connects as a WebSocket client to `ws://localhost:8080/ws` and measures throughput / message latency.
+
+### Examples:
+```bash
+# Run 50ms rapid market stream with volatility bursts
+go run cmd/simulator/main.go --interval 50 --burst
+
+# Target a specific test wallet & vault
+go run cmd/simulator/main.go --wallet "YOUR_WALLET_PUBKEY" --vault "VAULT_UUID" --interval 100
+
+# Benchmark client throughput & latency
+go run cmd/simulator/main.go --mode client-listener --ws "ws://localhost:8080/ws"
+```
+

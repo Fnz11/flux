@@ -95,3 +95,17 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func OptionalAuthMiddleware(jwtSecret string) gin.HandlerFunc {
+	secret := []byte(jwtSecret)
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" {
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			if claims, err := ValidateToken(tokenString, secret); err == nil && claims != nil {
+				c.Set("wallet_address", claims.WalletAddress)
+			}
+		}
+		c.Next()
+	}
+}

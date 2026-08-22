@@ -76,6 +76,13 @@ func (h *HistoryHandler) GetPortfolioHistory(c *gin.Context) {
 
 	wallet := c.Query("wallet")
 	if wallet == "" {
+		if val, exists := c.Get("wallet_address"); exists {
+			if s, ok := val.(string); ok {
+				wallet = s
+			}
+		}
+	}
+	if wallet == "" {
 		ErrorResponse(c, http.StatusBadRequest, "wallet parameter is required")
 		return
 	}

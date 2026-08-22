@@ -1,14 +1,15 @@
-import { useState, useMemo, useEffect, type ReactNode } from 'react'
+import { useState, useMemo, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useGlobalTransactionsQuery } from '@/services/hooks/useQuery/useGlobalTransactionsQuery'
-import type { GlobalTransactionAction } from '@/services/apis/rest-api/transactions.service'
+import type { GlobalTransactionAction, GlobalTransaction, GlobalTransactionsResponse } from '@/services/apis/rest-api/transactions.service'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, SortableTableHead, Pagination } from '@/components/ui/table'
 import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { SolscanLink } from '@/components/ui/SolscanLink'
 import { cn } from '@/lib/utils'
 import { formatDateTime, formatNumber } from '@/lib/format'
-import { useWebSocketStore } from '@/stores'
 import { useTableSort } from '@/hooks/useTableSort'
+import { useRealtimeSync } from '@/hooks/useRealtimeSync'
+import { activityHandler } from '@/services/ws/handlers/activityHandler'
 
 interface RecentActivityProps {
   wallet: string
@@ -25,10 +26,6 @@ const ACTION_META: Record<GlobalTransactionAction, { label: string; className: s
 const SKELETON_ROWS = 5
 
 export function RecentActivity({ wallet }: RecentActivityProps) {
-  const queryClient = useQueryClient()
-  const onMessage = useWebSocketStore((s) => s.onMessage)
-  const { data, isLoading, error } = useGlobalTransactionsQuery({ wallet })
-
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(8)
 
@@ -38,14 +35,16 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
     allowClear: true,
   })
 
-  useEffect(() => {
-    const unsubscribe = onMessage((msg) => {
-      if (msg.type === 'trade_confirmed') {
-        queryClient.invalidateQueries({ queryKey: ['transactions'] })
-      }
-    })
-    return unsubscribe
-  }, [onMessage, queryClient])
+  const { data, isLoading, error } = useGlobalTransactionsQuery({
+    page,
+    limit: pageSize,
+  })
+
+  // 200ms modular realtime batch sync
+  useRealtimeSync({
+    handlers: [activityHandler],
+    walletAddress: wallet,
+  })
 
   const sortedItems = useMemo(() => {
     const items = data?.items || []
@@ -84,8 +83,9 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
     })
   }, [data?.items, sortBy, sortOrder])
 
-  const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize))
-  const pagedItems = sortedItems.slice((page - 1) * pageSize, page * pageSize)
+  const totalItems = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  const displayedItems = sortedItems.slice(0, pageSize)
 
   let content: ReactNode
   if (isLoading) {
@@ -105,7 +105,7 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
         </TableCell>
       </TableRow>
     )
-  } else if (!data || sortedItems.length === 0) {
+  } else if (!data || displayedItems.length === 0) {
     content = (
       <TableEmpty
         colSpan={5}
@@ -114,7 +114,7 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
       />
     )
   } else {
-    content = pagedItems.map((item) => {
+    content = displayedItems.map((item) => {
       const meta = ACTION_META[item.action]
       const actionColor = item.action === 'deposit'
         ? 'text-status-info'
@@ -151,12 +151,12 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
 
   return (
     <Table
-      containerClassName="min-h-[380px]"
+      containerClassName="min-h-[380px] max-h-[440px]"
       footer={
         <Pagination
           page={page}
           totalPages={totalPages}
-          totalItems={sortedItems.length}
+          totalItems={totalItems}
           pageSize={pageSize}
           pageSizeOptions={[5, 8, 15, 30]}
           onPageChange={setPage}

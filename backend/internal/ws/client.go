@@ -14,7 +14,7 @@ const (
 	writeWait      = 10 * time.Second
 	pongWait       = 60 * time.Second
 	pingPeriod     = 30 * time.Second
-	maxMessageSize = 512
+	maxMessageSize = 65536
 )
 
 type Client struct {
@@ -27,10 +27,12 @@ type Client struct {
 }
 
 type inboundMessage struct {
-	Type    string `json:"type"`
-	Channel string `json:"channel,omitempty"`
-	Token   string `json:"token,omitempty"`
-	Wallet  string `json:"wallet,omitempty"`
+	Type     string      `json:"type"`
+	Channel  string      `json:"channel,omitempty"`
+	Channels []string    `json:"channels,omitempty"`
+	Token    string      `json:"token,omitempty"`
+	Wallet   string      `json:"wallet,omitempty"`
+	Data     interface{} `json:"data,omitempty"`
 }
 
 type outboundMessage struct {
@@ -120,7 +122,20 @@ func (c *Client) ReadPump() {
 			default:
 			}
 		case "subscribe":
+			var targetChannels []string
+			if len(msg.Channels) > 0 {
+				targetChannels = append(targetChannels, msg.Channels...)
+			}
 			if msg.Channel != "" {
+				for _, ch := range strings.Split(msg.Channel, ",") {
+					ch = strings.TrimSpace(ch)
+					if ch != "" {
+						targetChannels = append(targetChannels, ch)
+					}
+				}
+			}
+
+			if len(targetChannels) > 0 {
 				if msg.Token != "" && c.jwtSecret != "" {
 					claims, err := middleware.ValidateToken(msg.Token, []byte(c.jwtSecret))
 					if err == nil && claims != nil {
@@ -132,29 +147,93 @@ func (c *Client) ReadPump() {
 					c.user = msg.Wallet
 				}
 
-				if c.canSubscribe(msg.Channel) {
-					c.hub.Subscribe(c, msg.Channel)
-				} else {
-					errResp, _ := json.Marshal(outboundMessage{
-						Type:      "error",
-						Data:      "unauthorized subscription channel",
-						Timestamp: time.Now().Unix(),
-					})
-					select {
-					case c.send <- errResp:
-					default:
+				for _, ch := range targetChannels {
+					if c.canSubscribe(ch) {
+						c.hub.Subscribe(c, ch)
+					} else {
+						errResp, _ := json.Marshal(outboundMessage{
+							Type:      "error",
+							Data:      "unauthorized subscription channel: " + ch,
+							Timestamp: time.Now().Unix(),
+						})
+						select {
+						case c.send <- errResp:
+						default:
+						}
 					}
 				}
 			}
 		case "unsubscribe":
+			var targetChannels []string
+			if len(msg.Channels) > 0 {
+				targetChannels = append(targetChannels, msg.Channels...)
+			}
 			if msg.Channel != "" {
-				c.hub.Unsubscribe(c, msg.Channel)
+				for _, ch := range strings.Split(msg.Channel, ",") {
+					ch = strings.TrimSpace(ch)
+					if ch != "" {
+						targetChannels = append(targetChannels, ch)
+					}
+				}
+			}
+			for _, ch := range targetChannels {
+				c.hub.Unsubscribe(c, ch)
 			}
 		case "ping":
 			pong, _ := json.Marshal(outboundMessage{Type: "pong", Timestamp: time.Now().Unix()})
 			select {
 			case c.send <- pong:
 			default:
+			}
+		case "publish", "broadcast":
+			if msg.Channel != "" {
+				outMsg, _ := json.Marshal(outboundMessage{
+					Type:      msg.Type,
+					Data:      msg.Data,
+					Timestamp: time.Now().Unix(),
+				})
+				c.hub.BroadcastToChannel(msg.Channel, outMsg)
+			}
+		case "trade_confirmed", "portfolio_update", "portfolio_summary_update", "vault_update", "leaderboard_update":
+			outMsg, _ := json.Marshal(outboundMessage{
+				Type:      msg.Type,
+				Data:      msg.Data,
+				Timestamp: time.Now().Unix(),
+			})
+			if msg.Channel != "" {
+				c.hub.BroadcastToChannel(msg.Channel, outMsg)
+			} else {
+				switch msg.Type {
+				case "trade_confirmed":
+					c.hub.BroadcastToChannel("global:activity", outMsg)
+					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+						if vaultID, ok := dataMap["vault_id"].(string); ok && vaultID != "" {
+							c.hub.BroadcastToChannel("vault:"+vaultID, outMsg)
+						}
+						if wallet, ok := dataMap["wallet"].(string); ok && wallet != "" {
+							c.hub.BroadcastToChannel("user:"+wallet, outMsg)
+						}
+					}
+				case "portfolio_update", "portfolio_summary_update":
+					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+						wallet, _ := dataMap["wallet_address"].(string)
+						if wallet == "" {
+							wallet, _ = dataMap["wallet"].(string)
+						}
+						if wallet != "" {
+							c.hub.BroadcastToChannel("portfolio:"+wallet, outMsg)
+							c.hub.BroadcastToChannel("user:"+wallet, outMsg)
+						}
+					}
+				case "leaderboard_update":
+					c.hub.BroadcastToChannel("global:leaderboard", outMsg)
+				case "vault_update":
+					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+						if vaultID, ok := dataMap["vault_id"].(string); ok && vaultID != "" {
+							c.hub.BroadcastToChannel("vault:"+vaultID, outMsg)
+						}
+					}
+				}
 			}
 		}
 	}

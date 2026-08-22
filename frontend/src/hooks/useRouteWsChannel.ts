@@ -1,31 +1,40 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import { useWebSocketStore } from '@/stores/websocket-store'
 
-export function useRouteWsChannel(channels: (string | null | undefined)[]) {
-  const subscribe = useWebSocketStore((s) => s.subscribe)
-  const unsubscribe = useWebSocketStore((s) => s.unsubscribe)
+export function useRouteWsChannel(channels: (string | null | undefined)[], wallet?: string | null) {
+  const subscribeMany = useWebSocketStore((s) => s.subscribeMany)
+  const unsubscribeMany = useWebSocketStore((s) => s.unsubscribeMany)
 
-  const validChannels = channels.filter((c): c is string => Boolean(c))
-  const channelKey = validChannels.join(',')
+  const channelKey = useMemo(() => {
+    return channels.filter((c): c is string => Boolean(c)).sort().join(',')
+  }, [channels])
 
-  const channelsRef = useRef(validChannels)
-
-  useEffect(() => {
-    channelsRef.current = validChannels
-  })
+  const subscribedRef = useRef<string[]>([])
 
   useEffect(() => {
-    const activeChannels = channelsRef.current
-    if (activeChannels.length === 0) return
+    const validChannels = channels.filter((c): c is string => Boolean(c))
+    if (validChannels.length === 0) return
 
-    activeChannels.forEach((channel) => {
-      subscribe(channel)
-    })
+    const prev = subscribedRef.current
+    const toSubscribe = validChannels.filter((c) => !prev.includes(c))
+    const toUnsubscribe = prev.filter((c) => !validChannels.includes(c))
 
-    return () => {
-      activeChannels.forEach((channel) => {
-        unsubscribe(channel)
-      })
+    if (toUnsubscribe.length > 0) {
+      unsubscribeMany(toUnsubscribe)
     }
-  }, [channelKey, subscribe, unsubscribe])
+    if (toSubscribe.length > 0) {
+      subscribeMany(toSubscribe, wallet || undefined)
+    }
+
+    subscribedRef.current = validChannels
+  }, [channelKey, wallet, subscribeMany, unsubscribeMany])
+
+  useEffect(() => {
+    return () => {
+      if (subscribedRef.current.length > 0) {
+        unsubscribeMany(subscribedRef.current)
+        subscribedRef.current = []
+      }
+    }
+  }, [unsubscribeMany])
 }

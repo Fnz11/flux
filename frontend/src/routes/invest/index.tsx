@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useVaultsQuery } from '@/services/hooks/useQuery/useVaultsQuery'
@@ -6,7 +7,11 @@ import { EmptyVaultsTable } from '@/components/ui/EmptyVaultsTable'
 import { SectionCard } from '@/components/ui/SectionCard'
 import { VaultInvestCard } from './_components/VaultInvestCard'
 import { VaultInvestCardSkeleton } from './_components/VaultInvestCardSkeleton'
-import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { useVisibleVaultsWs } from '@/hooks/useVisibleVaultsWs'
+import { useRealtimeSync } from '@/hooks/useRealtimeSync'
+import { vaultHandler } from '@/services/ws/handlers/vaultHandler'
+import { portfolioHandler } from '@/services/ws/handlers/portfolioHandler'
+import { portfolioSummaryHandler } from '@/services/ws/handlers/portfolioSummaryHandler'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Trophy, Activity } from 'lucide-react'
 import { generateMetadata } from '@/lib/metadata'
@@ -25,16 +30,28 @@ export const Route = createFileRoute('/invest/')({
 })
 
 function InvestPage() {
-  useRouteWsChannel(['global:activity'])
   const wallet = useWallet()
+  const walletAddress = wallet.publicKey?.toBase58()
+
   const { data: vaults = [], isLoading: vaultsLoading, error: vaultsError } = useVaultsQuery({
     sortBy: 'tvl',
     sortOrder: 'desc',
+    limit: 6,
   })
 
-  const topVaults = vaults
-    .filter((v) => v.status === 'Active' || v.status === 'Fundraising')
-    .slice(0, 6)
+  const topVaults = useMemo(
+    () => vaults.filter((v) => v.status === 'Active' || v.status === 'Fundraising'),
+    [vaults]
+  )
+
+  // Senior pattern: Batch subscribe only to visible vaults + connected portfolio
+  useVisibleVaultsWs(topVaults, walletAddress)
+
+  // Modular Realtime Query Sync: Only mounts handlers relevant to this page
+  useRealtimeSync({
+    handlers: [vaultHandler, portfolioHandler, portfolioSummaryHandler],
+    walletAddress,
+  })
 
   return (
     <div className="space-y-4">

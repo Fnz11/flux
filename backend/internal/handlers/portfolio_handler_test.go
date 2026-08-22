@@ -248,3 +248,54 @@ func TestPortfolioHandler_GetPortfolio(t *testing.T) {
 		}
 	})
 }
+
+func TestPortfolioHandler_GetPortfolioSummary(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	pub58, _ := generateTestKeyPair()
+	userUUID := uuid.New().String()
+
+	t.Run("GetPortfolioSummary_HappyPath", func(t *testing.T) {
+		userRepo := newMockUserRepo()
+		userRepo.users[pub58] = &domain.UserDetail{
+			ID:            userUUID,
+			WalletAddress: pub58,
+		}
+
+		portfolioRepo := &mockPortfolioRepoForHandler{positions: make(map[string][]domain.PortfolioDetail)}
+		h := NewPortfolioHandler(userRepo, portfolioRepo)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "wallet", Value: pub58}}
+		c.Request = httptest.NewRequest("GET", "/api/v1/portfolio/"+pub58+"/summary", nil)
+
+		h.GetPortfolioSummary(c)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d", w.Code)
+		}
+	})
+
+	t.Run("GetPortfolioSummary_ViaSessionAuth", func(t *testing.T) {
+		userRepo := newMockUserRepo()
+		userRepo.users[pub58] = &domain.UserDetail{
+			ID:            userUUID,
+			WalletAddress: pub58,
+		}
+
+		portfolioRepo := &mockPortfolioRepoForHandler{positions: make(map[string][]domain.PortfolioDetail)}
+		h := NewPortfolioHandler(userRepo, portfolioRepo)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Set("wallet_address", pub58)
+		c.Request = httptest.NewRequest("GET", "/api/v1/portfolio/summary", nil)
+
+		h.GetPortfolioSummary(c)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200 via session auth, got %d", w.Code)
+		}
+	})
+}

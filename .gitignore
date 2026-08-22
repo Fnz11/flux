@@ -20,6 +20,9 @@ frontend/.output
 frontend/.vinxi
 frontend/__unconfig*
 frontend/todos.json
-test-ledger
 /backend/.env
 /frontend/test-results
+backend/simulator
+backend/server
+*.exe
+*.test

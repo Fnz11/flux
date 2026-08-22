@@ -48,6 +48,7 @@ func Setup(hs *HandlerSet) *gin.Engine {
 	r.Use(middleware.PrometheusMiddleware())
 
 	authMW := middleware.AuthMiddleware(hs.JWTSecret)
+	optionalAuthMW := middleware.OptionalAuthMiddleware(hs.JWTSecret)
 
 	// withIdem returns an authMW chain with the Redis-backed idempotency
 	// middleware appended whenever a Redis client is available. Applied to all
@@ -61,6 +62,7 @@ func Setup(hs *HandlerSet) *gin.Engine {
 	}
 
 	v1 := r.Group("/api/v1")
+	v1.Use(optionalAuthMW)
 	{
 		if hs.Health != nil {
 			v1.GET("/health", hs.Health.HealthCheck)
@@ -123,6 +125,9 @@ func Setup(hs *HandlerSet) *gin.Engine {
 		portfolio := v1.Group("/portfolio")
 		{
 			if hs.Portfolio != nil {
+				portfolio.GET("/summary", hs.Portfolio.GetPortfolioSummary)
+				portfolio.GET("/:wallet/summary", hs.Portfolio.GetPortfolioSummary)
+				portfolio.GET("/me", authMW, hs.Portfolio.GetMyPortfolio)
 				portfolio.GET("/:wallet", hs.Portfolio.GetPortfolio)
 			}
 			if hs.History != nil {

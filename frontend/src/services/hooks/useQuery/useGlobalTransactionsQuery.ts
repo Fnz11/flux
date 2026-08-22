@@ -8,6 +8,5 @@ export function useGlobalTransactionsQuery(params?: GlobalTransactionParams) {
   return useQuery({
     queryKey: ['transactions', params],
     queryFn: () => getGlobalTransactions(params),
-    enabled: Boolean(params?.wallet),
   })
 }

@@ -1,5 +1,5 @@
 import { Wallet, Coins, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react'
-import { usePortfolioPnl } from '@/hooks/usePortfolioPnl'
+import { usePortfolioSummaryQuery } from '@/services/hooks/useQuery/usePortfolioSummaryQuery'
 import { usePortfolioHistoryQuery } from '@/services/hooks/useQuery/usePortfolioHistoryQuery'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { cn } from '@/lib/utils'
@@ -16,8 +16,13 @@ function formatNum(num: number) {
 export function InvestSummary() {
   const wallet = useWallet()
   const walletAddress = wallet.publicKey?.toBase58()
-  const { totalInvested, totalValue, totalPnl, totalPnlPercent } = usePortfolioPnl(walletAddress)
-  const { data: history = [] } = usePortfolioHistoryQuery(walletAddress ?? '')
+  const { data: summary } = usePortfolioSummaryQuery(walletAddress)
+  const { data: history = [] } = usePortfolioHistoryQuery()
+
+  const totalInvested = summary?.total_invested ?? 0
+  const totalValue = summary?.current_value ?? 0
+  const totalPnl = summary?.total_pnl ?? 0
+  const totalPnlPercent = summary?.pnl_percent ?? 0
 
   const historyValues = history.reduce<number[]>((acc, point) => {
     const val = Number(point.value)

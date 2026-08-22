@@ -49,10 +49,19 @@ func (h *GlobalFeedHandler) List(c *gin.Context) {
 		limit = 20
 	}
 
+	wallet := c.Query("wallet")
+	if wallet == "" {
+		if val, exists := c.Get("wallet_address"); exists {
+			if s, ok := val.(string); ok {
+				wallet = s
+			}
+		}
+	}
+
 	items, total, err := h.repo.ListGlobalFeed(c.Request.Context(), domain.FeedFilter{
 		Page:   page,
 		Limit:  limit,
-		Wallet: c.Query("wallet"),
+		Wallet: wallet,
 		Type:   c.Query("type"),
 	})
 	if err != nil {

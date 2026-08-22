@@ -15,8 +15,10 @@ interface WebSocketActions {
   connect: (url: string) => void
   disconnect: () => void
   authenticate: (wallet: string | null) => void
-  subscribe: (channel: string) => void
+  subscribe: (channel: string, wallet?: string) => void
   unsubscribe: (channel: string) => void
+  subscribeMany: (channels: string[], wallet?: string) => void
+  unsubscribeMany: (channels: string[]) => void
   onMessage: (handler: MessageHandler) => () => void
 }
 
@@ -46,9 +48,9 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
       if (wallet) {
         socket.send(JSON.stringify({ type: 'auth', wallet }))
       }
-      subscriptions.forEach((channel) => {
-        socket.send(JSON.stringify({ type: 'subscribe', channel }))
-      })
+      if (subscriptions.length > 0) {
+        socket.send(JSON.stringify({ type: 'subscribe', channels: subscriptions, wallet: wallet || undefined }))
+      }
     }
 
     socket.onmessage = (event) => {
@@ -85,20 +87,22 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
   },
 
   authenticate: (wallet) => {
+    const current = get()
+    if (current.wallet === wallet && current.isConnected) return
     set({ wallet })
-    const { ws } = get()
-    if (wallet && ws?.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'auth', wallet }))
+    if (wallet && current.ws?.readyState === WebSocket.OPEN) {
+      current.ws.send(JSON.stringify({ type: 'auth', wallet }))
     }
   },
 
-  subscribe: (channel) =>
+  subscribe: (channel, wallet) =>
     set((s) => {
+      const activeWallet = wallet || s.wallet || undefined
       if (s.subscriptions.includes(channel)) return s
       if (s.ws?.readyState === WebSocket.OPEN) {
-        s.ws.send(JSON.stringify({ type: 'subscribe', channel }))
+        s.ws.send(JSON.stringify({ type: 'subscribe', channel, wallet: activeWallet }))
       }
-      return { subscriptions: [...s.subscriptions, channel] }
+      return { subscriptions: [...s.subscriptions, channel], ...(wallet ? { wallet } : {}) }
     }),
 
   unsubscribe: (channel) =>
@@ -107,6 +111,26 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
         s.ws.send(JSON.stringify({ type: 'unsubscribe', channel }))
       }
       return { subscriptions: s.subscriptions.filter((c) => c !== channel) }
+    }),
+
+  subscribeMany: (channels, wallet) =>
+    set((s) => {
+      const activeWallet = wallet || s.wallet || undefined
+      const newChannels = channels.filter((c) => Boolean(c) && !s.subscriptions.includes(c))
+      if (newChannels.length === 0) return s
+      if (s.ws?.readyState === WebSocket.OPEN) {
+        s.ws.send(JSON.stringify({ type: 'subscribe', channels: newChannels, wallet: activeWallet }))
+      }
+      return { subscriptions: [...s.subscriptions, ...newChannels], ...(wallet ? { wallet } : {}) }
+    }),
+
+  unsubscribeMany: (channels) =>
+    set((s) => {
+      const toRemove = new Set(channels)
+      if (s.ws?.readyState === WebSocket.OPEN && channels.length > 0) {
+        s.ws.send(JSON.stringify({ type: 'unsubscribe', channels }))
+      }
+      return { subscriptions: s.subscriptions.filter((c) => !toRemove.has(c)) }
     }),
 
   onMessage: (handler) => {
