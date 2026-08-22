@@ -10,7 +10,7 @@ export const HeroAmbient: React.FC<HeroAmbientProps> = ({ variant = 'full', clas
   return (
     <div
       className={cn(
-        'pointer-events-none fixed -top-24 left-1/2 -translate-x-1/2 w-screen h-screen overflow-hidden select-none -z-10',
+        'pointer-events-none fixed -top-24 left-1/2 -translate-x-1/2 w-screen h-full select-none -z-10',
         className,
       )}
       aria-hidden="true"

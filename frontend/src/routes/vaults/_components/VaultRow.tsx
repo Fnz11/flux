@@ -40,7 +40,9 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
       <TableCell className="py-4 px-6 whitespace-nowrap">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 shrink-0">
-            <AvatarFallback seed={vault.address || vault.id || displayName}>{initials}</AvatarFallback>
+            <AvatarFallback src={vault.metadata?.coverImageUrl} seed={vault.address || vault.id || displayName}>
+              {initials}
+            </AvatarFallback>
           </Avatar>
           <div>
             <div className="font-semibold text-text-primary flex items-center gap-2">

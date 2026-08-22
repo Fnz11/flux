@@ -196,10 +196,10 @@ export function VaultDetailView({
           <img
             src={coverImageUrl}
             alt={displayName}
-            className="size-11 sm:size-12 rounded-xl object-cover border border-white/15 shadow-md bg-bg-inset shrink-0"
+            className="size-16 sm:size-20 rounded-2xl object-cover border border-white/15 shadow-md bg-bg-inset shrink-0"
           />
         }
-        iconWrapperClassName="size-11 sm:size-12 rounded-xl p-0 border-0 overflow-hidden shrink-0 bg-transparent"
+        iconWrapperClassName="size-16 sm:size-20 rounded-2xl p-0 border-0 overflow-hidden shrink-0 bg-transparent"
         title={
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-base font-bold tracking-tight text-text-primary">

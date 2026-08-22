@@ -21,14 +21,19 @@ Avatar.displayName = 'Avatar'
 export interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {}
 
 const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, src, alt, ...props }, ref) => {
-    if (!src) return null
+  ({ className, src, alt, onError, ...props }, ref) => {
+    const [hasError, setHasError] = React.useState(false)
+    if (!src || hasError) return null
     return (
       <img
         ref={ref}
         src={src}
         alt={alt}
-        className={cn('aspect-square h-full w-full object-cover', className)}
+        onError={(e) => {
+          setHasError(true)
+          onError?.(e)
+        }}
+        className={cn('aspect-square h-full w-full object-cover rounded-[inherit]', className)}
         {...props}
       />
     )
@@ -38,27 +43,38 @@ AvatarImage.displayName = 'AvatarImage'
 
 export interface AvatarFallbackProps extends React.HTMLAttributes<HTMLDivElement> {
   seed?: string
+  src?: string
 }
 
 const AvatarFallback = React.forwardRef<HTMLDivElement, AvatarFallbackProps>(
-  ({ className, seed, children, ...props }, ref) => {
+  ({ className, seed, src, children, ...props }, ref) => {
+    const [imgError, setImgError] = React.useState(false)
     const seedVal = seed || (typeof children === 'string' && children.trim().length > 0 ? children.trim() : '')
     const dicebearUrl = seedVal ? getDicebearAvatar(seedVal) : ''
+    const effectiveSrc = src && !imgError ? src : dicebearUrl
 
     return (
       <div
         ref={ref}
         className={cn(
-          'flex h-full w-full items-center justify-center rounded-full bg-bg-inset text-text-secondary overflow-hidden',
+          'flex h-full w-full items-center justify-center rounded-[inherit] bg-bg-inset text-text-secondary overflow-hidden',
           className
         )}
         {...props}
       >
-        {dicebearUrl ? (
+        {effectiveSrc ? (
           <img
-            src={dicebearUrl}
+            src={effectiveSrc}
             alt={typeof children === 'string' ? children : seedVal || 'Avatar'}
-            className="h-full w-full object-cover"
+            onError={() => {
+              if (src && !imgError) {
+                setImgError(true)
+              }
+            }}
+            className={cn(
+              'h-full w-full object-cover rounded-[inherit]',
+              effectiveSrc === dicebearUrl && 'scale-[1.42]'
+            )}
           />
         ) : (
           children

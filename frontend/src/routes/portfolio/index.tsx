@@ -191,7 +191,9 @@ export function PortfolioPage() {
                             <TableCell className="py-4 px-6 whitespace-nowrap">
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10 shrink-0">
-                                  <AvatarFallback seed={pos.vaultId || pos.vaultName}>{initials}</AvatarFallback>
+                                  <AvatarFallback src={pos.metadata?.coverImageUrl || pos.coverImageUrl} seed={pos.vaultId || pos.vaultName}>
+                                    {initials}
+                                  </AvatarFallback>
                                 </Avatar>
                                 <div>
                                   <div className="font-semibold text-sm flex items-center gap-2 text-text-primary">

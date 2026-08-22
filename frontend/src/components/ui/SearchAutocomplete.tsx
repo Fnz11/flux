@@ -198,7 +198,7 @@ export function SearchAutocomplete({ query, setQuery, open, setOpen, loading, re
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Avatar className={cn('size-7 shrink-0 rounded-full border transition-colors', isSelected ? 'border-primary-gold/50' : 'border-border-subtle')}>
-                          <AvatarFallback seed={vault.displayName || vault.address || vault.id} />
+                          <AvatarFallback src={vault.coverImageUrl || vault.metadata?.coverImageUrl} seed={vault.displayName || vault.address || vault.id} />
                         </Avatar>
                         <div className="flex flex-col min-w-0">
                           <span className="truncate text-[13px] font-semibold">{vault.displayName || vault.address}</span>
