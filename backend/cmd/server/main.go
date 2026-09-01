@@ -99,6 +99,7 @@ func main() {
 	leaderboardHandler := handlers.NewLeaderboardHandler(repository.NewCachedLeaderboardRepository(repository.NewLeaderboardRepository(db), c))
 	historyHandler := handlers.NewHistoryHandler(repository.NewHistoryRepository(db))
 	globalFeedHandler := handlers.NewGlobalFeedHandler(repository.NewGlobalFeedRepository(db))
+	globalFeedHandler.SetCache(c)
 	globalMetricsHandler := handlers.NewGlobalMetricsHandler(repository.NewGlobalMetricsRepository(db))
 	verifyHandler := handlers.NewVerifyHandler(solanaClient, tradeRepo)
 

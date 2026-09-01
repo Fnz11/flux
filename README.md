@@ -178,7 +178,7 @@ Follow these instructions to run the Flux platform on your local machine.
 
 1. **Clone Repository:**
    ```bash
-   git clone https://github.com/your-org/flux.git
+   git clone https://github.com/Fnz11/flux.git
    cd flux
    ```
 

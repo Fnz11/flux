@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -181,6 +182,13 @@ func (h *SyncHandler) SyncVault(c *gin.Context) {
 	if err != nil {
 		SuccessResponse(c, vaultDetail)
 		return
+	}
+
+	if h.cache != nil {
+		resp := vaultDetailToResponse(reloaded)
+		_ = h.cache.SetWithTTL(c.Request.Context(), cache.VaultEntityKey(reloaded.Address), resp, cache.VaultSummaryTTL)
+		tvlFloat, _ := resp.TVL.Float64()
+		_ = h.cache.ZAdd(c.Request.Context(), cache.VaultZSetTVLKey(), tvlFloat, reloaded.Address)
 	}
 
 	if h.eventService != nil {
@@ -367,6 +375,42 @@ func (h *SyncHandler) SyncTrade(c *gin.Context) {
 	invalidateVaultPortfolioCaches(h.cache, h.portfolioRepo, c.Request.Context(), vault.ID)
 	invalidateLeaderboardCache(h.cache, c.Request.Context())
 	invalidateVaultSummaryCache(h.cache, c.Request.Context(), vault.Address)
+
+	// Enterprise In-Place Update: Update single vault entity & ZSET score without prefix wipe
+	if h.cache != nil {
+		if updatedVault, err := h.vaultRepo.GetByID(c.Request.Context(), vault.ID); err == nil && updatedVault != nil {
+			resp := vaultDetailToResponse(updatedVault)
+			_ = h.cache.SetWithTTL(c.Request.Context(), cache.VaultEntityKey(updatedVault.Address), resp, cache.VaultSummaryTTL)
+			tvlFloat, _ := resp.TVL.Float64()
+			_ = h.cache.ZAdd(c.Request.Context(), cache.VaultZSetTVLKey(), tvlFloat, updatedVault.Address)
+		}
+
+		// Enterprise In-Place Activity Append
+		vaultName := "Active Vault"
+		var metaMap map[string]any
+		if len(vault.Metadata) > 0 {
+			if err := json.Unmarshal(vault.Metadata, &metaMap); err == nil {
+				if n, ok := metaMap["name"].(string); ok && n != "" {
+					vaultName = n
+				}
+			}
+		}
+
+		feedItem := globalFeedItemResponse{
+			ID:                   tradeDetail.ID,
+			ExecutedAt:           tradeDetail.ExecutedAt.Format("2006-01-02T15:04:05Z07:00"),
+			Action:               strings.ToLower(tradeDetail.TradeType),
+			VaultID:              tradeDetail.VaultID,
+			VaultName:            vaultName,
+			Symbol:               tradeDetail.InputToken,
+			Amount:               tradeDetail.AmountIn,
+			TransactionSignature: tradeDetail.TransactionSignature,
+			Wallet:               parsed.Signer,
+		}
+		_ = h.cache.SetWithTTL(c.Request.Context(), cache.TxEntityKey(tradeDetail.ID), feedItem, cache.GlobalFeedTTL)
+		_ = h.cache.LPush(c.Request.Context(), cache.FeedGlobalListKey(), tradeDetail.ID)
+		_ = h.cache.LTrim(c.Request.Context(), cache.FeedGlobalListKey(), 0, 499)
+	}
 
 	if h.eventService != nil {
 		h.eventService.DispatchTradeConfirmed(tradeDetail.VaultID, tradeDetail.TransactionSignature, tradeDetail.TradeType)

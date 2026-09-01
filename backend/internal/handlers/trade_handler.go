@@ -240,3 +240,21 @@ func invalidateVaultPortfolioCaches(c cache.Cache, repo domain.PortfolioReposito
 		invalidateUserCache(c, ctx, uid)
 	}
 }
+
+func invalidateVaultListCache(c cache.Cache, ctx context.Context) {
+	if c == nil {
+		return
+	}
+	if err := c.DeletePrefix(ctx, cache.VaultListPrefix()); err != nil {
+		logrus.WithError(err).Warn("cache invalidation failed for vault list")
+	}
+}
+
+func invalidateGlobalFeedCache(c cache.Cache, ctx context.Context) {
+	if c == nil {
+		return
+	}
+	if err := c.DeletePrefix(ctx, cache.GlobalFeedPrefix()); err != nil {
+		logrus.WithError(err).Warn("cache invalidation failed for global feed")
+	}
+}

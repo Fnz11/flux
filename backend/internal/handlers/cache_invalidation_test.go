@@ -40,9 +40,34 @@ func (s *stubCache) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (s *stubCache) DeletePrefix(ctx context.Context, prefix string) error {
+	if s.failDelete {
+		return errors.New("redis unavailable")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.deleted = append(s.deleted, prefix+"*")
+	return nil
+}
+
 func (s *stubCache) SetWithTTL(ctx context.Context, key string, value any, ttl time.Duration) error {
 	return nil
 }
+
+func (s *stubCache) MGet(ctx context.Context, keys ...string) ([][]byte, error) { return nil, nil }
+func (s *stubCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+func (s *stubCache) ZRevRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+func (s *stubCache) ZCard(ctx context.Context, key string) (int64, error) { return 0, nil }
+func (s *stubCache) LPush(ctx context.Context, key string, values ...any) error { return nil }
+func (s *stubCache) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+func (s *stubCache) LTrim(ctx context.Context, key string, start, stop int64) error { return nil }
+func (s *stubCache) LLen(ctx context.Context, key string) (int64, error)              { return 0, nil }
 
 func (s *stubCache) Ping(ctx context.Context) error {
 	return nil
@@ -236,9 +261,35 @@ func TestCacheKeyUniqueness(t *testing.T) {
 		t.Errorf("expected different keys for different vault addresses, got %s", k1)
 	}
 
+	vlKey := cache.VaultListKey("Active", "", "", "tvl", "desc", 1, 6)
+	if vlKey != "app:vaults:list:Active::::tvl:desc:1:6" {
+		t.Errorf("unexpected vault list key: %s", vlKey)
+	}
+
+	feedKey := cache.GlobalFeedKey("wallet123", "deposit", 1, 8)
+	if feedKey != "app:global:feed:wallet123:deposit:1:8" {
+		t.Errorf("unexpected global feed key: %s", feedKey)
+	}
+
 	u1 := cache.UserPortfolioKey("user_1")
 	u2 := cache.UserPortfolioKey("user_2")
 	if u1 == u2 {
 		t.Errorf("expected different portfolio keys for different user IDs, got %s", u1)
+	}
+}
+
+func TestInvalidateVaultListAndGlobalFeedCaches(t *testing.T) {
+	stub := &stubCache{}
+	ctx := context.Background()
+
+	invalidateVaultListCache(stub, ctx)
+	invalidateGlobalFeedCache(stub, ctx)
+
+	got := stub.deletedKeys()
+	if !containsKey(got, cache.VaultListPrefix()+"*") {
+		t.Errorf("missing vault list prefix invalidation, got %v", got)
+	}
+	if !containsKey(got, cache.GlobalFeedPrefix()+"*") {
+		t.Errorf("missing global feed prefix invalidation, got %v", got)
 	}
 }

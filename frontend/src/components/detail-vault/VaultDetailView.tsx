@@ -180,12 +180,14 @@ export function VaultDetailView({
                 </Link>
               </>
             )}
-            <SweepButton
-              onClick={() => setDepositOpen(true)}
-              className="h-8 text-xs font-semibold"
-            >
-              Deposit
-            </SweepButton>
+            {wallet.connected && (
+              <SweepButton
+                onClick={() => setDepositOpen(true)}
+                className="h-8 text-xs font-semibold"
+              >
+                Deposit
+              </SweepButton>
+            )}
           </div>
         }
       />
@@ -271,18 +273,20 @@ export function VaultDetailView({
           </div>
         }
         rightContent={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setWithdrawOpen(true)}
-              disabled={!withdrawEligibility.canExecute}
-              title={withdrawEligibility.reason ?? 'Withdraw shares from this vault'}
-              className="h-8 text-xs disabled:cursor-not-allowed"
-            >
-              Withdraw
-            </Button>
-          </div>
+          wallet.connected ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setWithdrawOpen(true)}
+                disabled={!withdrawEligibility.canExecute}
+                title={withdrawEligibility.reason ?? 'Withdraw shares from this vault'}
+                className="h-8 text-xs disabled:cursor-not-allowed"
+              >
+                Withdraw
+              </Button>
+            </div>
+          ) : undefined
         }
       >
         {/* Top Info Banner / Avatar & Metrics */}

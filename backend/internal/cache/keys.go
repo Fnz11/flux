@@ -15,6 +15,8 @@ import (
 const (
 	PortfolioTTL    = 30 * time.Second
 	VaultSummaryTTL = 30 * time.Second
+	VaultListTTL    = 15 * time.Second
+	GlobalFeedTTL   = 30 * time.Second
 	LeaderboardTTL  = 60 * time.Second
 )
 
@@ -103,4 +105,49 @@ func TradeListByVaultIDsKey(vaultIDs []string, tradeType string, page, limit int
 		tradeType = "all"
 	}
 	return fmt.Sprintf("%s:vaults:%s:trades:%s:%d:%d", keyPrefix, joined, tradeType, page, limit)
+}
+
+// VaultEntityKey returns app:vault:entity:{address} for single source-of-truth vault entity caching.
+func VaultEntityKey(address string) string {
+	return fmt.Sprintf("%s:vault:entity:%s", keyPrefix, address)
+}
+
+// VaultZSetTVLKey returns app:vaults:zset:tvl for O(log N) TVL ranking and pagination.
+func VaultZSetTVLKey() string {
+	return fmt.Sprintf("%s:vaults:zset:tvl", keyPrefix)
+}
+
+// TxEntityKey returns app:tx:entity:{txID} for single source-of-truth transaction caching.
+func TxEntityKey(txID string) string {
+	return fmt.Sprintf("%s:tx:entity:%s", keyPrefix, txID)
+}
+
+// FeedGlobalListKey returns app:feed:global:list for O(1) rolling recent activity indexing.
+func FeedGlobalListKey() string {
+	return fmt.Sprintf("%s:feed:global:list", keyPrefix)
+}
+
+// FeedWalletListKey returns app:feed:wallet:{wallet}:list for user-specific activity indexing.
+func FeedWalletListKey(wallet string) string {
+	return fmt.Sprintf("%s:feed:wallet:%s:list", keyPrefix, wallet)
+}
+
+// VaultListKey returns app:vaults:list:{status}:{manager}:{search}:{sortBy}:{sortOrder}:{page}:{limit}.
+func VaultListKey(status, manager, search, sortBy, sortOrder string, page, limit int) string {
+	return fmt.Sprintf("%s:vaults:list:%s:%s:%s:%s:%s:%d:%d", keyPrefix, status, manager, search, sortBy, sortOrder, page, limit)
+}
+
+// VaultListPrefix returns app:vaults:list: for prefix invalidation.
+func VaultListPrefix() string {
+	return fmt.Sprintf("%s:vaults:list:", keyPrefix)
+}
+
+// GlobalFeedKey returns app:global:feed:{wallet}:{tradeType}:{page}:{limit}.
+func GlobalFeedKey(wallet, tradeType string, page, limit int) string {
+	return fmt.Sprintf("%s:global:feed:%s:%s:%d:%d", keyPrefix, wallet, tradeType, page, limit)
+}
+
+// GlobalFeedPrefix returns app:global:feed: for prefix invalidation.
+func GlobalFeedPrefix() string {
+	return fmt.Sprintf("%s:global:feed:", keyPrefix)
 }

@@ -59,6 +59,39 @@ func (h *VaultHandler) ListVaults(c *gin.Context) {
 		limit = 20
 	}
 
+	// Enterprise Fast Path: Default TVL-sorted leaderboard via Redis ZSET + MGET
+	isDefaultQuery := status == "" && managerAddress == "" && search == "" && (sortBy == "" || sortBy == "tvl") && (sortOrder == "" || sortOrder == "desc")
+	if h.cache != nil && isDefaultQuery {
+		zKey := cache.VaultZSetTVLKey()
+		totalCount, err := h.cache.ZCard(c.Request.Context(), zKey)
+		if err == nil && totalCount > 0 {
+			start := int64((page - 1) * limit)
+			stop := start + int64(limit) - 1
+			addresses, err := h.cache.ZRevRange(c.Request.Context(), zKey, start, stop)
+			if err == nil && len(addresses) > 0 {
+				keys := make([]string, len(addresses))
+				for i, addr := range addresses {
+					keys[i] = cache.VaultEntityKey(addr)
+				}
+				rawEntities, err := h.cache.MGet(c.Request.Context(), keys...)
+				if err == nil && len(rawEntities) == len(addresses) {
+					cachedItems := make([]models.VaultResponse, len(rawEntities))
+					allValid := true
+					for i, raw := range rawEntities {
+						if err := json.Unmarshal(raw, &cachedItems[i]); err != nil {
+							allValid = false
+							break
+						}
+					}
+					if allValid {
+						PaginatedResponse(c, cachedItems, int(totalCount), page, limit)
+						return
+					}
+				}
+			}
+		}
+	}
+
 	filter := domain.VaultListFilter{
 		Status:         status,
 		ManagerAddress: managerAddress,
@@ -78,6 +111,15 @@ func (h *VaultHandler) ListVaults(c *gin.Context) {
 	resp := make([]models.VaultResponse, len(details))
 	for i, d := range details {
 		resp[i] = vaultDetailToResponse(&d)
+	}
+
+	// Enterprise Hydration: Cache individual entities and index into ZSET
+	if h.cache != nil && len(resp) > 0 {
+		for _, item := range resp {
+			_ = h.cache.SetWithTTL(c.Request.Context(), cache.VaultEntityKey(item.Address), item, cache.VaultSummaryTTL)
+			tvlFloat, _ := item.TVL.Float64()
+			_ = h.cache.ZAdd(c.Request.Context(), cache.VaultZSetTVLKey(), tvlFloat, item.Address)
+		}
 	}
 
 	PaginatedResponse(c, resp, int(total), page, limit)
@@ -318,6 +360,7 @@ func (h *VaultHandler) UpdateVaultMetadata(c *gin.Context) {
 	}
 	invalidateLeaderboardCache(h.cache, c.Request.Context())
 	invalidateVaultSummaryCache(h.cache, c.Request.Context(), vault.Address)
+	invalidateVaultListCache(h.cache, c.Request.Context())
 	invalidateVaultPortfolioCaches(h.cache, h.portfolioRepo, c.Request.Context(), vault.ID)
 
 	updated, err := h.vaultRepo.GetByAddress(c.Request.Context(), address)

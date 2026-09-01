@@ -45,6 +45,17 @@ func (m *memCache) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (m *memCache) DeletePrefix(ctx context.Context, prefix string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for k := range m.data {
+		if len(k) >= len(prefix) && k[:len(prefix)] == prefix {
+			delete(m.data, k)
+		}
+	}
+	return nil
+}
+
 func (m *memCache) SetWithTTL(ctx context.Context, key string, value any, ttl time.Duration) error {
 	raw, err := marshal(value)
 	if err != nil {
@@ -55,6 +66,32 @@ func (m *memCache) SetWithTTL(ctx context.Context, key string, value any, ttl ti
 	m.data[key] = memEntry{raw: raw, ttl: ttl}
 	return nil
 }
+
+func (m *memCache) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var out [][]byte
+	for _, k := range keys {
+		if e, ok := m.data[k]; ok {
+			out = append(out, e.raw)
+		}
+	}
+	return out, nil
+}
+
+func (m *memCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+func (m *memCache) ZRevRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+func (m *memCache) ZCard(ctx context.Context, key string) (int64, error) { return 0, nil }
+func (m *memCache) LPush(ctx context.Context, key string, values ...any) error { return nil }
+func (m *memCache) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+func (m *memCache) LTrim(ctx context.Context, key string, start, stop int64) error { return nil }
+func (m *memCache) LLen(ctx context.Context, key string) (int64, error)              { return 0, nil }
 
 func (m *memCache) Ping(ctx context.Context) error { return nil }
 

@@ -30,10 +30,25 @@ func (m *mockCache) Set(ctx context.Context, key string, value any, ttl time.Dur
 	return nil
 }
 func (m *mockCache) Delete(ctx context.Context, key string) error { return nil }
+func (m *mockCache) DeletePrefix(ctx context.Context, prefix string) error { return nil }
 func (m *mockCache) SetWithTTL(ctx context.Context, key string, value any, ttl time.Duration) error {
 	return nil
 }
-func (m *mockCache) Ping(ctx context.Context) error { return m.pingErr }
+func (m *mockCache) MGet(ctx context.Context, keys ...string) ([][]byte, error) { return nil, nil }
+func (m *mockCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+func (m *mockCache) ZRevRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+func (m *mockCache) ZCard(ctx context.Context, key string) (int64, error) { return 0, nil }
+func (m *mockCache) LPush(ctx context.Context, key string, values ...any) error { return nil }
+func (m *mockCache) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+func (m *mockCache) LTrim(ctx context.Context, key string, start, stop int64) error { return nil }
+func (m *mockCache) LLen(ctx context.Context, key string) (int64, error)              { return 0, nil }
+func (m *mockCache) Ping(ctx context.Context) error                                { return m.pingErr }
 
 func TestHealthCheck(t *testing.T) {
 	gin.SetMode(gin.TestMode)
