@@ -135,6 +135,28 @@ func Setup(hs *HandlerSet) *gin.Engine {
 			}
 		}
 
+		user := v1.Group("/user")
+		{
+			if hs.GlobalFeed != nil {
+				user.GET("/activity", hs.GlobalFeed.List)
+			}
+			userPortfolio := user.Group("/portfolio")
+			{
+				if hs.Portfolio != nil {
+					userPortfolio.GET("/summary", hs.Portfolio.GetPortfolioSummary)
+					userPortfolio.GET("/:wallet/summary", hs.Portfolio.GetPortfolioSummary)
+					userPortfolio.GET("/me", authMW, hs.Portfolio.GetMyPortfolio)
+					userPortfolio.GET("/:wallet", hs.Portfolio.GetPortfolio)
+				}
+				if hs.History != nil {
+					userPortfolio.GET("/history", hs.History.GetPortfolioHistory)
+				}
+			}
+			if hs.Notification != nil {
+				user.GET("/notifications", hs.Notification.List)
+			}
+		}
+
 		if hs.WS != nil {
 			v1.GET("/ws", hs.WS.HandleWS)
 		}

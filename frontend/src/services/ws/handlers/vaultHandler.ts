@@ -13,7 +13,7 @@ interface VaultDelta {
 }
 
 export const vaultHandler: WSEventHandler<VaultPayload> = {
-  types: ['vault_update', 'trade_confirmed'],
+  types: ['vault_portfolio_update', 'vault_update', 'trade_confirmed'],
 
   handleBatch: (messages, { queryClient }) => {
     const updates = new Map<string, VaultDelta>()

@@ -37,6 +37,7 @@ type inboundMessage struct {
 
 type outboundMessage struct {
 	Type      string      `json:"type"`
+	Channel   string      `json:"channel,omitempty"`
 	Data      interface{} `json:"data,omitempty"`
 	Timestamp int64       `json:"timestamp"`
 }
@@ -64,13 +65,43 @@ func (c *Client) WalletAddress() string {
 }
 
 func (c *Client) canSubscribe(channel string) bool {
+	// Semantic private channels require client to be authenticated
+	if channel == "portfolio" || channel == "notification" || channel == "activity" {
+		return c.walletAddress != ""
+	}
+
 	for _, prefix := range []string{"portfolio:", "user:", "wallet:"} {
 		if strings.HasPrefix(channel, prefix) {
 			target := strings.TrimPrefix(channel, prefix)
+			// Handle legitimate sub-channels: user:<wallet>:notification, user:<wallet>:activity, portfolio:<wallet>:summary
+			if idx := strings.Index(target, ":"); idx != -1 {
+				wallet := target[:idx]
+				sub := target[idx+1:]
+				if sub == "notification" || sub == "activity" || sub == "summary" {
+					return c.walletAddress != "" && strings.EqualFold(wallet, c.walletAddress)
+				}
+				return false
+			}
 			return c.walletAddress != "" && strings.EqualFold(target, c.walletAddress)
 		}
 	}
 	return true
+}
+
+func (c *Client) resolveChannel(channel string) string {
+	if c.walletAddress == "" {
+		return channel
+	}
+	switch channel {
+	case "portfolio":
+		return "portfolio:" + c.walletAddress
+	case "notification":
+		return "user:" + c.walletAddress + ":notification"
+	case "activity":
+		return "user:" + c.walletAddress + ":activity"
+	default:
+		return channel
+	}
 }
 
 func (c *Client) ReadPump() {
@@ -149,7 +180,7 @@ func (c *Client) ReadPump() {
 
 				for _, ch := range targetChannels {
 					if c.canSubscribe(ch) {
-						c.hub.Subscribe(c, ch)
+						c.hub.Subscribe(c, c.resolveChannel(ch))
 					} else {
 						errResp, _ := json.Marshal(outboundMessage{
 							Type:      "error",
@@ -177,7 +208,7 @@ func (c *Client) ReadPump() {
 				}
 			}
 			for _, ch := range targetChannels {
-				c.hub.Unsubscribe(c, ch)
+				c.hub.Unsubscribe(c, c.resolveChannel(ch))
 			}
 		case "ping":
 			pong, _ := json.Marshal(outboundMessage{Type: "pong", Timestamp: time.Now().Unix()})
@@ -189,29 +220,42 @@ func (c *Client) ReadPump() {
 			if msg.Channel != "" {
 				outMsg, _ := json.Marshal(outboundMessage{
 					Type:      msg.Type,
+					Channel:   msg.Channel,
 					Data:      msg.Data,
 					Timestamp: time.Now().Unix(),
 				})
 				c.hub.BroadcastToChannel(msg.Channel, outMsg)
 			}
-		case "trade_confirmed", "portfolio_update", "portfolio_summary_update", "vault_update", "leaderboard_update":
-			outMsg, _ := json.Marshal(outboundMessage{
-				Type:      msg.Type,
-				Data:      msg.Data,
-				Timestamp: time.Now().Unix(),
-			})
+		case "trade_confirmed", "portfolio_update", "portfolio_summary_update", "vault_portfolio_update", "vault_update", "leaderboard_update":
 			if msg.Channel != "" {
+				outMsg, _ := json.Marshal(outboundMessage{
+					Type:      msg.Type,
+					Channel:   msg.Channel,
+					Data:      msg.Data,
+					Timestamp: time.Now().Unix(),
+				})
 				c.hub.BroadcastToChannel(msg.Channel, outMsg)
 			} else {
+				broadcast := func(channel string) {
+					outMsg, _ := json.Marshal(outboundMessage{
+						Type:      msg.Type,
+						Channel:   channel,
+						Data:      msg.Data,
+						Timestamp: time.Now().Unix(),
+					})
+					c.hub.BroadcastToChannel(channel, outMsg)
+				}
+
 				switch msg.Type {
 				case "trade_confirmed":
-					c.hub.BroadcastToChannel("global:activity", outMsg)
+					broadcast("global:activity")
 					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
 						if vaultID, ok := dataMap["vault_id"].(string); ok && vaultID != "" {
-							c.hub.BroadcastToChannel("vault:"+vaultID, outMsg)
+							broadcast("vault:" + vaultID + ":activity")
+							broadcast("vault:" + vaultID)
 						}
 						if wallet, ok := dataMap["wallet"].(string); ok && wallet != "" {
-							c.hub.BroadcastToChannel("user:"+wallet, outMsg)
+							broadcast("user:" + wallet + ":activity")
 						}
 					}
 				case "portfolio_update", "portfolio_summary_update":
@@ -221,16 +265,16 @@ func (c *Client) ReadPump() {
 							wallet, _ = dataMap["wallet"].(string)
 						}
 						if wallet != "" {
-							c.hub.BroadcastToChannel("portfolio:"+wallet, outMsg)
-							c.hub.BroadcastToChannel("user:"+wallet, outMsg)
+							broadcast("portfolio:" + wallet)
 						}
 					}
 				case "leaderboard_update":
-					c.hub.BroadcastToChannel("global:leaderboard", outMsg)
-				case "vault_update":
+					broadcast("global:leaderboard")
+				case "vault_portfolio_update", "vault_update":
 					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
 						if vaultID, ok := dataMap["vault_id"].(string); ok && vaultID != "" {
-							c.hub.BroadcastToChannel("vault:"+vaultID, outMsg)
+							broadcast("vault:" + vaultID + ":portfolio")
+							broadcast("vault:" + vaultID)
 						}
 					}
 				}

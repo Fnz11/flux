@@ -4,7 +4,7 @@ import type { PortfolioPosition, ApiPortfolioResponse } from '@/types'
 
 export async function getPortfolio(wallet: string): Promise<PortfolioPosition[]> {
   const res = await api.get<ApiPortfolioResponse | RawApiPortfolioPosition[] | { data?: ApiPortfolioResponse | RawApiPortfolioPosition[] }>(
-    `/portfolio/${encodeURIComponent(wallet)}`,
+    `/user/portfolio/${encodeURIComponent(wallet)}`,
   )
   const payload = (res && typeof res === 'object' && 'data' in res && res.data) ? res.data : res
   const items = Array.isArray(payload)

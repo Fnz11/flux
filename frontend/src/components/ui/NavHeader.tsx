@@ -4,7 +4,6 @@ import { search } from '@/services/apis/rest-api/search.service'
 import { useDebounce } from '@/hooks/useDebounce'
 import type { SearchResults, SearchPair, SearchVault, SearchResultKind } from '@/types'
 import { useAppStore } from '@/stores/app-store'
-import { useNotificationWs } from '@/services/ws'
 import { SearchAutocomplete } from './SearchAutocomplete'
 import { NotificationsPopover } from './NotificationsPopover'
 import { WalletConnectButton } from './WalletConnectButton'
@@ -20,8 +19,6 @@ export function NavHeader() {
   const [results, setResults] = useState<SearchResults | null>(null)
 
   const debouncedQuery = useDebounce(query, 300)
-
-  useNotificationWs()
 
   useEffect(() => {
     const q = debouncedQuery.trim()

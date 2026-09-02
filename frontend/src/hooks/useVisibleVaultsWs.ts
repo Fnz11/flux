@@ -17,20 +17,16 @@ export function useVisibleVaultsWs(
 ) {
   const activeChannels = useMemo(() => {
     const channels: string[] = []
-    if (walletAddress) {
-      channels.push(`portfolio:${walletAddress}`)
-      channels.push(`user:${walletAddress}`)
-    }
     if (vaults && vaults.length > 0) {
       vaults.forEach((v) => {
         const id = v.address || v.id
         if (id) {
-          channels.push(`vault:${id}`)
+          channels.push(`vault:${id}:portfolio`)
         }
       })
     }
     return channels
-  }, [walletAddress, vaults])
+  }, [vaults])
 
   useRouteWsChannel(activeChannels, walletAddress)
 

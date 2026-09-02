@@ -218,9 +218,12 @@ export type WsMessageType =
 
 export interface WsMessage<T = unknown> {
   type: WsMessageType
+  channel?: string
   data: T
   timestamp: number
 }
+
+export type WSMessage<T = unknown> = WsMessage<T>
 
 export interface WsUpdateData {
   vault_id: string

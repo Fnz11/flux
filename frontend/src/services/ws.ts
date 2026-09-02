@@ -4,8 +4,8 @@ import { useAppStore } from '@/stores/app-store'
 import { registerNotificationWsListener } from '@/stores/notification-store'
 
 export function subscribeToNotifications(wallet: string): () => void {
-  const channel = `user:${wallet}`
-  useWebSocketStore.getState().subscribe(channel)
+  const channel = 'notification'
+  useWebSocketStore.getState().subscribe(channel, wallet)
   return () => {
     useWebSocketStore.getState().unsubscribe(channel)
   }

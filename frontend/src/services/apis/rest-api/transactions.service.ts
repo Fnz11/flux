@@ -61,7 +61,7 @@ function mapApiGlobalTransaction(item: ApiGlobalTransaction): GlobalTransaction 
 }
 
 export async function getGlobalTransactions(params: GlobalTransactionParams = {}): Promise<GlobalTransactionsResponse> {
-  const res = await api.get<ApiGlobalTransactionsEnvelope>('/transactions', params)
+  const res = await api.get<ApiGlobalTransactionsEnvelope>('/user/activity', params)
   return {
     items: (res.data?.items ?? []).map(mapApiGlobalTransaction),
     total: res.data?.total ?? 0,

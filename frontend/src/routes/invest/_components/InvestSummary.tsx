@@ -17,7 +17,7 @@ export function InvestSummary() {
   const wallet = useWallet()
   const walletAddress = wallet.publicKey?.toBase58()
   const { data: summary } = usePortfolioSummaryQuery(walletAddress)
-  const { data: history = [] } = usePortfolioHistoryQuery()
+  const { data: history = [] } = usePortfolioHistoryQuery(walletAddress)
 
   const totalInvested = summary?.total_invested ?? 0
   const totalValue = summary?.current_value ?? 0

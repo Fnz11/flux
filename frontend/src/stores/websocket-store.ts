@@ -55,9 +55,15 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
 
     socket.onmessage = (event) => {
       try {
-        const msg: WSMessage = JSON.parse(event.data)
-        set({ lastMessage: msg })
-        get().handlers.forEach((handler) => handler(msg))
+        const raw = String(event.data || '')
+        const lines = raw.includes('\n') ? raw.split('\n') : [raw]
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+          const msg: WSMessage = JSON.parse(trimmed)
+          set({ lastMessage: msg })
+          get().handlers.forEach((handler) => handler(msg))
+        }
       } catch {
         // ignore malformed messages
       }

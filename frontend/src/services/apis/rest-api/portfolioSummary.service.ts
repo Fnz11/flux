@@ -12,7 +12,7 @@ export interface PortfolioSummaryResponse {
 }
 
 export async function getPortfolioSummary(wallet?: string): Promise<PortfolioSummaryResponse> {
-  const endpoint = wallet ? `/portfolio/${encodeURIComponent(wallet)}/summary` : '/portfolio/summary'
+  const endpoint = wallet ? `/user/portfolio/${encodeURIComponent(wallet)}/summary` : '/user/portfolio/summary'
   const res = await api.get<PortfolioSummaryResponse | { data?: PortfolioSummaryResponse }>(endpoint)
   const payload = (res && typeof res === 'object' && 'data' in res && res.data) ? res.data : res
   return {

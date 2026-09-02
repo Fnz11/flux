@@ -23,6 +23,7 @@ func NewNotificationService(repo domain.NotificationRepository, hub *ws.Hub) *No
 // It mirrors ws.outboundMessage: {"type":"notification","data":{...},"timestamp":<unix>}.
 type notificationPush struct {
 	Type      string      `json:"type"`
+	Channel   string      `json:"channel,omitempty"`
 	Data      interface{} `json:"data"`
 	Timestamp int64       `json:"timestamp"`
 }
@@ -39,18 +40,25 @@ func (s *NotificationService) Create(ctx context.Context, userID, wallet, typ, t
 	}
 
 	if s.hub != nil {
-		msg, _ := json.Marshal(notificationPush{
-			Type: "notification",
-			Data: models.NotificationResponse{
-				ID:      n.ID,
-				Type:    n.Type,
-				Title:   n.Title,
-				Message: n.Message,
-				Read:    n.ReadAt != nil,
-			},
-			Timestamp: time.Now().Unix(),
-		})
-		s.hub.BroadcastToChannels([]string{"user:" + wallet, "user:" + userID}, msg)
+		broadcast := func(channel string) {
+			msg, _ := json.Marshal(notificationPush{
+				Type:    "notification",
+				Channel: channel,
+				Data: models.NotificationResponse{
+					ID:      n.ID,
+					Type:    n.Type,
+					Title:   n.Title,
+					Message: n.Message,
+					Read:    n.ReadAt != nil,
+				},
+				Timestamp: time.Now().Unix(),
+			})
+			s.hub.BroadcastToChannel(channel, msg)
+		}
+
+		broadcast("user:" + wallet + ":notification")
+		broadcast("user:" + userID + ":notification")
+		broadcast("user:" + wallet)
 	}
 	return nil
 }

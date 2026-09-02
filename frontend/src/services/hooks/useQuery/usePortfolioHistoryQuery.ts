@@ -8,6 +8,7 @@ export function usePortfolioHistoryQuery(wallet?: string, range: PortfolioHistor
   return useQuery({
     queryKey: ['portfolioHistory', wallet, range],
     queryFn: () => getPortfolioHistory(wallet, range),
+    enabled: Boolean(wallet),
     staleTime: 60_000,
   })
 }

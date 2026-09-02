@@ -38,6 +38,7 @@ export function RecentActivity({ wallet }: RecentActivityProps) {
   const { data, isLoading, error } = useGlobalTransactionsQuery({
     page,
     limit: pageSize,
+    wallet,
   })
 
   // 200ms modular realtime batch sync

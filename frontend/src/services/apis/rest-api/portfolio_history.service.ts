@@ -13,7 +13,7 @@ export async function getPortfolioHistory(
   }
   const res = await api.get<
     ApiPortfolioHistoryResponse | ApiPortfolioHistoryPoint[] | { data?: ApiPortfolioHistoryResponse | ApiPortfolioHistoryPoint[] }
-  >('/portfolio/history', queryParams)
+  >('/user/portfolio/history', queryParams)
   const payload = (res && typeof res === 'object' && 'data' in res && res.data) ? res.data : res
   if (Array.isArray(payload)) return payload
   return (payload && typeof payload === 'object' && 'points' in payload && Array.isArray((payload as ApiPortfolioHistoryResponse).points))

@@ -206,9 +206,9 @@ func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOp
 				})
 				_ = c.WriteMessage(gorillawebsocket.TextMessage, tradeMsg)
 
-				// 2. Dispatch vault_update with new TVL and PnL payload
+				// 2. Dispatch vault_portfolio_update with new TVL and PnL payload
 				vaultMsg, _ := json.Marshal(map[string]interface{}{
-					"type": "vault_update",
+					"type": "vault_portfolio_update",
 					"data": map[string]interface{}{
 						"vault_id":    v.Address,
 						"tvl":         newTvl.InexactFloat64(),
@@ -230,9 +230,8 @@ func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOp
 				portfolioMsg, _ := json.Marshal(map[string]interface{}{
 					"type": "portfolio_update",
 					"data": map[string]interface{}{
-						"wallet_address": targetWallet,
-						"wallet":         targetWallet,
-						"pnl_delta":      pnlDelta,
+						"wallet":    targetWallet,
+						"pnl_delta": pnlDelta,
 					},
 					"timestamp": time.Now().Unix(),
 				})
@@ -241,9 +240,8 @@ func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOp
 				summaryMsg, _ := json.Marshal(map[string]interface{}{
 					"type": "portfolio_summary_update",
 					"data": map[string]interface{}{
-						"wallet_address": targetWallet,
-						"wallet":         targetWallet,
-						"pnl_delta":      pnlDelta,
+						"wallet":    targetWallet,
+						"pnl_delta": pnlDelta,
 					},
 					"timestamp": time.Now().Unix(),
 				})

@@ -8,6 +8,8 @@ import { SectionCard } from '@/components/ui/SectionCard'
 import { VaultInvestCard } from './_components/VaultInvestCard'
 import { VaultInvestCardSkeleton } from './_components/VaultInvestCardSkeleton'
 import { useVisibleVaultsWs } from '@/hooks/useVisibleVaultsWs'
+import { usePortfolioWs } from '@/hooks/usePortfolioWs'
+import { useActivityWs } from '@/hooks/useActivityWs'
 import { useRealtimeSync } from '@/hooks/useRealtimeSync'
 import { vaultHandler } from '@/services/ws/handlers/vaultHandler'
 import { portfolioHandler } from '@/services/ws/handlers/portfolioHandler'
@@ -44,10 +46,12 @@ function InvestPage() {
     [vaults]
   )
 
-  // Senior pattern: Batch subscribe only to visible vaults + connected portfolio
+  // Senior pattern: Batch subscribe to visible vaults + portfolio + activity in 1 frame
   useVisibleVaultsWs(topVaults, walletAddress)
+  usePortfolioWs(walletAddress)
+  useActivityWs(walletAddress)
 
-  // Modular Realtime Query Sync: Only mounts handlers relevant to this page
+  // Modular Realtime Query Sync: Mounts handlers relevant to this page
   useRealtimeSync({
     handlers: [vaultHandler, portfolioHandler, portfolioSummaryHandler],
     walletAddress,
