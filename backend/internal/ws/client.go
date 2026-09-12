@@ -250,9 +250,15 @@ func (c *Client) ReadPump() {
 				case "trade_confirmed":
 					broadcast("global:activity")
 					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
-						if vaultID, ok := dataMap["vault_id"].(string); ok && vaultID != "" {
+						vaultID, _ := dataMap["vault_id"].(string)
+						vaultAddr, _ := dataMap["vault_address"].(string)
+						if vaultID != "" {
 							broadcast("vault:" + vaultID + ":activity")
 							broadcast("vault:" + vaultID)
+						}
+						if vaultAddr != "" && vaultAddr != vaultID {
+							broadcast("vault:" + vaultAddr + ":activity")
+							broadcast("vault:" + vaultAddr)
 						}
 						if wallet, ok := dataMap["wallet"].(string); ok && wallet != "" {
 							broadcast("user:" + wallet + ":activity")
@@ -260,9 +266,9 @@ func (c *Client) ReadPump() {
 					}
 				case "portfolio_update", "portfolio_summary_update":
 					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
-						wallet, _ := dataMap["wallet_address"].(string)
+						wallet, _ := dataMap["wallet"].(string)
 						if wallet == "" {
-							wallet, _ = dataMap["wallet"].(string)
+							wallet, _ = dataMap["wallet_address"].(string)
 						}
 						if wallet != "" {
 							broadcast("portfolio:" + wallet)
@@ -272,9 +278,15 @@ func (c *Client) ReadPump() {
 					broadcast("global:leaderboard")
 				case "vault_portfolio_update", "vault_update":
 					if dataMap, ok := msg.Data.(map[string]interface{}); ok {
-						if vaultID, ok := dataMap["vault_id"].(string); ok && vaultID != "" {
+						vaultID, _ := dataMap["vault_id"].(string)
+						vaultAddr, _ := dataMap["vault_address"].(string)
+						if vaultID != "" {
 							broadcast("vault:" + vaultID + ":portfolio")
 							broadcast("vault:" + vaultID)
+						}
+						if vaultAddr != "" && vaultAddr != vaultID {
+							broadcast("vault:" + vaultAddr + ":portfolio")
+							broadcast("vault:" + vaultAddr)
 						}
 					}
 				}

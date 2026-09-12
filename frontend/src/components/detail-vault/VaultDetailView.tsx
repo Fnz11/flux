@@ -3,6 +3,9 @@ import { Link } from '@tanstack/react-router'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useVaultDetailQuery, usePortfolioQuery } from '@/services/hooks'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { useRealtimeSync } from '@/hooks/useRealtimeSync'
+import { vaultHandler } from '@/services/ws/handlers/vaultHandler'
+import { portfolioHandler } from '@/services/ws/handlers/portfolioHandler'
 import { AddressPill } from '@/components/ui/AddressPill'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { TokenIcon } from '@/components/ui/TokenIcon'
@@ -78,12 +81,32 @@ export function VaultDetailView({
   defaultTab = 'Overview',
   isInvestorView = false,
 }: VaultDetailViewProps) {
-  useRouteWsChannel([id ? `vault:${id}` : null, 'vaults'])
-
   const wallet = useWallet()
   const walletAddress = wallet.publicKey?.toBase58() ?? ''
 
   const { data: vault, isLoading, isError } = useVaultDetailQuery(id)
+
+  // Real-time channel subscriptions for this specific vault
+  const vaultChannels = useMemo(() => {
+    const channels: string[] = []
+    if (id) {
+      channels.push(`vault:${id}:portfolio`, `vault:${id}:activity`, `vault:${id}`)
+    }
+    if (vault?.address && vault.address !== id) {
+      channels.push(`vault:${vault.address}:portfolio`, `vault:${vault.address}:activity`, `vault:${vault.address}`)
+    }
+    if (vault?.id && vault.id !== id && vault.id !== vault.address) {
+      channels.push(`vault:${vault.id}:portfolio`, `vault:${vault.id}:activity`, `vault:${vault.id}`)
+    }
+    return channels
+  }, [id, vault?.address, vault?.id])
+
+  useRouteWsChannel(vaultChannels, walletAddress)
+
+  useRealtimeSync({
+    handlers: [vaultHandler, portfolioHandler],
+    walletAddress,
+  })
   const { data: positions = [] } = usePortfolioQuery(walletAddress)
   const position = useMemo(
     () =>

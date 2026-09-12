@@ -1,36 +1,47 @@
-import { Link } from '@tanstack/react-router'
-import { ChevronRight } from 'lucide-react'
-import type { Vault } from '@/types'
-import { StatusBadge } from '@/components/ui/StatusBadge'
-import { TableRow, TableCell } from '@/components/ui/table'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { VaultSparkline } from './VaultSparkline'
-import { cn } from '@/lib/utils'
-import { TokenIcon } from '@/components/ui/TokenIcon'
-import { AddressPill } from '@/components/ui/AddressPill'
-import { formatDate, formatMinRaise, formatPercent } from '@/lib/format'
-import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
+import { Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
+import type { Vault } from "@/types";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TableRow, TableCell } from "@/components/ui/table";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { VaultSparkline } from "./VaultSparkline";
+import { cn } from "@/lib/utils";
+import { TokenIcon } from "@/components/ui/TokenIcon";
+import { AddressPill } from "@/components/ui/AddressPill";
+import { formatDate, formatMinRaise, formatPercent } from "@/lib/format";
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from "@/constants/tokens";
+import { getEffectiveSparkline } from "@/lib/sparkline";
 
 export interface VaultRowProps {
-  vault: Vault
-  sortBy?: string
+  vault: Vault;
+  sortBy?: string;
 }
 
 export function VaultRow({ vault, sortBy }: VaultRowProps) {
-  const sparkline = vault.sparkline ?? []
-  const pnl = typeof vault.pnlPercent === 'number' ? vault.pnlPercent : (Number(vault.pnlPercent) || 0)
-  const isPositivePnl = pnl >= 0
-  const displayName = vault.metadata?.displayName || (vault.address && vault.address.length >= 8 ? `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}` : (vault.id ? `Vault ${vault.id}` : 'Vault'))
+  const sparkline = getEffectiveSparkline(vault);
+  const pnl =
+    typeof vault.pnlPercent === "number"
+      ? vault.pnlPercent
+      : Number(vault.pnlPercent) || 0;
+  const isPositivePnl = pnl >= 0;
+  const displayName =
+    vault.metadata?.displayName ||
+    (vault.address && vault.address.length >= 8
+      ? `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`
+      : vault.id
+        ? `Vault ${vault.id}`
+        : "Vault");
   const initials = displayName
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2);
 
-  const focusAssets = vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
-    ? vault.metadata.focusAssets
-    : [...DEFAULT_FOCUS_ASSETS_WHITELIST]
+  const focusAssets =
+    vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
+      ? vault.metadata.focusAssets
+      : [...DEFAULT_FOCUS_ASSETS_WHITELIST];
 
   return (
     <TableRow
@@ -41,7 +52,10 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
       <TableCell className="py-4 px-6 whitespace-nowrap">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 shrink-0">
-            <AvatarFallback src={vault.metadata?.coverImageUrl} seed={vault.address || vault.id || displayName}>
+            <AvatarFallback
+              src={vault.metadata?.coverImageUrl}
+              seed={vault.address || vault.id || displayName}
+            >
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -52,9 +66,15 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
             </div>
             <div className="mt-0.5">
               {vault.managerAddress ? (
-                <AddressPill prefix="by " address={vault.managerAddress} length={4} />
+                <AddressPill
+                  prefix="by "
+                  address={vault.managerAddress}
+                  length={4}
+                />
               ) : (
-                <span className="text-xs text-text-tertiary font-mono">by Unknown Manager</span>
+                <span className="text-xs text-text-tertiary font-mono">
+                  by Unknown Manager
+                </span>
               )}
             </div>
           </div>
@@ -62,11 +82,13 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
       </TableCell>
 
       {/* PNL */}
-      <TableCell className={cn(
-        'py-4 px-4 whitespace-nowrap font-mono font-semibold',
-        isPositivePnl ? 'text-status-success' : 'text-status-error',
-        sortBy === 'pnl' && 'bg-primary-coral/5'
-      )}>
+      <TableCell
+        className={cn(
+          "py-4 px-4 whitespace-nowrap font-mono font-semibold",
+          isPositivePnl ? "text-status-success" : "text-status-error",
+          sortBy === "pnl" && "bg-primary-coral/5",
+        )}
+      >
         {formatPercent(pnl)}
       </TableCell>
 
@@ -117,5 +139,5 @@ export function VaultRow({ vault, sortBy }: VaultRowProps) {
         </Link>
       </TableCell>
     </TableRow>
-  )
+  );
 }

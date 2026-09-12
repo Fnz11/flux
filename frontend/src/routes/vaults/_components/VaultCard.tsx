@@ -1,49 +1,72 @@
-import { Link } from '@tanstack/react-router'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { Card } from '@/components/ui/card'
-import { AddressPill } from '@/components/ui/AddressPill'
-import { StatusBadge } from '@/components/ui/StatusBadge'
-import { TokenAmount } from '@/components/ui/TokenAmount'
-import { TokenIcon } from '@/components/ui/TokenIcon'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { VaultSparkline } from './VaultSparkline'
-import { formatPercent } from '@/lib/format'
-import { Users, Lock, Unlock, ArrowRight, Pencil, TrendingUp } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { Vault } from '@/types'
-import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
+import { Link } from "@tanstack/react-router";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { Card } from "@/components/ui/card";
+import { AddressPill } from "@/components/ui/AddressPill";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TokenAmount } from "@/components/ui/TokenAmount";
+import { TokenIcon } from "@/components/ui/TokenIcon";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { VaultSparkline } from "./VaultSparkline";
+import { formatPercent } from "@/lib/format";
+import {
+  Users,
+  Lock,
+  Unlock,
+  ArrowRight,
+  Pencil,
+  TrendingUp,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Vault } from "@/types";
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from "@/constants/tokens";
+import { getEffectiveSparkline } from "@/lib/sparkline";
 
 export interface VaultCardProps {
-  vault: Vault
+  vault: Vault;
 }
 
 export function VaultCard({ vault }: VaultCardProps) {
-  let walletAddress = ''
+  let walletAddress = "";
   try {
-    const wallet = useWallet()
-    walletAddress = wallet?.publicKey?.toBase58() ?? ''
+    const wallet = useWallet();
+    walletAddress = wallet?.publicKey?.toBase58() ?? "";
   } catch {
-    walletAddress = ''
+    walletAddress = "";
   }
 
-  const isManager = Boolean(walletAddress && vault.managerAddress && walletAddress === vault.managerAddress)
-  const isClosed = vault.vaultType === 'closed'
-  const displayName = vault.metadata?.displayName || (vault.id ? `Vault ${vault.id}` : (vault.address ? `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}` : 'Vault'))
+  const isManager = Boolean(
+    walletAddress &&
+    vault.managerAddress &&
+    walletAddress === vault.managerAddress,
+  );
+  const isClosed = vault.vaultType === "closed";
+  const displayName =
+    vault.metadata?.displayName ||
+    (vault.id
+      ? `Vault ${vault.id}`
+      : vault.address
+        ? `Vault ${vault.address.slice(0, 4)}...${vault.address.slice(-4)}`
+        : "Vault");
   const initials = displayName
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2);
 
-  const totalFeesBps = (vault.performanceFeeBps || 0) + (vault.managementFeeBps || 0)
-  const pnl = typeof vault.pnlPercent === 'number' ? vault.pnlPercent : (Number(vault.pnlPercent) || 0)
-  const isPositivePnl = pnl >= 0
-  const sparkline = vault.sparkline ?? []
+  const totalFeesBps =
+    (vault.performanceFeeBps || 0) + (vault.managementFeeBps || 0);
+  const pnl =
+    typeof vault.pnlPercent === "number"
+      ? vault.pnlPercent
+      : Number(vault.pnlPercent) || 0;
+  const isPositivePnl = pnl >= 0;
+  const sparkline = getEffectiveSparkline(vault);
 
-  const focusAssets = vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
-    ? vault.metadata.focusAssets
-    : [...DEFAULT_FOCUS_ASSETS_WHITELIST]
+  const focusAssets =
+    vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
+      ? vault.metadata.focusAssets
+      : [...DEFAULT_FOCUS_ASSETS_WHITELIST];
 
   return (
     <Card className="group relative flex flex-col justify-between p-5 hover:border-primary-coral/40 transition-all hover:shadow-[0_16px_48px_rgba(0,0,0,0.7)]">
@@ -74,7 +97,11 @@ export function VaultCard({ vault }: VaultCardProps) {
               </div>
               <div className="mt-1">
                 {vault.managerAddress ? (
-                  <AddressPill prefix="by " address={vault.managerAddress} length={4} />
+                  <AddressPill
+                    prefix="by "
+                    address={vault.managerAddress}
+                    length={4}
+                  />
                 ) : (
                   <AddressPill address={vault.address} length={4} />
                 )}
@@ -83,7 +110,7 @@ export function VaultCard({ vault }: VaultCardProps) {
           </div>
 
           <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-text-secondary shrink-0">
-            {vault.vaultType === 'closed' ? (
+            {vault.vaultType === "closed" ? (
               <>
                 <Lock className="size-2.5 text-primary-amber" /> Closed
               </>
@@ -105,27 +132,44 @@ export function VaultCard({ vault }: VaultCardProps) {
         {/* 4-Item Metrics Grid */}
         <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl bg-white/[0.02] p-3 border border-white/8">
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">AUM (TVL)</p>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              AUM (TVL)
+            </p>
             <div className="mt-0.5">
               <TokenAmount amount={vault.tvl} symbol="USD" compact />
             </div>
           </div>
 
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">Net PnL</p>
-            <p className={cn('mt-0.5 font-mono text-sm font-bold', isPositivePnl ? 'text-status-success' : 'text-status-error')}>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              Net PnL
+            </p>
+            <p
+              className={cn(
+                "mt-0.5 font-mono text-sm font-bold",
+                isPositivePnl ? "text-status-success" : "text-status-error",
+              )}
+            >
               {formatPercent(pnl)}
             </p>
           </div>
 
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">Perf Fee</p>
-            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">{vault.performanceFeeBps} BPS</p>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              Perf Fee
+            </p>
+            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">
+              {vault.performanceFeeBps} BPS
+            </p>
           </div>
 
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">Total Fees</p>
-            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">{totalFeesBps} BPS</p>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              Total Fees
+            </p>
+            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">
+              {totalFeesBps} BPS
+            </p>
           </div>
         </div>
 
@@ -189,5 +233,5 @@ export function VaultCard({ vault }: VaultCardProps) {
         </Link>
       </div>
     </Card>
-  )
+  );
 }

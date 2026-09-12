@@ -1,38 +1,45 @@
-import { Link } from '@tanstack/react-router'
-import type { Vault } from '@/types'
-import { Card } from '@/components/ui/card'
-import { StatusBadge } from '@/components/ui/StatusBadge'
-import { AddressPill } from '@/components/ui/AddressPill'
-import { TokenAmount } from '@/components/ui/TokenAmount'
-import { TokenIcon } from '@/components/ui/TokenIcon'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { VaultSparkline } from '@/routes/vaults/_components/VaultSparkline'
-import { formatPercent } from '@/lib/format'
-import { Users, Lock, Unlock, ArrowUpRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
+import { Link } from "@tanstack/react-router";
+import type { Vault } from "@/types";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { AddressPill } from "@/components/ui/AddressPill";
+import { TokenAmount } from "@/components/ui/TokenAmount";
+import { TokenIcon } from "@/components/ui/TokenIcon";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { VaultSparkline } from "@/routes/vaults/_components/VaultSparkline";
+import { formatPercent } from "@/lib/format";
+import { Users, Lock, Unlock, ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from "@/constants/tokens";
+import { getEffectiveSparkline } from "@/lib/sparkline";
 
 interface VaultInvestCardProps {
-  vault: Vault
+  vault: Vault;
 }
 
 export function VaultInvestCard({ vault }: VaultInvestCardProps) {
-  const displayName = vault.metadata?.displayName || (vault.id ? `Vault ${vault.id}` : `Vault ${vault.address?.slice(0, 8) ?? ''}`)
+  const displayName =
+    vault.metadata?.displayName ||
+    (vault.id
+      ? `Vault ${vault.id}`
+      : `Vault ${vault.address?.slice(0, 8) ?? ""}`);
   const initials = displayName
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2);
 
-  const totalFeesBps = (vault.performanceFeeBps || 0) + (vault.managementFeeBps || 0)
-  const pnl = vault.pnlPercent ?? 0
-  const isPositivePnl = pnl >= 0
-  const sparkline = vault.sparkline ?? []
+  const totalFeesBps =
+    (vault.performanceFeeBps || 0) + (vault.managementFeeBps || 0);
+  const pnl = vault.pnlPercent ?? 0;
+  const isPositivePnl = pnl >= 0;
+  const sparkline = getEffectiveSparkline(vault);
 
-  const focusAssets = vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
-    ? vault.metadata.focusAssets
-    : [...DEFAULT_FOCUS_ASSETS_WHITELIST]
+  const focusAssets =
+    vault.metadata?.focusAssets && vault.metadata.focusAssets.length > 0
+      ? vault.metadata.focusAssets
+      : [...DEFAULT_FOCUS_ASSETS_WHITELIST];
 
   return (
     <Card className="group relative flex flex-col justify-between p-5 hover:border-primary-coral/40 transition-all hover:shadow-[0_16px_48px_rgba(0,0,0,0.7)]">
@@ -63,7 +70,11 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
               </div>
               <div className="mt-1">
                 {vault.managerAddress ? (
-                  <AddressPill prefix="by " address={vault.managerAddress} length={4} />
+                  <AddressPill
+                    prefix="by "
+                    address={vault.managerAddress}
+                    length={4}
+                  />
                 ) : (
                   <AddressPill address={vault.address} length={4} />
                 )}
@@ -72,7 +83,7 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
           </div>
 
           <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-text-secondary shrink-0">
-            {vault.vaultType === 'closed' ? (
+            {vault.vaultType === "closed" ? (
               <>
                 <Lock className="size-2.5 text-primary-amber" /> Closed
               </>
@@ -94,27 +105,44 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
         {/* 4-Item Metrics Grid */}
         <div className="mt-4 grid grid-cols-2 gap-2.5 rounded-xl bg-white/[0.02] p-3 border border-white/8">
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">AUM (TVL)</p>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              AUM (TVL)
+            </p>
             <div className="mt-0.5">
               <TokenAmount amount={vault.tvl} symbol="USD" compact />
             </div>
           </div>
 
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">Net PnL</p>
-            <p className={cn('mt-0.5 font-mono text-sm font-bold', isPositivePnl ? 'text-status-success' : 'text-status-error')}>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              Net PnL
+            </p>
+            <p
+              className={cn(
+                "mt-0.5 font-mono text-sm font-bold",
+                isPositivePnl ? "text-status-success" : "text-status-error",
+              )}
+            >
               {formatPercent(pnl)}
             </p>
           </div>
 
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">Perf Fee</p>
-            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">{vault.performanceFeeBps} BPS</p>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              Perf Fee
+            </p>
+            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">
+              {vault.performanceFeeBps} BPS
+            </p>
           </div>
 
           <div>
-            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">Total Fees</p>
-            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">{totalFeesBps} BPS</p>
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-text-tertiary">
+              Total Fees
+            </p>
+            <p className="mt-0.5 font-mono text-xs font-semibold text-text-primary">
+              {totalFeesBps} BPS
+            </p>
           </div>
         </div>
 
@@ -158,7 +186,7 @@ export function VaultInvestCard({ vault }: VaultInvestCardProps) {
         </Link>
       </div>
     </Card>
-  )
+  );
 }
 
-export { VaultInvestCardSkeleton } from './VaultInvestCardSkeleton'
+export { VaultInvestCardSkeleton } from "./VaultInvestCardSkeleton";

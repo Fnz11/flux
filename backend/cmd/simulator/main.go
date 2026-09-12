@@ -81,8 +81,8 @@ func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOp
 				}
 			}
 			if len(vaults) == 0 {
-				// Query top 10 vaults sorted by TVL DESC to match UI
-				db.Order("tvl DESC").Limit(10).Find(&vaults)
+				// Query vaults to match UI viewport
+				db.Order("created_at DESC").Limit(50).Find(&vaults)
 			}
 
 			if opts.Wallet != "" {
@@ -103,6 +103,8 @@ func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOp
 	if len(vaults) == 0 {
 		logger.Warn("No vaults found in DB. Run seed first for best results.")
 		vaults = append(vaults, models.Vault{Address: "mock-vault-1"})
+	} else {
+		logger.Infof("Loaded %d vaults from DB: %s...", len(vaults), vaults[0].Address)
 	}
 	if len(users) == 0 {
 		users = append(users, models.User{WalletAddress: "mock-wallet-1"})
@@ -184,7 +186,8 @@ func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOp
 					"type": "trade_confirmed",
 					"data": map[string]interface{}{
 						"id":                    fakeSig,
-						"vault_id":              v.Address,
+						"vault_id":              v.ID.String(),
+						"vault_address":         v.Address,
 						"vault_name":            v.Address[:min(8, len(v.Address))],
 						"signature":             fakeSig,
 						"transaction_signature": fakeSig,
@@ -210,9 +213,10 @@ func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOp
 				vaultMsg, _ := json.Marshal(map[string]interface{}{
 					"type": "vault_portfolio_update",
 					"data": map[string]interface{}{
-						"vault_id":    v.Address,
-						"tvl":         newTvl.InexactFloat64(),
-						"pnl_percent": pnlDelta,
+						"vault_id":      v.ID.String(),
+						"vault_address": v.Address,
+						"tvl":           newTvl.InexactFloat64(),
+						"pnl_percent":   pnlDelta,
 					},
 					"timestamp": time.Now().Unix(),
 				})

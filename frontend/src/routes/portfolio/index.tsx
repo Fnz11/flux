@@ -15,6 +15,10 @@ import { SectionCard } from '@/components/ui/SectionCard'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Sparkles, ShieldCheck, ChevronRight } from 'lucide-react'
 import { useRouteWsChannel } from '@/hooks/useRouteWsChannel'
+import { useRealtimeSync } from '@/hooks/useRealtimeSync'
+import { vaultHandler } from '@/services/ws/handlers/vaultHandler'
+import { portfolioHandler } from '@/services/ws/handlers/portfolioHandler'
+import { portfolioSummaryHandler } from '@/services/ws/handlers/portfolioSummaryHandler'
 import { generateMetadata } from '@/lib/metadata'
 import { cn, formatDate } from '@/lib/utils'
 
@@ -36,9 +40,6 @@ const POSITIONS_PAGE_SIZE = 8
 export function PortfolioPage() {
   const wallet = useWallet()
   const walletAddress = wallet.publicKey?.toBase58() ?? ''
-
-  useRouteWsChannel([walletAddress ? `portfolio:${walletAddress}` : null, 'global:leaderboard'])
-
   const { data: portfolioPositions = [], isLoading } = usePortfolioQuery(walletAddress)
   useVaultsQuery()
 
@@ -56,6 +57,25 @@ export function PortfolioPage() {
 
   const positionVaultIds = useMemo(() => sortedPositions.map((p) => p.vaultId), [sortedPositions])
   const { trades, isLoading: tradesLoading } = useTradeHistory(positionVaultIds)
+
+  // Subscribe to user portfolio updates and individual vault channels for real-time trades/PnL
+  const wsChannels = useMemo(() => {
+    const channels: (string | null)[] = [
+      walletAddress ? `portfolio:${walletAddress}` : null,
+      'global:leaderboard',
+    ]
+    for (const id of positionVaultIds) {
+      if (id) channels.push(`vault:${id}`)
+    }
+    return channels
+  }, [walletAddress, positionVaultIds])
+
+  useRouteWsChannel(wsChannels, walletAddress)
+
+  useRealtimeSync({
+    handlers: [vaultHandler, portfolioHandler, portfolioSummaryHandler],
+    walletAddress,
+  })
 
   return (
     <div className="space-y-5">

@@ -68,15 +68,17 @@ Through Flux, managers can create vaults, set fee structures, and execute trades
 * **Manager Dashboard:** 
   * Vault creation with highly customizable parameters (`minRaiseAmount`, `performanceFee`, `managementFee`, `lockupPeriod`).
   * Advanced management to edit vault metadata (Tags, Focus Assets) synced seamlessly with the Postgres backend.
-  * Trade execution directly with the Pyth Oracle AMM, complete with automated fee distribution.
+  * Interactive AMM Trade console with Pyth Hermes multi-pair pricing, confidence bands, execution rates, and direct swap execution.
+  * Live Manager TVL calculations and segmented table/grid layout switches.
 * **Investor Workspace:**
   * Effortless SOL/USDC deposit flows to receive programmatic Share Tokens.
   * Instant in-kind withdrawal capability claiming underlying assets directly from the vault.
-  * Live portfolio tracking and real-time dashboard PnL monitoring.
+  * Real-time portfolio tracking, invested vault allocation charts, and live trade history.
 * **System & UX Enhancements:**
+  * Directional organic sparkline generator with endpoint damping ensuring realistic PnL curves per vault.
   * Centralized dust filtering threshold shared between API and frontend.
   * Advanced pending transaction state store with Solscan block explorer links.
-  * Auto-invalidation and cache refetching on successful WebSocket swap confirmations.
+  * Zero-HTTP in-memory query cache mutations on real-time WebSocket swap and trade events.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

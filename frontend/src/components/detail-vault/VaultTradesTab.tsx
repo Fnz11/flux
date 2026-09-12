@@ -1,118 +1,184 @@
-import { useEffect, useState, useMemo } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, SortableTableHead, Pagination } from '@/components/ui/table'
-import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
-import { SolscanLink } from '@/components/ui/SolscanLink'
-import { SweepButton } from '@/components/ui/SweepButton'
-import { SectionCard } from '@/components/ui/SectionCard'
-import { useWebSocketStore } from '@/stores'
-import { useTableSort } from '@/hooks/useTableSort'
-import * as tradeService from '@/services/apis/rest-api/trade.service'
-import type { ApiTrade } from '@/types'
-import { TokenIcon } from '@/components/ui/TokenIcon'
-import { formatTokenSymbol } from '@/constants/tokens'
-import { ArrowUpDown, ArrowRight, Radio } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { formatDateTime } from '@/lib/format'
+import { useEffect, useState, useMemo } from "react";
+import { Link } from "@tanstack/react-router";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableEmpty,
+  SortableTableHead,
+  Pagination,
+} from "@/components/ui/table";
+import { TableRowSkeleton } from "@/components/ui/TableSkeleton";
+import { SolscanLink } from "@/components/ui/SolscanLink";
+import { SweepButton } from "@/components/ui/SweepButton";
+import { SectionCard } from "@/components/ui/SectionCard";
+import { useWebSocketStore } from "@/stores";
+import { useTableSort } from "@/hooks/useTableSort";
+import * as tradeService from "@/services/apis/rest-api/trade.service";
+import type { ApiTrade } from "@/types";
+import { TokenIcon } from "@/components/ui/TokenIcon";
+import { formatTokenSymbol } from "@/constants/tokens";
+import { ArrowUpDown, ArrowRight, Radio } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
 
 export interface VaultTradesTabProps {
-  vaultId: string
-  isManager?: boolean
+  vaultId: string;
+  isManager?: boolean;
 }
 
-type TradeSortColumn = 'executed_at' | 'trade_type' | 'amount_in' | 'amount_out' | 'price_at_execution'
+type TradeSortColumn =
+  | "executed_at"
+  | "trade_type"
+  | "amount_in"
+  | "amount_out"
+  | "price_at_execution";
 
 export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
-  const [trades, setTrades] = useState<ApiTrade[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [trades, setTrades] = useState<ApiTrade[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const { sortBy, sortOrder, handleSort } = useTableSort<TradeSortColumn>({
-    sortBy: 'executed_at',
-    defaultOrder: 'desc',
+    sortBy: "executed_at",
+    defaultOrder: "desc",
     allowClear: true,
-  })
+  });
 
-  const subscribe = useWebSocketStore((s) => s.subscribe)
-  const unsubscribe = useWebSocketStore((s) => s.unsubscribe)
-  const onMessage = useWebSocketStore((s) => s.onMessage)
+  const subscribe = useWebSocketStore((s) => s.subscribe);
+  const unsubscribe = useWebSocketStore((s) => s.unsubscribe);
+  const onMessage = useWebSocketStore((s) => s.onMessage);
 
   useEffect(() => {
-    setIsLoading(true)
+    setIsLoading(true);
     tradeService
       .getHistory(vaultId)
       .then((res) => setTrades(res.trades || []))
       .catch(() => setTrades([]))
-      .finally(() => setIsLoading(false))
+      .finally(() => setIsLoading(false));
 
-    subscribe(`vault:${vaultId}`)
+    subscribe([`vault:${vaultId}:activity`, `vault:${vaultId}`]);
 
     const unsub = onMessage((msg) => {
-      if (!msg) return
-      const raw = msg as unknown as Record<string, unknown>
-      const eventType = String(raw.type || raw.event || '')
+      if (!msg) return;
+      const raw = msg as unknown as Record<string, unknown>;
+      const eventType = String(raw.type || raw.event || "");
       if (
-        eventType === 'trade_confirmed' ||
-        eventType === 'TRADE_EXECUTED' ||
-        eventType === 'trade_created' ||
-        eventType === 'TRADE_CONFIRMED'
+        eventType === "trade_confirmed" ||
+        eventType === "TRADE_EXECUTED" ||
+        eventType === "trade_created" ||
+        eventType === "TRADE_CONFIRMED"
       ) {
-        const payload = (raw.data || raw.payload || raw) as Record<string, unknown>
-        const targetVaultId = payload.vault_id || payload.vaultId || raw.vault_id || raw.vaultId
-        if (!targetVaultId || targetVaultId === vaultId) {
-          tradeService
-            .getHistory(vaultId)
-            .then((res) => {
-              if (res?.trades) setTrades(res.trades)
-            })
-            .catch(() => {})
+        const payload = (raw.data || raw.payload || raw) as Record<
+          string,
+          unknown
+        >;
+        const targetVaultId = String(
+          payload.vault_id ||
+            payload.vaultId ||
+            payload.vault_address ||
+            raw.vault_id ||
+            raw.vaultId ||
+            "",
+        );
+        if (
+          !targetVaultId ||
+          targetVaultId.toLowerCase() === vaultId.toLowerCase()
+        ) {
+          const newTrade: ApiTrade = {
+            id: String(
+              payload.id || payload.signature || `trade-${Date.now()}`,
+            ),
+            vault_id: String(payload.vault_id || payload.vaultId || vaultId),
+            actor_id: String(
+              payload.actor_id || payload.actorId || payload.wallet || "",
+            ),
+            transaction_signature: String(
+              payload.transaction_signature || payload.signature || "",
+            ),
+            trade_type: (payload.action || payload.trade_type || "swap") as any,
+            input_token: String(payload.input_token || payload.symbol || "SOL"),
+            output_token: String(payload.output_token || "USDC"),
+            amount_in: Number(payload.amount_in || payload.amount || 0),
+            amount_out: Number(payload.amount_out || 0),
+            price_at_execution: Number(
+              payload.price || payload.price_at_execution || 0,
+            ),
+            executed_at: String(
+              payload.executed_at || new Date().toISOString(),
+            ),
+          };
+
+          setTrades((prev) => {
+            if (
+              prev.some(
+                (t) =>
+                  t.id === newTrade.id ||
+                  (newTrade.transaction_signature &&
+                    t.transaction_signature === newTrade.transaction_signature),
+              )
+            ) {
+              return prev;
+            }
+            return [newTrade, ...prev].slice(0, 100);
+          });
         }
       }
-    })
+    });
 
     return () => {
-      unsub()
-      unsubscribe(`vault:${vaultId}`)
-    }
-  }, [vaultId, subscribe, unsubscribe, onMessage])
+      unsub();
+      unsubscribe([`vault:${vaultId}:activity`, `vault:${vaultId}`]);
+    };
+  }, [vaultId, subscribe, unsubscribe, onMessage]);
 
   const sortedTrades = useMemo(() => {
     return [...trades].sort((a, b) => {
-      let aVal: number | string = 0
-      let bVal: number | string = 0
+      let aVal: number | string = 0;
+      let bVal: number | string = 0;
 
       switch (sortBy) {
-        case 'executed_at':
-          aVal = new Date(a.executed_at).getTime()
-          bVal = new Date(b.executed_at).getTime()
-          break
-        case 'trade_type':
-          aVal = a.trade_type || ''
-          bVal = b.trade_type || ''
-          break
-        case 'amount_in':
-          aVal = a.amount_in || 0
-          bVal = b.amount_in || 0
-          break
-        case 'amount_out':
-          aVal = a.amount_out || 0
-          bVal = b.amount_out || 0
-          break
-        case 'price_at_execution':
-          aVal = a.price_at_execution || 0
-          bVal = b.price_at_execution || 0
-          break
+        case "executed_at":
+          aVal = new Date(a.executed_at).getTime();
+          bVal = new Date(b.executed_at).getTime();
+          break;
+        case "trade_type":
+          aVal = a.trade_type || "";
+          bVal = b.trade_type || "";
+          break;
+        case "amount_in":
+          aVal = a.amount_in || 0;
+          bVal = b.amount_in || 0;
+          break;
+        case "amount_out":
+          aVal = a.amount_out || 0;
+          bVal = b.amount_out || 0;
+          break;
+        case "price_at_execution":
+          aVal = a.price_at_execution || 0;
+          bVal = b.price_at_execution || 0;
+          break;
       }
 
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return sortOrder === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
       }
-      return sortOrder === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number)
-    })
-  }, [trades, sortBy, sortOrder])
+      return sortOrder === "asc"
+        ? (aVal as number) - (bVal as number)
+        : (bVal as number) - (aVal as number);
+    });
+  }, [trades, sortBy, sortOrder]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedTrades.length / pageSize))
-  const pagedTrades = sortedTrades.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = Math.max(1, Math.ceil(sortedTrades.length / pageSize));
+  const pagedTrades = sortedTrades.slice(
+    (page - 1) * pageSize,
+    page * pageSize,
+  );
 
   return (
     <SectionCard
@@ -137,178 +203,218 @@ export function VaultTradesTab({ vaultId, isManager }: VaultTradesTabProps) {
         ) : null
       }
     >
-        <Table
-          className="min-w-[700px]"
-          footer={
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              totalItems={sortedTrades.length}
-              pageSize={pageSize}
-              pageSizeOptions={[5, 10, 20, 50]}
-              onPageChange={setPage}
-              onPageSizeChange={(newSize: number) => {
-                setPageSize(newSize)
-                setPage(1)
-              }}
-              itemLabel="trades"
-              isLoading={isLoading}
-            />
-          }
-        >
-          <TableHeader>
-            <TableRow>
-              <SortableTableHead
-                column="executed_at"
-                currentSort={sortBy}
-                currentOrder={sortOrder}
-                onSort={handleSort}
-                className="py-3 px-4"
-              >
-                Date & Time
-              </SortableTableHead>
-              <SortableTableHead
-                column="trade_type"
-                currentSort={sortBy as any}
-                currentOrder={sortOrder}
-                onSort={handleSort}
-                className="py-3 px-4"
-              >
-                Type
-              </SortableTableHead>
-              <TableHead className="py-3 px-4">Pair</TableHead>
-              <SortableTableHead
-                column="amount_in"
-                currentSort={sortBy as any}
-                currentOrder={sortOrder}
-                onSort={handleSort}
-                align="right"
-                className="py-3 px-4"
-              >
-                In Amount
-              </SortableTableHead>
-              <SortableTableHead
-                column="amount_out"
-                currentSort={sortBy as any}
-                currentOrder={sortOrder}
-                onSort={handleSort}
-                align="right"
-                className="py-3 px-4"
-              >
-                Out Amount
-              </SortableTableHead>
-              <SortableTableHead
-                column="price_at_execution"
-                currentSort={sortBy as any}
-                currentOrder={sortOrder}
-                onSort={handleSort}
-                align="right"
-                className="py-3 px-4"
-              >
-                Price
-              </SortableTableHead>
-              <TableHead className="py-3 px-4 text-right">Transaction</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRowSkeleton
-                  key={i}
-                  columns={7}
-                  rows={1}
-                  cellAligns={['left', 'left', 'left', 'right', 'right', 'right', 'right']}
-                  cellWidths={['w-28', 'w-12', 'w-24', 'w-16', 'w-16', 'w-16', 'w-12']}
-                />
-              ))
-            ) : pagedTrades.length === 0 ? (
-              <TableEmpty
-                colSpan={7}
-                icon={<ArrowUpDown className="size-5" />}
-                title="No trades recorded yet"
-                description="Automated and manual trades executed by the manager will be recorded here in real-time."
-                minHeight="min-h-[200px]"
+      <Table
+        className="min-w-[700px]"
+        footer={
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={sortedTrades.length}
+            pageSize={pageSize}
+            pageSizeOptions={[5, 10, 20, 50]}
+            onPageChange={setPage}
+            onPageSizeChange={(newSize: number) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
+            itemLabel="trades"
+            isLoading={isLoading}
+          />
+        }
+      >
+        <TableHeader>
+          <TableRow>
+            <SortableTableHead
+              column="executed_at"
+              currentSort={sortBy}
+              currentOrder={sortOrder}
+              onSort={handleSort}
+              className="py-3 px-4"
+            >
+              Date & Time
+            </SortableTableHead>
+            <SortableTableHead
+              column="trade_type"
+              currentSort={sortBy as any}
+              currentOrder={sortOrder}
+              onSort={handleSort}
+              className="py-3 px-4"
+            >
+              Type
+            </SortableTableHead>
+            <TableHead className="py-3 px-4">Pair</TableHead>
+            <SortableTableHead
+              column="amount_in"
+              currentSort={sortBy as any}
+              currentOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+              className="py-3 px-4"
+            >
+              In Amount
+            </SortableTableHead>
+            <SortableTableHead
+              column="amount_out"
+              currentSort={sortBy as any}
+              currentOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+              className="py-3 px-4"
+            >
+              Out Amount
+            </SortableTableHead>
+            <SortableTableHead
+              column="price_at_execution"
+              currentSort={sortBy as any}
+              currentOrder={sortOrder}
+              onSort={handleSort}
+              align="right"
+              className="py-3 px-4"
+            >
+              Price
+            </SortableTableHead>
+            <TableHead className="py-3 px-4 text-right">Transaction</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRowSkeleton
+                key={i}
+                columns={7}
+                rows={1}
+                cellAligns={[
+                  "left",
+                  "left",
+                  "left",
+                  "right",
+                  "right",
+                  "right",
+                  "right",
+                ]}
+                cellWidths={[
+                  "w-28",
+                  "w-12",
+                  "w-24",
+                  "w-16",
+                  "w-16",
+                  "w-16",
+                  "w-12",
+                ]}
               />
-            ) : (
-              pagedTrades.map((t) => {
-                const typeLower = t.trade_type?.toLowerCase()
-                const isBuy = typeLower === 'buy'
-                const isSell = typeLower === 'sell'
-                const isDeposit = typeLower === 'deposit'
-                const isWithdraw = typeLower === 'withdraw'
+            ))
+          ) : pagedTrades.length === 0 ? (
+            <TableEmpty
+              colSpan={7}
+              icon={<ArrowUpDown className="size-5" />}
+              title="No trades recorded yet"
+              description="Automated and manual trades executed by the manager will be recorded here in real-time."
+              minHeight="min-h-[200px]"
+            />
+          ) : (
+            pagedTrades.map((t) => {
+              const typeLower = t.trade_type?.toLowerCase();
+              const isBuy = typeLower === "buy";
+              const isSell = typeLower === "sell";
+              const isDeposit = typeLower === "deposit";
+              const isWithdraw = typeLower === "withdraw";
 
-                const actionColor = isBuy
-                  ? 'text-status-success'
-                  : isSell
-                    ? 'text-status-error'
-                    : isDeposit
-                      ? 'text-status-info'
-                      : isWithdraw
-                        ? 'text-status-purple'
-                        : 'text-text-primary'
+              const actionColor = isBuy
+                ? "text-status-success"
+                : isSell
+                  ? "text-status-error"
+                  : isDeposit
+                    ? "text-status-info"
+                    : isWithdraw
+                      ? "text-status-purple"
+                      : "text-text-primary";
 
-                const badgeClass = isBuy
-                  ? 'bg-status-success/15 text-status-success border border-status-success/25'
-                  : isSell
-                    ? 'bg-status-error/15 text-status-error border border-status-error/25'
-                    : isDeposit
-                      ? 'bg-status-info/15 text-status-info border border-status-info/25'
-                      : isWithdraw
-                        ? 'bg-status-purple/15 text-status-purple border border-status-purple/25'
-                        : 'bg-bg-inset text-text-secondary'
+              const badgeClass = isBuy
+                ? "bg-status-success/15 text-status-success border border-status-success/25"
+                : isSell
+                  ? "bg-status-error/15 text-status-error border border-status-error/25"
+                  : isDeposit
+                    ? "bg-status-info/15 text-status-info border border-status-info/25"
+                    : isWithdraw
+                      ? "bg-status-purple/15 text-status-purple border border-status-purple/25"
+                      : "bg-bg-inset text-text-secondary";
 
-                const dateStr = formatDateTime(t.executed_at)
-                const tokenInRaw = (t as any).token_in_symbol || t.input_token || ''
-                const tokenOutRaw = (t as any).token_out_symbol || t.output_token || ''
-                const tokenIn = formatTokenSymbol(tokenInRaw, isWithdraw ? 'SHARES' : undefined)
-                const tokenOut = formatTokenSymbol(tokenOutRaw, isDeposit ? 'SHARES' : undefined)
-                const signature = (t as any).tx_signature || t.transaction_signature || ''
-                return (
-                  <TableRow key={t.id} className="hover:bg-white/[0.02]">
-                    <TableCell className="py-3 px-4 font-mono text-xs whitespace-nowrap text-text-secondary">
-                      {dateStr}
-                    </TableCell>
-                    <TableCell className="py-3 px-4">
-                      <span
-                        className={cn(
-                          'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold',
-                          badgeClass,
-                        )}
-                      >
-                        {t.trade_type}
+              const dateStr = formatDateTime(t.executed_at);
+              const tokenInRaw =
+                (t as any).token_in_symbol || t.input_token || "";
+              const tokenOutRaw =
+                (t as any).token_out_symbol || t.output_token || "";
+              const tokenIn = formatTokenSymbol(
+                tokenInRaw,
+                isWithdraw ? "SHARES" : undefined,
+              );
+              const tokenOut = formatTokenSymbol(
+                tokenOutRaw,
+                isDeposit ? "SHARES" : undefined,
+              );
+              const signature =
+                (t as any).tx_signature || t.transaction_signature || "";
+              return (
+                <TableRow key={t.id} className="hover:bg-white/[0.02]">
+                  <TableCell className="py-3 px-4 font-mono text-xs whitespace-nowrap text-text-secondary">
+                    {dateStr}
+                  </TableCell>
+                  <TableCell className="py-3 px-4">
+                    <span
+                      className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold",
+                        badgeClass,
+                      )}
+                    >
+                      {t.trade_type}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-3 px-4">
+                    <div className="flex items-center gap-1.5">
+                      <TokenIcon symbol={tokenIn} className="size-4" />
+                      <span className="font-mono text-xs font-semibold text-text-primary">
+                        {tokenIn}
                       </span>
-                    </TableCell>
-                    <TableCell className="py-3 px-4">
-                      <div className="flex items-center gap-1.5">
-                        <TokenIcon symbol={tokenIn} className="size-4" />
-                        <span className="font-mono text-xs font-semibold text-text-primary">
-                          {tokenIn}
-                        </span>
-                        <span className="text-text-muted text-xs">→</span>
-                        <TokenIcon symbol={tokenOut} className="size-4" />
-                        <span className="font-mono text-xs font-semibold text-text-primary">
-                          {tokenOut}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className={cn('py-3 px-4 text-right font-mono text-xs font-medium', actionColor)}>
-                      {t.amount_in} {tokenIn}
-                    </TableCell>
-                    <TableCell className={cn('py-3 px-4 text-right font-mono text-xs font-semibold', actionColor)}>
-                      {Number(t.amount_out || 0).toFixed(4)} {tokenOut}
-                    </TableCell>
-                    <TableCell className={cn('py-3 px-4 text-right font-mono text-xs font-medium', actionColor)}>
-                      ${Number(t.price_at_execution || 0).toFixed(4)}
-                    </TableCell>
-                    <TableCell className="py-3 px-4 text-right">
-                      <SolscanLink signature={signature} />
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
+                      <span className="text-text-muted text-xs">→</span>
+                      <TokenIcon symbol={tokenOut} className="size-4" />
+                      <span className="font-mono text-xs font-semibold text-text-primary">
+                        {tokenOut}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "py-3 px-4 text-right font-mono text-xs font-medium",
+                      actionColor,
+                    )}
+                  >
+                    {t.amount_in} {tokenIn}
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "py-3 px-4 text-right font-mono text-xs font-semibold",
+                      actionColor,
+                    )}
+                  >
+                    {Number(t.amount_out || 0).toFixed(4)} {tokenOut}
+                  </TableCell>
+                  <TableCell
+                    className={cn(
+                      "py-3 px-4 text-right font-mono text-xs font-medium",
+                      actionColor,
+                    )}
+                  >
+                    ${Number(t.price_at_execution || 0).toFixed(4)}
+                  </TableCell>
+                  <TableCell className="py-3 px-4 text-right">
+                    <SolscanLink signature={signature} />
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
     </SectionCard>
-  )
+  );
 }

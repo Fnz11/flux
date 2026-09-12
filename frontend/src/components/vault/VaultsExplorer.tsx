@@ -15,6 +15,9 @@ import { Layers, Search, X, LayoutList, LayoutGrid } from 'lucide-react'
 import { STATUS_TABS, type StatusTab } from '@/constants/vault'
 import { cn } from '@/lib/utils'
 import type { Vault } from '@/types'
+import { useVisibleVaultsWs } from '@/hooks/useVisibleVaultsWs'
+import { useRealtimeSync } from '@/hooks/useRealtimeSync'
+import { vaultHandler } from '@/services/ws/handlers/vaultHandler'
 
 export interface VaultsExplorerProps {
   title?: string
@@ -148,6 +151,15 @@ export function VaultsExplorer({
   const pagedVaults = useMemo(() => {
     return allVaults.slice((page - 1) * pageSize, page * pageSize)
   }, [allVaults, page, pageSize])
+
+  // Real-time batch subscription to visible vaults in current page view
+  useVisibleVaultsWs(pagedVaults, walletAddress)
+
+  // Real-time query sync: invalidates/updates react-query cache on vault_portfolio_update
+  useRealtimeSync({
+    handlers: [vaultHandler],
+    walletAddress,
+  })
 
   // Reset page when filter changes
   useEffect(() => {
@@ -300,22 +312,21 @@ export function VaultsExplorer({
           </div>
 
           {totalPages > 0 && (
-            <div className="pt-4 border-t border-border-subtle/50">
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                totalItems={allVaults.length}
-                pageSize={pageSize}
-                pageSizeOptions={[5, 10, 20, 50]}
-                onPageChange={setPage}
-                onPageSizeChange={(newSize) => {
-                  setPageSize(newSize)
-                  setPage(1)
-                }}
-                itemLabel="vaults"
-                isLoading={isLoading}
-              />
-            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              totalItems={allVaults.length}
+              pageSize={pageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize)
+                setPage(1)
+              }}
+              itemLabel="vaults"
+              isLoading={isLoading}
+              className="border-t-0 bg-transparent px-0 py-0 backdrop-blur-none"
+            />
           )}
         </div>
       )}

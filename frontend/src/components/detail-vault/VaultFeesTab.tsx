@@ -23,6 +23,10 @@ export function VaultFeesTab({ vault, isManager }: VaultFeesTabProps) {
   const accruedMgmt = vaultFee?.accrued_management_fee ?? (vault.tvl * (mgmtBps / 10000))
   const totalAccrued = vaultFee?.total_accrued ?? (accruedPerf + accruedMgmt)
 
+  const perfVal = Number(accruedPerf || 0)
+  const mgmtVal = Number(accruedMgmt || 0)
+  const totalVal = Number(totalAccrued || 0)
+
   return (
     <div className="space-y-6">
       {/* 3 Fee Cards Grid */}
@@ -36,7 +40,7 @@ export function VaultFeesTab({ vault, isManager }: VaultFeesTabProps) {
             <Skeleton className="mt-2.5 h-7 w-28 rounded-md" />
           ) : (
             <p className="mt-2 font-mono text-2xl font-bold text-text-primary">
-              ${accruedPerf.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${perfVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           )}
           <p className="mt-1 text-[11px] text-text-muted">
@@ -53,7 +57,7 @@ export function VaultFeesTab({ vault, isManager }: VaultFeesTabProps) {
             <Skeleton className="mt-2.5 h-7 w-28 rounded-md" />
           ) : (
             <p className="mt-2 font-mono text-2xl font-bold text-text-primary">
-              ${accruedMgmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${mgmtVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           )}
           <p className="mt-1 text-[11px] text-text-muted">
@@ -70,7 +74,7 @@ export function VaultFeesTab({ vault, isManager }: VaultFeesTabProps) {
             <Skeleton className="mt-2.5 h-7 w-28 rounded-md" />
           ) : (
             <p className="mt-2 font-mono text-2xl font-bold text-status-success">
-              ${totalAccrued.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           )}
           <p className="mt-1 text-[11px] text-text-muted">
