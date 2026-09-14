@@ -28,6 +28,9 @@
       <a href="#why-flux-key-advantages">Why Flux? (Key Advantages)</a>
     </li>
     <li>
+      <a href="#application-showcase">Application Showcase</a>
+    </li>
+    <li>
       <a href="#key-platform-features">Key Platform Features</a>
     </li>
     <li>
@@ -60,6 +63,95 @@ Through Flux, managers can create vaults, set fee structures, and execute trades
 * **💹 On-Chain Pyth Oracle Integration:** Swap execution relies on live Devnet prices directly from the Pyth Network Price Accounts, ensuring transparent and accurate token conversions.
 * **🎯 High-Performance React UI:** Leverages TanStack Start, Zustand for strict quote-locking state, and `@tanstack/react-virtual` for DOM windowing to prevent UI lag on massive vault lists.
 * **🔥 State Conflict Resolution:** True isolation between Manager and Investor modes utilizing independent session storage, guaranteeing an intuitive and bug-free user experience.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Application Showcase
+
+Explore the core user journeys and interfaces of Flux across Investor, Manager, Trading, and Vault workflows.
+
+---
+
+### 1. Investor Dashboard (`/`)
+> Real-time overview of the investor's total deposited capital, overall PnL, live directional sparklines, and active invested vault positions.
+<br />
+<p align="center">
+  <img src="docs/screenshots/01-investor-dashboard.png" alt="Investor Dashboard" width="90%">
+</p>
+
+---
+
+### 2. Manager Dashboard (`/` in Manager Mode)
+> Dedicated control center for fund managers displaying total managed TVL, active managed vaults with table/grid switcher, performance metrics, and quick access to trade consoles.
+<br />
+<p align="center">
+  <img src="docs/screenshots/02-manager-dashboard.png" alt="Manager Dashboard" width="90%">
+</p>
+
+---
+
+### 3. Invest Hub (`/invest`)
+> Investor discovery portal showcasing aggregate investment stats, top featured high-yield vaults, curated performance cards, and live on-chain deposit/withdrawal activity.
+<br />
+<p align="center">
+  <img src="docs/screenshots/03-invest-hub.png" alt="Invest Hub" width="90%">
+</p>
+
+---
+
+### 4. Browse Vaults (`/invest/vaults`)
+> Investor-focused vault directory tailored for capital allocators, featuring card/grid visualizations, tag filters, asset focus chips, and instant deposit shortcuts.
+<br />
+<p align="center">
+  <img src="docs/screenshots/04-invest-vaults.png" alt="Browse Vaults" width="90%">
+</p>
+
+---
+
+### 5. Vaults Directory (`/vaults`)
+> Comprehensive directory of all active, fundraising, and closed vaults with dynamic search, multi-metric sorting (TVL, 30D Return, Investors), tags, and organic directional sparklines.
+<br />
+<p align="center">
+  <img src="docs/screenshots/05-vaults-explorer.png" alt="Vaults Explorer" width="90%">
+</p>
+
+---
+
+### 6. Create Vault Modal (`/vaults/create`)
+> Intuitive modal wizard allowing managers to deploy new on-chain Solana vaults by configuring parameters such as target raise, management fees, performance fees, and lockup duration.
+<br />
+<p align="center">
+  <img src="docs/screenshots/06-vault-create.png" alt="Create Vault Modal" width="90%">
+</p>
+
+---
+
+### 7. Vault Detail (`/vaults/:id` & `/invest/vaults/:id`)
+> In-depth breakdown of a single vault featuring historical NAV performance charts, asset holdings breakdown, trade logs, fee collection, and the deposit/withdraw interaction card.
+<br />
+<p align="center">
+  <img src="docs/screenshots/07-vault-detail.png" alt="Vault Detail Page" width="90%">
+</p>
+
+---
+
+### 8. Pyth AMM Trade Console (`/trade`)
+> High-precision AMM execution interface for vault managers, backed by live Pyth Network Hermes price oracles, confidence bands, execution rates, and atomic in-memory balance updates.
+<br />
+<p align="center">
+  <img src="docs/screenshots/08-trade-console.png" alt="AMM Trade Console" width="90%">
+</p>
+
+---
+
+### 9. Portfolio & History (`/portfolio`)
+> Complete investor analytics hub with historical PnL curves, interactive timeframe selectors (1D, 1W, 1M, 3M, 1Y, ALL), asset allocation donut charts, and live trade history.
+<br />
+<p align="center">
+  <img src="docs/screenshots/09-portfolio.png" alt="Portfolio and History" width="90%">
+</p>
+
+---
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
