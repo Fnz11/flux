@@ -285,7 +285,7 @@ func TestVerifyHandler_Success_BuyClassification(t *testing.T) {
 	program := randomPubkey(t, 3)
 	bt := time.Date(2026, 8, 8, 12, 0, 0, 0, time.UTC)
 
-	ixData := buildBuyIXData(100, 250, 10)
+	ixData := buildBuyIXData(100_000_000, 250_000_000, 10)
 	txResult := buildRX(t, sig, signer, vault, program, ixData, bt, true)
 	h := NewVerifyHandler(nil, nil)
 	h.client = &stubTxVerifier{result: txResult}

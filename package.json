@@ -2,6 +2,9 @@
   "name": "flux",
   "private": true,
   "scripts": {
+    "dev": "docker compose up -d",
+    "seed": "cd backend && go run cmd/seed/main.go",
+    "seed:clean": "cd backend && go run cmd/seed/main.go --clean",
     "prepare": "husky"
   },
   "devDependencies": {

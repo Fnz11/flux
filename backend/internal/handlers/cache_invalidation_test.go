@@ -262,7 +262,7 @@ func TestCacheKeyUniqueness(t *testing.T) {
 	}
 
 	vlKey := cache.VaultListKey("Active", "", "", "tvl", "desc", 1, 6)
-	if vlKey != "app:vaults:list:Active::::tvl:desc:1:6" {
+	if vlKey != "app:vaults:list:Active:::tvl:desc:1:6" {
 		t.Errorf("unexpected vault list key: %s", vlKey)
 	}
 

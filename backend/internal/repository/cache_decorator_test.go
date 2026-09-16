@@ -66,7 +66,59 @@ func (s *stubCache) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (s *stubCache) DeletePrefix(ctx context.Context, prefix string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for k := range s.data {
+		if len(k) >= len(prefix) && k[:len(prefix)] == prefix {
+			s.deletes = append(s.deletes, k)
+			delete(s.data, k)
+		}
+	}
+	return nil
+}
+
 func (s *stubCache) Ping(ctx context.Context) error { return nil }
+
+func (s *stubCache) MGet(ctx context.Context, keys ...string) ([][]byte, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([][]byte, 0, len(keys))
+	for _, k := range keys {
+		if val, ok := s.data[k]; ok {
+			out = append(out, []byte(val))
+		}
+	}
+	return out, nil
+}
+
+func (s *stubCache) ZAdd(ctx context.Context, key string, score float64, member string) error {
+	return nil
+}
+
+func (s *stubCache) ZRevRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+
+func (s *stubCache) ZCard(ctx context.Context, key string) (int64, error) {
+	return 0, nil
+}
+
+func (s *stubCache) LPush(ctx context.Context, key string, values ...any) error {
+	return nil
+}
+
+func (s *stubCache) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return nil, nil
+}
+
+func (s *stubCache) LTrim(ctx context.Context, key string, start, stop int64) error {
+	return nil
+}
+
+func (s *stubCache) LLen(ctx context.Context, key string) (int64, error) {
+	return 0, nil
+}
 
 func (s *stubCache) seedRaw(key, raw string) {
 	s.mu.Lock()

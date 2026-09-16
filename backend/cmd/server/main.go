@@ -15,8 +15,10 @@ import (
 	"github.com/flux-protocol/backend/internal/handlers"
 	"github.com/flux-protocol/backend/internal/jobs"
 	"github.com/flux-protocol/backend/internal/middleware"
+	"github.com/flux-protocol/backend/internal/models"
 	"github.com/flux-protocol/backend/internal/repository"
 	"github.com/flux-protocol/backend/internal/router"
+	"github.com/flux-protocol/backend/internal/seed"
 	"github.com/flux-protocol/backend/internal/server"
 	"github.com/flux-protocol/backend/internal/services"
 	"github.com/flux-protocol/backend/internal/ws"
@@ -35,6 +37,28 @@ func main() {
 	db, err := database.Connect(cfg)
 	if err != nil {
 		logger.Fatalf("failed to connect database: %v", err)
+	}
+
+	// Auto-seed if database is empty so initial runs are immediately populated
+	if cfg.AutoSeed {
+		var vaultCount int64
+		if err := db.Model(&models.Vault{}).Count(&vaultCount).Error; err == nil && vaultCount == 0 {
+			logger.Info("database has 0 vaults; running initial seed...")
+			go func() {
+				seedCtx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+				defer cancel()
+				seedOpts := seed.DefaultOptions()
+				seedOpts.Users = 12
+				seedOpts.VaultsPerUser = 2
+				seedOpts.TradesPerVault = 8
+				solSeed := seed.NewSolanaSeedClient(cfg.SolanaRPCURL)
+				if err := seed.Run(seedCtx, db, seedOpts, logger, solSeed); err != nil {
+					logger.WithError(err).Warn("initial auto-seed failed")
+				} else {
+					logger.Info("initial auto-seed completed successfully")
+				}
+			}()
+		}
 	}
 
 	userRepo := repository.NewUserRepository(db)

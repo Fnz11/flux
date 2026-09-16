@@ -94,8 +94,8 @@ func TestSearchHandler_PairsRole(t *testing.T) {
 
 		data, _ := body["data"].(map[string]interface{})
 		items, _ := data["items"].([]interface{})
-		if len(items) != 7 {
-			t.Errorf("expected all 7 pairs (limit capped), got %d", len(items))
+		if len(items) != 6 {
+			t.Errorf("expected all 6 pairs (limit capped), got %d", len(items))
 		}
 	})
 

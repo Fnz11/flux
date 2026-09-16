@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -166,11 +167,12 @@ func TestSyncHandler_SyncTrade_SignerMismatch_Returns403(t *testing.T) {
 func TestClassifyInstructions_Withdraw(t *testing.T) {
 	vaultAddr := "VaultPDA1111111111111111111111111111111111"
 
-	// Test case 1: shares_to_burn in args
+	sharesBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(sharesBytes, 100_000_000_000)
 	parsedBurn := &solana.ParsedTransaction{
 		Instructions: []solana.ParsedInstruction{
 			{
-				Data: append([]byte{183, 18, 70, 156, 148, 109, 161, 34}, []byte{100, 0, 0, 0, 0, 0, 0, 0}...), // withdraw discriminator + u64(100)
+				Data: append([]byte{183, 18, 70, 156, 148, 109, 161, 34}, sharesBytes...), // withdraw discriminator + u64(100 shares)
 				Accounts: []string{vaultAddr},
 			},
 		},

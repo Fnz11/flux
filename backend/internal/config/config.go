@@ -24,6 +24,7 @@ type Config struct {
 	SSLMode              string
 	SolanaRPCURL         string
 	SolanaProgramID      string
+	AutoSeed             bool
 }
 
 // loadEnvFile reads .env if present and sets OS env variables if not already set.
@@ -125,5 +126,6 @@ func Load() (*Config, error) {
 		SSLMode:              sslMode,
 		SolanaRPCURL:         solanaURL,
 		SolanaProgramID:      solanaProgramID,
+		AutoSeed:             os.Getenv("AUTO_SEED") != "false",
 	}, nil
 }
