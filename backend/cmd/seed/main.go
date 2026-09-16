@@ -38,6 +38,16 @@ func main() {
 		fmt.Fprintf(os.Stderr, "--vaults-per-user must be >= %d, got %d\n", seed.VaultsPerUserMin, opts.VaultsPerUser)
 		os.Exit(1)
 	}
+	if os.Getenv("DATABASE_URL") == "" {
+		if direct := os.Getenv("DIRECT_DATABASE_URL"); direct != "" {
+			_ = os.Setenv("DATABASE_URL", direct)
+		} else {
+			_ = os.Setenv("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/flux?sslmode=disable")
+		}
+	}
+	if os.Getenv("JWT_SECRET") == "" {
+		_ = os.Setenv("JWT_SECRET", "change-me-to-at-least-32-bytes-long-secret-key!")
+	}
 
 	cfg, err := config.Load()
 	if err != nil {

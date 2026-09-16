@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "docker compose up -d",
-    "seed": "cd backend && go run cmd/seed/main.go",
-    "seed:clean": "cd backend && go run cmd/seed/main.go --clean",
+    "seed": "cd backend && DIRECT_DATABASE_URL=\"${DIRECT_DATABASE_URL:-postgres://postgres:postgres@localhost:5433/flux?sslmode=disable}\" go run cmd/seed/main.go",
+    "seed:clean": "cd backend && DIRECT_DATABASE_URL=\"${DIRECT_DATABASE_URL:-postgres://postgres:postgres@localhost:5433/flux?sslmode=disable}\" go run cmd/seed/main.go --clean",
     "prepare": "husky"
   },
   "devDependencies": {
