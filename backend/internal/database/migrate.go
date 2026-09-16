@@ -14,6 +14,9 @@ import (
 // GORM often emits ALTER COLUMN on numeric(36,18) even when already correct;
 // Postgres rejects that while matviews depend on the column (SQLSTATE 0A000).
 func AutoMigrate(db *gorm.DB) error {
+	if sqlDB, err := db.DB(); err == nil {
+		_, _ = sqlDB.Exec("CREATE EXTENSION IF NOT EXISTS timescaledb;")
+	}
 	_ = dropMatviews(db)
 
 	if err := db.AutoMigrate(
