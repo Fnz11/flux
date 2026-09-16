@@ -5,4 +5,4 @@ test-ledger
 .git
 .env
 .DS_Store
-programs/fbyt-clone-vault/target
+programs/flux-vault/target
