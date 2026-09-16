@@ -289,7 +289,26 @@ Follow these instructions to run the Flux platform on your local machine.
    pnpm run dev
    ```
 
-4. **Launch the High-Frequency Simulator:**
+4. **Database Seeding (Full Dataset or Specific Wallet):**
+   * **Full Realistic Dataset Seed:**
+     Populate the database with 30 real funded user accounts, 150 vaults, verified on-chain ed25519 trade signatures, metrics, and price history:
+     ```bash
+     bun run seed
+     # or: npm run seed
+     ```
+   * **Seed a Specific Connected Wallet:**
+     Pre-populate your own connected wallet with managed vaults, invested positions, PnL metrics, and historical trade logs so the Portfolio and Manager dashboards are immediately filled with live data:
+     ```bash
+     bun run seed:wallet --wallet=<YOUR_WALLET_ADDRESS>
+     # or: npm run seed:wallet -- --wallet=<YOUR_WALLET_ADDRESS>
+     ```
+   * **Clean & Re-seed:**
+     ```bash
+     bun run seed:clean
+     # or: npm run seed:clean
+     ```
+
+5. **Launch the High-Frequency Simulator:**
    ```bash
    cd ../backend
    go run ./cmd/simulator --interval=150 --wallet=<CONNECTED_WALLET>
