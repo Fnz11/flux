@@ -5,6 +5,7 @@
     "dev": "docker compose up -d",
     "seed": "cd backend && DIRECT_DATABASE_URL=\"${DIRECT_DATABASE_URL:-postgres://postgres:postgres@localhost:5433/flux?sslmode=disable}\" go run cmd/seed/main.go",
     "seed:clean": "cd backend && DIRECT_DATABASE_URL=\"${DIRECT_DATABASE_URL:-postgres://postgres:postgres@localhost:5433/flux?sslmode=disable}\" go run cmd/seed/main.go --clean",
+    "seed:wallet": "cd backend && DIRECT_DATABASE_URL=\"${DIRECT_DATABASE_URL:-postgres://postgres:postgres@localhost:5433/flux?sslmode=disable}\" go run cmd/seed/main.go",
     "prepare": "husky"
   },
   "devDependencies": {

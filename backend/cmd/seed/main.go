@@ -26,17 +26,27 @@ func main() {
 	flag.IntVar(&opts.MetricDays, "metric-days", opts.MetricDays, "history depth (days) for metrics/price history")
 	flag.BoolVar(&opts.Clean, "clean", false, "truncate seeded tables before seeding")
 	flag.StringVar(&opts.RPCURL, "rpc", opts.RPCURL, "Solana RPC URL (defaults to local test validator)")
+	flag.StringVar(&opts.Wallet, "wallet", opts.Wallet, "specific wallet address to seed/include in dataset")
 	flag.Float64Var(&opts.AirdropSOL, "airdrop-sol", opts.AirdropSOL, "SOL airdropped to each user account")
 	flag.Float64Var(&opts.VaultSOL, "vault-sol", opts.VaultSOL, "SOL airdropped to each vault account")
 	flag.Parse()
 
-	if opts.Users < seed.UsersMin {
-		fmt.Fprintf(os.Stderr, "--users must be >= %d, got %d\n", seed.UsersMin, opts.Users)
-		os.Exit(1)
-	}
-	if opts.VaultsPerUser < seed.VaultsPerUserMin {
-		fmt.Fprintf(os.Stderr, "--vaults-per-user must be >= %d, got %d\n", seed.VaultsPerUserMin, opts.VaultsPerUser)
-		os.Exit(1)
+	if opts.Wallet != "" {
+		if opts.Users < 1 {
+			opts.Users = 1
+		}
+		if opts.VaultsPerUser < 1 {
+			opts.VaultsPerUser = 2
+		}
+	} else {
+		if opts.Users < seed.UsersMin {
+			fmt.Fprintf(os.Stderr, "--users must be >= %d, got %d\n", seed.UsersMin, opts.Users)
+			os.Exit(1)
+		}
+		if opts.VaultsPerUser < seed.VaultsPerUserMin {
+			fmt.Fprintf(os.Stderr, "--vaults-per-user must be >= %d, got %d\n", seed.VaultsPerUserMin, opts.VaultsPerUser)
+			os.Exit(1)
+		}
 	}
 	if os.Getenv("DATABASE_URL") == "" {
 		if direct := os.Getenv("DIRECT_DATABASE_URL"); direct != "" {

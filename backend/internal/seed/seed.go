@@ -39,17 +39,29 @@ func Run(ctx context.Context, db *gorm.DB, opts Options, logger *logrus.Logger, 
 	userKeys := make([]*solana.Wallet, 0, opts.Users)
 	for i := 0; i < opts.Users; i++ {
 		w := sol.NewKeypair()
-		users = append(users, &models.User{
+		walletAddr := w.PublicKey().String()
+		var existingUser models.User
+		if i == 0 && opts.Wallet != "" {
+			walletAddr = opts.Wallet
+			// Check if user already exists in db
+			if err := db.Where("wallet_address = ?", walletAddr).First(&existingUser).Error; err == nil {
+				users = append(users, &existingUser)
+				userKeys = append(userKeys, w)
+				continue
+			}
+		}
+		u := &models.User{
 			ID:            uuid.New(),
-			WalletAddress: w.PublicKey().String(),
+			WalletAddress: walletAddr,
 			Nonce:         uuid.NewString(),
 			CreatedAt:     now,
 			UpdatedAt:     now,
-		})
+		}
+		if err := db.Create(u).Error; err != nil {
+			return fmt.Errorf("create user %s: %w", walletAddr, err)
+		}
+		users = append(users, u)
 		userKeys = append(userKeys, w)
-	}
-	if err := db.Create(&users).Error; err != nil {
-		return fmt.Errorf("create users: %w", err)
 	}
 	logger.WithField("users", len(users)).Info("users persisted")
 

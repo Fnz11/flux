@@ -13,6 +13,7 @@ type Options struct {
 	RPCURL         string
 	AirdropSOL     float64 // initial SOL airdropped to each user (target, topped-up on demand)
 	VaultSOL       float64 // SOL airdropped to each vault account so it can act as sender
+	Wallet         string  // optional specific wallet address to seed/include
 }
 
 const (
