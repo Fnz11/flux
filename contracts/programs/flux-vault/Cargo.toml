@@ -1,7 +1,7 @@
 [package]
-name = "fbyt-clone-vault"
+name = "flux-vault"
 version = "0.1.0"
-description = "FBYT Clone Vault Program"
+description = "Flux Vault Program"
 edition = "2021"
 
 [lib]

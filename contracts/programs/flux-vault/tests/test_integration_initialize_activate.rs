@@ -1,7 +1,7 @@
 mod common;
 
 use common::*;
-use fbyt_clone_vault::state::VaultStatusCode;
+use flux_vault::state::VaultStatusCode;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
@@ -28,7 +28,7 @@ fn test_init_vault_fee_at_max_boundary() {
 
     // Over the cap (5001 + 5000 = 10001) must fail (FeeTooHigh)
     let share_mint_over = Keypair::new();
-    let data_over = fbyt_clone_vault::instruction::InitializeVault {
+    let data_over = flux_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 5001,
         management_fee_bps: 5000,
@@ -65,7 +65,7 @@ fn test_init_vault_fee_at_max_boundary() {
         &[b"vault_authority", vault_pda_max.as_ref()],
         &program_id,
     );
-    let data_max = fbyt_clone_vault::instruction::InitializeVault {
+    let data_max = flux_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 5000,
         management_fee_bps: 5000,
@@ -181,15 +181,15 @@ fn test_init_vault_duplicate_fails() {
 
     let (vault_pda, _) = Pubkey::find_program_address(
         &[b"vault", manager.pubkey().as_ref()],
-        &fbyt_clone_vault::ID,
+        &flux_vault::ID,
     );
     let (vault_authority_pda, _) = Pubkey::find_program_address(
         &[b"vault_authority", vault_pda.as_ref()],
-        &fbyt_clone_vault::ID,
+        &flux_vault::ID,
     );
     let share_token_mint = Keypair::new();
 
-    let data = fbyt_clone_vault::instruction::InitializeVault {
+    let data = flux_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 1000,
         management_fee_bps: 500,
@@ -197,7 +197,7 @@ fn test_init_vault_duplicate_fails() {
         allowed_output_mints: vec![],
     };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(vault_pda, false),
@@ -234,7 +234,7 @@ fn test_init_vault_duplicate_allowed_mints() {
         &program_id,
     );
 
-    let data = fbyt_clone_vault::instruction::InitializeVault {
+    let data = flux_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 1000,
         management_fee_bps: 500,
@@ -300,7 +300,7 @@ fn test_init_vault_all_fields_set_correctly() {
         &program_id,
     );
 
-    let data = fbyt_clone_vault::instruction::InitializeVault {
+    let data = flux_vault::instruction::InitializeVault {
         min_raise_amount: min_raise,
         performance_fee_bps: perf_fee,
         management_fee_bps: mgmt_fee,

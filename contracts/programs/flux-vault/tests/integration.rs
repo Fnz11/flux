@@ -36,7 +36,7 @@ fn test_initialize_vault_basic() {
 
     let deposit_mint = create_mint(&mut svm, &payer, &payer.pubkey());
 
-    let ix = fbyt_clone_vault::instruction::InitializeVault {
+    let ix = flux_vault::instruction::InitializeVault {
         min_raise_amount: 1_000_000_000,
         performance_fee_bps: 500,
         management_fee_bps: 200,

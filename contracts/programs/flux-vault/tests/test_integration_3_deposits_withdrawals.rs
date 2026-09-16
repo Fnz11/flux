@@ -1,7 +1,7 @@
 mod common;
 
 use common::*;
-use fbyt_clone_vault::state::VaultStatusCode;
+use flux_vault::state::VaultStatusCode;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;

@@ -67,16 +67,30 @@ vi.mock('@/services/hooks', () => ({
   }),
   usePortfolioQuery: () => ({ data: mocks.positions, isLoading: mocks.portfolioLoading }),
 }))
-vi.mock('@/hooks/usePortfolioPnl', () => ({ usePortfolioPnl: () => mocks.pnl }))
+vi.mock('@/services/hooks/useQuery/usePortfolioSummaryQuery', () => ({
+  usePortfolioSummaryQuery: () => ({
+    data: {
+      total_invested: mocks.pnl.totalInvested,
+      current_value: mocks.pnl.totalValue,
+      total_pnl: mocks.pnl.totalPnl,
+      pnl_percent: mocks.pnl.totalPnlPercent,
+    },
+    isLoading: false,
+  }),
+}))
 vi.mock('@/services/hooks/useQuery/usePortfolioHistoryQuery', () => ({
   usePortfolioHistoryQuery: () => ({ data: mocks.history }),
 }))
 vi.mock('@/services/hooks/useQuery/useGlobalTransactionsQuery', () => ({
   useGlobalTransactionsQuery: () => mocks.activity,
 }))
-vi.mock('@tanstack/react-query', () => ({
-  useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
-}))
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>()
+  return {
+    ...actual,
+    useQueryClient: () => ({ invalidateQueries: mocks.invalidateQueries }),
+  }
+})
 vi.mock('@/stores', () => ({
   useWebSocketStore: <T,>(selector: (state: { onMessage: typeof mocks.subscribe }) => T) =>
     selector({ onMessage: mocks.subscribe }),

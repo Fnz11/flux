@@ -5,8 +5,10 @@
 .vscode
 skills-lock.json
 backup
-contracts/program/fbyt-clone
-contracts/programs/fbyt-clone-vault/target
+contracts/programs/*/target
+contracts/programs/**/target
+contracts/target
+**/target
 frontend/node_modules
 frontend/.DS_Store
 frontend/dist

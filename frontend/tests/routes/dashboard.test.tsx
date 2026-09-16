@@ -49,6 +49,10 @@ vi.mock('../../src/hooks/useRouteWsChannel', () => ({
   useRouteWsChannel: vi.fn(),
 }))
 
+vi.mock('../../src/hooks/useRealtimeSync', () => ({
+  useRealtimeSync: vi.fn(),
+}))
+
 vi.mock('../../src/routes/_components/ManagerVaultsList', () => ({
   ManagerVaultsList: () => <div data-testid="manager-vaults-list" />,
 }))

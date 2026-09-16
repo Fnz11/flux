@@ -29,7 +29,7 @@ export const useAppStore = create<AppStore>()(
       setActiveVaultId: (vaultId) => set({ activeVaultId: vaultId }),
     }),
     {
-      name: 'fbyt-app',
+      name: 'flux-app',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ isManager: state.isManager }),
     },

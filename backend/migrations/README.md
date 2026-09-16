@@ -1,6 +1,6 @@
 # Migrations
 
-Manual SQL migrations for the FBYT-Clone backend. Base tables (`users`, `vaults`,
+Manual SQL migrations for the Flux backend. Base tables (`users`, `vaults`,
 `portfolios`, `trade_histories`) are created by GORM AutoMigrate at app startup
 (`internal/database/migrate.go`); the numbered scripts below are additive
 optimizations that must run **after** the first boot (or after AutoMigrate has

@@ -104,6 +104,7 @@ vi.mock('../src/lib/api', () => ({
 vi.mock('../src/services/apis/rest-api/auth.service', () => ({
   ensureWalletAuthenticated: vi.fn(async () => 'mock-token'),
   getCachedAuthToken: vi.fn(() => 'mock-token'),
+  isTokenExpired: vi.fn(() => false),
   requestNonce: vi.fn(async () => 'mock-nonce'),
   verifySignature: vi.fn(async () => 'mock-token'),
 }))

@@ -1,5 +1,5 @@
 {
-  "name": "fbyt-clone",
+  "name": "flux",
   "private": true,
   "scripts": {
     "prepare": "husky"

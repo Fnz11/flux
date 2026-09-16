@@ -15,7 +15,10 @@ export function useTradeHistory(vaultIds: string[]) {
   const isLoading = results.some((r) => r.isLoading)
 
   const trades = useMemo(() => {
-    const allTrades = results.flatMap((r) => r.data?.trades || []).map(mapApiTrade)
+    const allTrades = results
+      .flatMap((r) => r.data?.trades || [])
+      .filter(Boolean)
+      .map(mapApiTrade)
     allTrades.sort((a, b) => new Date(b.executed_at).getTime() - new Date(a.executed_at).getTime())
     return allTrades
   }, [results])

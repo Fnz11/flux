@@ -30,14 +30,14 @@ describe('transactions service', () => {
         vaultName: 'Alpha', symbol: 'SOL', amount: 12.5, transactionSignature: 'sig-1', wallet: 'wallet-1',
       }],
     })
-    expect(api.get).toHaveBeenCalledWith('/transactions', params)
+    expect(api.get).toHaveBeenCalledWith('/user/activity', params)
   })
 
   it('uses empty params and defaults a missing data envelope', async () => {
     vi.mocked(api.get).mockResolvedValueOnce({})
 
     await expect(getGlobalTransactions()).resolves.toEqual({ items: [], total: 0 })
-    expect(api.get).toHaveBeenCalledWith('/transactions', {})
+    expect(api.get).toHaveBeenCalledWith('/user/activity', {})
   })
 })
 
@@ -57,7 +57,7 @@ describe('portfolio services', () => {
       vaultId: 'v1', vaultAddress: 'a1', vaultName: 'Alpha', sharesOwned: 2,
       totalInvested: 100, averageEntryPrice: 50, currentValue: 125, pnl: 25, pnlPercent: 25,
     }])
-    expect(api.get).toHaveBeenCalledWith('/portfolio/wallet%2Fa%2Bb')
+    expect(api.get).toHaveBeenCalledWith('/user/portfolio/wallet%2Fa%2Bb')
   })
 
   it('supports a bare portfolio array and malformed envelope fallback', async () => {
@@ -74,7 +74,7 @@ describe('portfolio services', () => {
 
     await getPortfolioHistory('w1')
 
-    expect(api.get).toHaveBeenCalledWith('/portfolio/history', { wallet: 'w1', range: '30d' })
+    expect(api.get).toHaveBeenCalledWith('/user/portfolio/history', { wallet: 'w1', range: '30d' })
   })
 
   it('supports custom range, bare arrays, and missing points', async () => {
@@ -82,7 +82,7 @@ describe('portfolio services', () => {
     vi.mocked(api.get).mockResolvedValueOnce(points).mockResolvedValueOnce({})
 
     await expect(getPortfolioHistory('w1', '90d')).resolves.toEqual(points)
-    expect(api.get).toHaveBeenNthCalledWith(1, '/portfolio/history', { wallet: 'w1', range: '90d' })
+    expect(api.get).toHaveBeenNthCalledWith(1, '/user/portfolio/history', { wallet: 'w1', range: '90d' })
     await expect(getPortfolioHistory('w1', '7d')).resolves.toEqual([])
   })
 })

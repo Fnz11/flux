@@ -39,5 +39,5 @@ echo "Launching solana-test-validator with ${#ACCOUNT_ARGS[@]} account arguments
 
 exec solana-test-validator \
     --reset \
-    --bpf-program FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais /workspace/target/deploy/fbyt_clone_vault.so \
+    --bpf-program FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais /workspace/target/deploy/flux_vault.so \
     "${ACCOUNT_ARGS[@]}"

@@ -7,10 +7,10 @@ skip-lint = false
 validator = "legacy"
 
 [programs.devnet]
-fbyt_clone_vault = "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais"
+flux_vault = "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais"
 
 [programs.localnet]
-fbyt_clone_vault = "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais"
+flux_vault = "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais"
 
 [provider]
 cluster = "localnet"

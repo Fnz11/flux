@@ -68,10 +68,9 @@ export function getTradeEligibility(
     return { canExecute: false, reason: 'Only the vault manager can execute trades for this vault' }
   }
 
-  const isStatusFundraising = vault.status?.toLowerCase() === 'fundraising'
   const isStatusActive = vault.status?.toLowerCase() === 'active'
 
-  if (!isStatusActive && !(isStatusFundraising && isManager)) {
+  if (!isStatusActive) {
     return {
       canExecute: false,
       reason: `Vault is currently in ${vault.status || 'Fundraising'} phase. Trading unlocks after activation.`,

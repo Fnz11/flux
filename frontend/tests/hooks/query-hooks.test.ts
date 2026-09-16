@@ -15,7 +15,13 @@ vi.mock('@tanstack/react-query', () => ({
   },
 }))
 vi.mock('../../src/services/apis/rest-api/fee.service', () => ({ getAccruedFees: vi.fn() }))
-vi.mock('../../src/services/apis/rest-api/trade.service', () => ({ getHistory: vi.fn() }))
+vi.mock('../../src/services/apis/rest-api/trade.service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/services/apis/rest-api/trade.service')>()
+  return {
+    ...actual,
+    getHistory: vi.fn(),
+  }
+})
 
 const fee = (vault: string, perf: number, mgmt: number) => ({
   vault_id: vault, accrued_performance_fee: perf, accrued_management_fee: mgmt, total_accrued: perf + mgmt,

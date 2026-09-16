@@ -57,7 +57,7 @@ func main() {
 
 func runWSSimulator(ctx context.Context, logger *logrus.Logger, opts SimulatorOptions) {
 	if os.Getenv("DATABASE_URL") == "" && os.Getenv("DIRECT_DATABASE_URL") == "" {
-		_ = os.Setenv("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/fbyt?sslmode=disable")
+		_ = os.Setenv("DATABASE_URL", "postgres://postgres:postgres@localhost:5433/flux?sslmode=disable")
 	} else if os.Getenv("DATABASE_URL") == "" && os.Getenv("DIRECT_DATABASE_URL") != "" {
 		_ = os.Setenv("DATABASE_URL", os.Getenv("DIRECT_DATABASE_URL"))
 	}

@@ -181,16 +181,8 @@ export function useExecuteTrade() {
                       .instruction()
                     ixs.push(activateIx)
                   }
-                } else {
-                  const accInfo = await connection.getAccountInfo(vaultPubkey)
-                  if (!accInfo || accInfo.data.length === 0) {
-                    throw new Error('This vault is not initialized on the current blockchain cluster. Please deploy or select an active vault.')
-                  }
                 }
               } catch (checkErr: any) {
-                if (checkErr?.message?.includes('not initialized')) {
-                  throw checkErr
-                }
                 console.error('Auto-activate vault check error:', checkErr)
               }
 

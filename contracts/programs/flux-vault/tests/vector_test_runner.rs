@@ -1,6 +1,6 @@
-use fbyt_clone_vault::math::share_math::{calculate_shares_to_mint, calculate_amount_out as amount_out};
-use fbyt_clone_vault::math::fee_math::{calculate_performance_fee, calculate_management_fee};
-use fbyt_clone_vault::pyth_price::calculate_amount_out as pyth_amount_out;
+use flux_vault::math::share_math::{calculate_shares_to_mint, calculate_amount_out as amount_out};
+use flux_vault::math::fee_math::{calculate_performance_fee, calculate_management_fee};
+use flux_vault::pyth_price::calculate_amount_out as pyth_amount_out;
 
 #[test]
 fn rsma() {

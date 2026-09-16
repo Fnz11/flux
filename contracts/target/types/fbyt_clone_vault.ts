@@ -2,15 +2,15 @@
  * Program IDL in camelCase format in order to be used in JS/TS.
  *
  * Note that this is only a type helper and is not the actual IDL. The original
- * IDL can be found at `target/idl/fbyt_clone_vault.json`.
+ * IDL can be found at `target/idl/flux_vault.json`.
  */
-export type FbytCloneVault = {
+export type FluxVault = {
   "address": "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais",
   "metadata": {
-    "name": "fbytCloneVault",
+    "name": "fluxVault",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "FBYT Clone Vault Program"
+    "description": "Flux Vault Program"
   },
   "instructions": [
     {

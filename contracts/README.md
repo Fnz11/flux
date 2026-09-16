@@ -1,5 +1,5 @@
-# FBYT Clone Vault
-
+# Flux Vault
+ 
 Solana Anchor program for non-custodial vault-based investment on Devnet.
 
 ## Purpose
@@ -49,7 +49,7 @@ anchor test
 ```
 
 Tests use LiteSVM - a fast, deterministic Solana runtime in Rust. Test files
-live in `programs/fbyt-clone-vault/tests/`.
+live in `programs/flux-vault/tests/`.
 
 ## Deployment
 
@@ -59,4 +59,4 @@ anchor deploy --provider.cluster devnet
 
 ## Program ID
 
-`FBYT1111111111111111111111111111111111111` (Devnet)
+`FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais` (Devnet)

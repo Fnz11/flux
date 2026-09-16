@@ -1,5 +1,5 @@
 {
-  "name": "fbyt-frontend",
+  "name": "flux-frontend",
   "private": true,
   "type": "module",
   "imports": {

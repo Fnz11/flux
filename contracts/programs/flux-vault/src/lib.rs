@@ -15,7 +15,7 @@ pub mod utils;
 declare_id!("FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais");
 
 #[program]
-pub mod fbyt_clone_vault {
+pub mod flux_vault {
     use super::*;
 
     pub fn initialize_vault(

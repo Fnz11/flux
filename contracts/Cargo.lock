@@ -1266,7 +1266,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fbyt-clone-vault"
+name = "flux-vault"
 version = "0.1.0"
 dependencies = [
  "anchor-lang 0.30.1",

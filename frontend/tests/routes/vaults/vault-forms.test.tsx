@@ -102,7 +102,7 @@ describe('create vault form', () => {
     expect(mocks.create.mock.calls[0][0]).toMatchObject({
       displayName: 'Yield Vault',
       acceptedAssets: ['SOL', 'USDC', 'USDT'],
-      minRaiseAmount: 10,
+      minRaiseAmount: 1,
       agreedToTerms: true,
     })
   })

@@ -2,7 +2,7 @@ mod common;
 
 use anchor_lang::InstructionData;
 use common::*;
-use fbyt_clone_vault::state::VaultStatusCode;
+use flux_vault::state::VaultStatusCode;
 use litesvm::LiteSVM;
 use solana_instruction::{AccountMeta, Instruction};
 use solana_keypair::Keypair;
@@ -14,9 +14,9 @@ fn deactivate_vault(
     manager: &Keypair,
     vault_pda: &Pubkey,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::DeactivateVault {};
+    let data = flux_vault::instruction::DeactivateVault {};
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(*vault_pda, false),

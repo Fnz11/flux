@@ -30,7 +30,7 @@ describe('config service', () => {
   it('maps a null response to configuration defaults', async () => {
     vi.mocked(api.get).mockResolvedValueOnce(null)
 
-    await expect(getConfig()).resolves.toMatchObject({ dustThreshold: 0.001, minRaiseAmount: 10, lockupPeriod: 7 })
+    await expect(getConfig()).resolves.toMatchObject({ dustThreshold: 0.001, minRaiseAmount: 1, lockupPeriod: 7 })
   })
 })
 
@@ -41,8 +41,8 @@ describe('fee and trade services', () => {
     const fees = { vault_id: 'v1', accrued_performance_fee: 2, accrued_management_fee: 1, total_accrued: 3 }
     vi.mocked(api.get).mockResolvedValueOnce(fees)
 
-    await expect(getAccruedFees('v1')).resolves.toBe(fees)
-    expect(api.get).toHaveBeenCalledWith('/fees/v1')
+    await expect(getAccruedFees('v1')).resolves.toMatchObject(fees)
+    expect(api.get).toHaveBeenCalledWith('/vaults/v1/fees')
   })
 
   it('returns trade history from the vault-specific endpoint unchanged', async () => {

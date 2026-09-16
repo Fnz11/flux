@@ -12,7 +12,7 @@ use {
     spl_associated_token_account::get_associated_token_address_with_program_id,
 };
 use anchor_lang::InstructionData;
-use fbyt_clone_vault::state::{VaultState, VaultStatusCode};
+use flux_vault::state::{VaultState, VaultStatusCode};
 
 pub const TOKEN_PROGRAM_ID: Pubkey =
     pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
@@ -63,8 +63,8 @@ pub fn setup_svm() -> (LiteSVM, Keypair, Pubkey) {
     let payer = Keypair::new();
     svm.airdrop(&payer.pubkey(), 1_000_000_000_000).unwrap();
 
-    let program_id = fbyt_clone_vault::ID;
-    let program_bytes = include_bytes!("../../target/deploy/fbyt_clone_vault.so");
+    let program_id = flux_vault::ID;
+    let program_bytes = include_bytes!("../../target/deploy/flux_vault.so");
     svm.add_program(&program_id, program_bytes).unwrap();
 
     (svm, payer, program_id)
@@ -185,14 +185,14 @@ pub fn initialize_vault_with_params(
 
     let (vault_pda, _) = Pubkey::find_program_address(
         &[b"vault", payer.pubkey().as_ref(), share_token_mint.pubkey().as_ref()],
-        &fbyt_clone_vault::ID,
+        &flux_vault::ID,
     );
     let (vault_authority_pda, _) = Pubkey::find_program_address(
         &[b"vault_authority", vault_pda.as_ref()],
-        &fbyt_clone_vault::ID,
+        &flux_vault::ID,
     );
 
-    let data = fbyt_clone_vault::instruction::InitializeVault {
+    let data = flux_vault::instruction::InitializeVault {
         min_raise_amount,
         performance_fee_bps,
         management_fee_bps,
@@ -200,7 +200,7 @@ pub fn initialize_vault_with_params(
         allowed_output_mints: vec![],
     };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(payer.pubkey(), true),
             AccountMeta::new(vault_pda, false),
@@ -226,9 +226,9 @@ pub fn activate_vault(
     manager: &Keypair,
     vault_pda: &Pubkey,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::ActivateVault {};
+    let data = flux_vault::instruction::ActivateVault {};
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(*vault_pda, false),
@@ -250,9 +250,9 @@ pub fn deposit(
     investor_share_ata: Pubkey,
     amount: u64,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::Deposit { amount };
+    let data = flux_vault::instruction::Deposit { amount };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(depositor.pubkey(), true),
             AccountMeta::new(vault_pda, false),
@@ -284,9 +284,9 @@ pub fn withdraw(
     investor_share_ata: Pubkey,
     shares_to_burn: u64,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::Withdraw { shares_to_burn };
+    let data = flux_vault::instruction::Withdraw { shares_to_burn };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(investor.pubkey(), true),
             AccountMeta::new(vault_pda, false),
@@ -310,9 +310,9 @@ pub fn pause_vault(
     vault_pda: &Pubkey,
     paused: bool,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::PauseVault { paused };
+    let data = flux_vault::instruction::PauseVault { paused };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(*vault_pda, false),
@@ -328,9 +328,9 @@ pub fn set_pending_manager(
     vault_pda: &Pubkey,
     pending_manager: Pubkey,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::SetPendingManager { pending_manager };
+    let data = flux_vault::instruction::SetPendingManager { pending_manager };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(*vault_pda, false),
@@ -345,9 +345,9 @@ pub fn accept_manager(
     pending_manager: &Keypair,
     vault_pda: &Pubkey,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::AcceptManager {};
+    let data = flux_vault::instruction::AcceptManager {};
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(pending_manager.pubkey(), true),
             AccountMeta::new(*vault_pda, false),
@@ -366,9 +366,9 @@ pub fn collect_fees(
     manager_token_account: Pubkey,
     token_mint: Pubkey,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::CollectFees {};
+    let data = flux_vault::instruction::CollectFees {};
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(vault_pda, false),
@@ -396,12 +396,12 @@ pub fn execute_trade_pyth(
     amount_in: u64,
     min_amount_out: u64,
 ) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::ExecuteTradePyth {
+    let data = flux_vault::instruction::ExecuteTradePyth {
         amount_in,
         min_amount_out,
     };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(vault_pda, false),

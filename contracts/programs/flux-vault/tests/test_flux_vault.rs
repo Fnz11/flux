@@ -1,7 +1,7 @@
 mod common;
 
 use common::*;
-use fbyt_clone_vault::state::VaultStatusCode;
+use flux_vault::state::VaultStatusCode;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
@@ -263,7 +263,7 @@ fn test_fee_cap_enforcement_on_initialization() {
     );
     let share_token_mint = Keypair::new();
 
-    let data_invalid = fbyt_clone_vault::instruction::InitializeVault {
+    let data_invalid = flux_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 6000,
         management_fee_bps: 5000,
@@ -300,7 +300,7 @@ fn test_fee_cap_enforcement_on_initialization() {
         &[b"vault_authority", vault_pda_valid.as_ref()],
         &program_id,
     );
-    let data_valid = fbyt_clone_vault::instruction::InitializeVault {
+    let data_valid = flux_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 5000,
         management_fee_bps: 5000,
@@ -396,15 +396,15 @@ fn test_rejects_double_init() {
 
     let (vault_pda, _) = Pubkey::find_program_address(
         &[b"vault", payer.pubkey().as_ref()],
-        &fbyt_clone_vault::ID,
+        &flux_vault::ID,
     );
     let (vault_authority_pda, _) = Pubkey::find_program_address(
         &[b"vault_authority", vault_pda.as_ref()],
-        &fbyt_clone_vault::ID,
+        &flux_vault::ID,
     );
     let share_token_mint = Keypair::new();
 
-    let data = fbyt_clone_vault::instruction::InitializeVault {
+    let data = flux_vault::instruction::InitializeVault {
         min_raise_amount: 0,
         performance_fee_bps: 1000,
         management_fee_bps: 500,
@@ -412,7 +412,7 @@ fn test_rejects_double_init() {
         allowed_output_mints: vec![],
     };
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(payer.pubkey(), true),
             AccountMeta::new(vault_pda, false),
@@ -747,8 +747,8 @@ fn test_collect_fees_accrual() {
 
 #[test]
 fn test_decimal_normalization_in_trades() {
-    use fbyt_clone_vault::pyth_price::calculate_amount_out;
-    use fbyt_clone_vault::math::fee_math::{calculate_management_fee, calculate_performance_fee};
+    use flux_vault::pyth_price::calculate_amount_out;
+    use flux_vault::math::fee_math::{calculate_management_fee, calculate_performance_fee};
 
     // Test Pyth amount out calculation with negative exponent (e.g. Pyth price feed exponent -8)
     // SOL price = $150.00 -> 15_000_000_000 in Pyth (price: 15_000_000_000, expo: -8)
@@ -1027,7 +1027,7 @@ fn test_old_manager_cannot_trade_after_rotation() {
 
 #[test]
 fn test_math_property_invariants() {
-    use fbyt_clone_vault::math::share_math::{calculate_shares_to_mint, calculate_amount_out};
+    use flux_vault::math::share_math::{calculate_shares_to_mint, calculate_amount_out};
 
     // Property 1: Minting shares never yields more than pro-rata value (vault favorability)
     for deposit_amt in [1, 100, 999, 1_000_000, 1_000_000_000] {

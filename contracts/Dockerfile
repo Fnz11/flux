@@ -14,12 +14,12 @@ COPY . .
 # binary keeps the declared program ID (FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais).
 # Ensure target/deploy directory exists before anchor build
 RUN mkdir -p target/deploy && \
-    cp deploy/fbyt_clone_vault-keypair.json target/deploy/fbyt_clone_vault-keypair.json
+    cp deploy/flux_vault-keypair.json target/deploy/flux_vault-keypair.json
 
-# Run build to compile the smart contracts (creates target/deploy/fbyt_clone_vault.so)
+# Run build to compile the smart contracts (creates target/deploy/flux_vault.so)
 RUN anchor build && \
     mkdir -p target/deploy && \
-    cp programs/fbyt-clone-vault/target/deploy/fbyt_clone_vault.so target/deploy/fbyt_clone_vault.so
+    cp programs/flux-vault/target/deploy/flux_vault.so target/deploy/flux_vault.so
 
 RUN chmod +x /workspace/entrypoint.sh
 

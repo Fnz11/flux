@@ -1,4 +1,4 @@
-# FBYT-Clone Full Stack Local Development
+# Flux Full Stack Local Development
 #
 # Start everything:
 #   docker compose up -d
@@ -16,7 +16,7 @@ services:
     build:
       context: ./frontend
       target: dev
-    container_name: fbyt-frontend
+    container_name: flux-frontend
     ports:
       - "3000:3000"
     volumes:
@@ -33,7 +33,7 @@ services:
     platform: linux/amd64 # anchor images are amd64-only; required on Apple Silicon
     build:
       context: ./contracts
-    container_name: fbyt-contracts
+    container_name: flux-contracts
     ports:
       - "8899:8899" # Solana RPC port
       - "8900:8900"
@@ -47,14 +47,14 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: fbyt-backend
+    container_name: flux-backend
     ports:
       - "8080:8080"
     environment:
       PORT: "8080"
       JWT_SECRET: ${JWT_SECRET:-change-me-to-at-least-32-bytes-long-secret-key!}
       CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:3001"
-      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@pgbouncer:6432/${POSTGRES_DB:-fbyt}?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@pgbouncer:6432/${POSTGRES_DB:-flux}?sslmode=disable
       REDIS_URL: redis://redis:6379
       SOLANA_RPC_URL: http://contracts:8899
     volumes:
@@ -77,14 +77,14 @@ services:
   # ---------------------------------------------------------
   timescaledb:
     image: timescale/timescaledb:latest-pg16
-    container_name: fbyt-timescaledb
+    container_name: flux-timescaledb
     restart: unless-stopped
     ports:
       - "${TIMESCALEDB_PORT:-5433}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-fbyt}
+      POSTGRES_DB: ${POSTGRES_DB:-flux}
       TIMESCALEDB_TELEMETRY: "off"
     command:
       - "postgres"
@@ -96,7 +96,7 @@ services:
       - timescaledb_data:/var/lib/postgresql/data
       - ./backend/deploy/timescaledb/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fbyt}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-flux}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -104,7 +104,7 @@ services:
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
-    container_name: fbyt-pgbouncer
+    container_name: flux-pgbouncer
     restart: unless-stopped
     ports:
       - "6432:6432"
@@ -113,7 +113,7 @@ services:
       DB_PORT: "5432"
       DB_USER: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      DB_NAME: ${POSTGRES_DB:-fbyt}
+      DB_NAME: ${POSTGRES_DB:-flux}
       LISTEN_PORT: "6432"
       POOL_MODE: transaction
       AUTH_TYPE: scram-sha-256
@@ -126,7 +126,7 @@ services:
       timescaledb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "6432", "-U", "${POSTGRES_USER:-postgres}", "-d", "${POSTGRES_DB:-fbyt}"]
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "6432", "-U", "${POSTGRES_USER:-postgres}", "-d", "${POSTGRES_DB:-flux}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -134,7 +134,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: fbyt-redis
+    container_name: flux-redis
     restart: unless-stopped
     ports:
       - "6380:6379"

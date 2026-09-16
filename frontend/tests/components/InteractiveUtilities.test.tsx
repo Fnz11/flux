@@ -16,6 +16,9 @@ vi.mock('@/components/ui/dialog', () => ({
   DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogHeader: ({ children }: { children: React.ReactNode }) => <header>{children}</header>,
   DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+  DialogBody: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogFooter: ({ children }: { children: React.ReactNode }) => <footer>{children}</footer>,
 }))
 vi.mock('framer-motion', () => ({
   LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,

@@ -60,7 +60,7 @@ transaction contract, and pgbouncer may close idle-in-transaction connections.
 psql "$DIRECT_DATABASE_URL" -f migrations/002_hypertables.sql
 
 # or inside the container:
-docker compose exec timescaledb psql -U postgres -d fbyt -f /dev/stdin <<'SQL'
+docker compose exec timescaledb psql -U postgres -d flux -f /dev/stdin <<'SQL'
 SELECT create_hypertable('trade_histories', 'executed_at');
 SQL
 ```
@@ -93,6 +93,6 @@ the PgBouncer URL from `.env.example`.
 docker compose up -d                    # start all three services
 docker compose ps                       # health status
 docker compose logs -f pgbouncer        # pool logs
-docker compose exec pgbouncer psql -h 127.0.0.1 -p 6432 -U postgres -d fbyt -c 'SHOW POOLS;'
+docker compose exec pgbouncer psql -h 127.0.0.1 -p 6432 -U postgres -d flux -c 'SHOW POOLS;'
 docker compose exec redis redis-cli info stats
 ```

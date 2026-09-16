@@ -48,8 +48,8 @@ export const useWebSocketStore = create<WebSocketStore>()((set, get) => ({
       if (wallet) {
         socket.send(JSON.stringify({ type: 'auth', wallet }))
       }
-      if (subscriptions.length > 0) {
-        socket.send(JSON.stringify({ type: 'subscribe', channels: subscriptions, wallet: wallet || undefined }))
+      for (const channel of subscriptions) {
+        socket.send(JSON.stringify({ type: 'subscribe', channel }))
       }
     }
 

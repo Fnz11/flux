@@ -1,7 +1,7 @@
 mod common;
 
 use common::*;
-use fbyt_clone_vault::state::VaultStatusCode;
+use flux_vault::state::VaultStatusCode;
 use solana_keypair::Keypair;
 use solana_pubkey::Pubkey;
 use solana_signer::Signer;
@@ -12,9 +12,9 @@ use litesvm::LiteSVM;
 // Local helper mirroring the (unexposed) DeactivateVault instruction so a vault
 // can be moved into Dormant status.
 fn deactivate_vault(svm: &mut LiteSVM, manager: &Keypair, vault_pda: &Pubkey) -> Result<(), String> {
-    let data = fbyt_clone_vault::instruction::DeactivateVault {};
+    let data = flux_vault::instruction::DeactivateVault {};
     let ix = Instruction {
-        program_id: fbyt_clone_vault::ID,
+        program_id: flux_vault::ID,
         accounts: vec![
             AccountMeta::new(manager.pubkey(), true),
             AccountMeta::new(*vault_pda, false),

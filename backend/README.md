@@ -50,7 +50,7 @@ To successfully run the seeder, you must provide a `DIRECT_DATABASE_URL` pointin
 
 2. Run the seeder with the direct database URL:
    ```bash
-   export DIRECT_DATABASE_URL="postgres://postgres:postgres@localhost:5432/fbyt?sslmode=disable"
+   export DIRECT_DATABASE_URL="postgres://postgres:postgres@localhost:5432/flux?sslmode=disable"
    go run cmd/seed/main.go
    ```
 

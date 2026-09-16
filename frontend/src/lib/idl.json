@@ -1,10 +1,10 @@
 {
   "address": "FJY6JUzQybrA5CbM9jgnTJtndhEU6vBAFF5vCuvq6Ais",
   "metadata": {
-    "name": "fbyt_clone_vault",
+    "name": "flux_vault",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "FBYT Clone Vault Program"
+    "description": "Flux Vault Program"
   },
   "instructions": [
     {
