@@ -188,9 +188,10 @@ export function DepositModal({ vaultId, open, onClose }: DepositModalProps) {
       await handleConfirm()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('insufficient lamports') || msg.includes('0x1')) {
+      if (msg.includes('insufficient lamports') || msg.includes('0x1') || msg.toLowerCase().includes('insufficient')) {
+        const symbol = selectedToken.symbol || 'token'
         setErrorMessage(
-          `Insufficient SOL balance for deposit + transaction fees. Available: ${tokenBalance?.toFixed(4) ?? '0'} SOL.`,
+          `Insufficient ${symbol} balance for deposit + transaction fees. Available: ${tokenBalance?.toFixed(4) ?? '0'} ${symbol}.`,
         )
       } else if (msg.includes('AccountNotInitialized') || msg.includes('0xbc4') || msg.includes('3012')) {
         setErrorMessage(

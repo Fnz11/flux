@@ -27,7 +27,11 @@ export interface RawApiVault {
     coverImageUrl?: string
     cover_image_url?: string
     tags?: string[]
+    depositMint?: string
+    deposit_mint?: string
   } | null
+  depositMint?: string
+  deposit_mint?: string
   performanceFeeBps?: number
   performance_fee_bps?: number
   managementFeeBps?: number
@@ -117,16 +121,15 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
     status = 'Active'
   }
 
-  let metadataObj: any = raw.metadata
-  if (typeof metadataObj === 'string') {
+  let metadataObj: Record<string, unknown> = {}
+  if (typeof raw.metadata === 'string') {
     try {
-      metadataObj = JSON.parse(metadataObj)
+      metadataObj = JSON.parse(raw.metadata) as Record<string, unknown>
     } catch {
       metadataObj = {}
     }
-  }
-  if (!metadataObj || typeof metadataObj !== 'object') {
-    metadataObj = {}
+  } else if (raw.metadata && typeof raw.metadata === 'object') {
+    metadataObj = raw.metadata as Record<string, unknown>
   }
 
   const focusAssets = Array.isArray(metadataObj.focusAssets)
@@ -140,6 +143,13 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
     : Array.isArray(metadataObj.accepted_assets)
       ? metadataObj.accepted_assets
       : undefined
+
+  const depositMint =
+    (typeof raw.depositMint === 'string' && raw.depositMint) ||
+    (typeof raw.deposit_mint === 'string' && raw.deposit_mint) ||
+    (typeof metadataObj.depositMint === 'string' && metadataObj.depositMint) ||
+    (typeof metadataObj.deposit_mint === 'string' && metadataObj.deposit_mint) ||
+    undefined
 
   const pnlPercent = typeof raw.pnl_percent === 'number'
     ? raw.pnl_percent
@@ -158,22 +168,23 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
     managerAddress: raw.managerAddress ?? raw.manager_address ?? '',
     status,
     metadata: {
-      displayName: metadataObj.displayName ?? metadataObj.display_name ?? '',
-      description: metadataObj.description ?? '',
-      focusAssets: focusAssets.filter((t: any) => typeof t === 'string' && t.toUpperCase() !== 'BONK'),
+      displayName: String(metadataObj.displayName ?? metadataObj.display_name ?? ''),
+      description: String(metadataObj.description ?? ''),
+      focusAssets: focusAssets.filter((t: unknown): t is string => typeof t === 'string' && t.toUpperCase() !== 'BONK'),
       ...(acceptedAssets
-        ? { acceptedAssets: acceptedAssets.filter((t: any) => typeof t === 'string' && t.toUpperCase() !== 'BONK') }
+        ? { acceptedAssets: acceptedAssets.filter((t: unknown): t is string => typeof t === 'string' && t.toUpperCase() !== 'BONK') }
         : {}),
       ...(metadataObj.coverImageUrl || metadataObj.cover_image_url
-        ? { coverImageUrl: metadataObj.coverImageUrl ?? metadataObj.cover_image_url }
+        ? { coverImageUrl: String(metadataObj.coverImageUrl ?? metadataObj.cover_image_url) }
         : {}),
       ...(metadataObj.tags
-        ? { tags: Array.isArray(metadataObj.tags) ? metadataObj.tags : [] }
+        ? { tags: Array.isArray(metadataObj.tags) ? (metadataObj.tags as string[]) : [] }
         : {}),
+      ...(depositMint ? { depositMint } : {}),
     },
     performanceFeeBps: Number(raw.performanceFeeBps ?? raw.performance_fee_bps) || 0,
     managementFeeBps: Number(raw.managementFeeBps ?? raw.management_fee_bps) || 0,
-    tvl: typeof raw.tvl === 'number' ? raw.tvl : parseFloat(raw.tvl || '0'),
+    tvl: typeof raw.tvl === 'number' ? raw.tvl : parseFloat(String(raw.tvl || '0')),
     createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
     updatedAt: raw.updatedAt ?? raw.updated_at ?? new Date().toISOString(),
     pnlPercent,
@@ -181,6 +192,7 @@ export function mapApiVaultToVault(raw: RawApiVault | null | undefined): Vault {
     lockupPeriod: typeof raw.lockup_period === 'number' ? raw.lockup_period : typeof raw.lockupPeriod === 'number' ? raw.lockupPeriod : 7,
     vaultType: raw.vaultType ?? raw.vault_type ?? 'open',
     investorCount: typeof raw.investor_count === 'number' ? raw.investor_count : typeof raw.investorCount === 'number' ? raw.investorCount : (raw.investors ?? 0),
+    ...(depositMint ? { depositMint } : {}),
   }
   if (Array.isArray(raw.sparkline)) {
     vault.sparkline = raw.sparkline.map((p) => (typeof p === 'number' ? p : Number(p?.value ?? p)))

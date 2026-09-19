@@ -210,6 +210,7 @@ func (w *TxIndexerWorker) finalizeCreateVault(ctx context.Context, draft *models
 		LockupPeriod      int64    `json:"lockupPeriod"`
 		ShareTokenMint    string   `json:"shareTokenMint"`
 		VaultAddress      string   `json:"vaultAddress"`
+		DepositMint       string   `json:"depositMint"`
 	}
 	_ = json.Unmarshal(draft.Metadata, &meta)
 
@@ -230,6 +231,7 @@ func (w *TxIndexerWorker) finalizeCreateVault(ctx context.Context, draft *models
 		"focusAssets":    meta.FocusAssets,
 		"tags":           meta.Tags,
 		"shareTokenMint": meta.ShareTokenMint,
+		"depositMint":    meta.DepositMint,
 	}
 	metaJSON, _ := json.Marshal(vaultMetadata)
 

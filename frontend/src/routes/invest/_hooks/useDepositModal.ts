@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useConnection } from '@solana/wallet-adapter-react'
+import { PublicKey } from '@solana/web3.js'
 import { useDeposit } from '@/hooks/useDeposit'
 import { useVaultsQuery, useVaultDetailQuery } from '@/services/hooks/useQuery/useVaultsQuery'
 import { TOKENS as ALL_TOKENS, getTokenMeta, type TokenInfo } from '@/constants/tokens'
@@ -7,21 +9,13 @@ import type { Vault } from '@/types'
 export const TOKENS = ALL_TOKENS
 
 export function getSupportedDepositTokens(vault?: Vault): TokenInfo[] {
-  const depositMint =
-    (vault?.metadata as any)?.depositMint ||
-    (vault as unknown as { deposit_mint?: string })?.deposit_mint ||
-    (vault as unknown as { depositMint?: string })?.depositMint
+  const depositMint = vault?.depositMint || vault?.metadata?.depositMint
   if (depositMint) {
     const meta = getTokenMeta(depositMint)
     if (meta.mint) return [meta]
   }
 
-  const accepted =
-    (vault?.metadata as any)?.acceptedAssets ||
-    (vault?.metadata as any)?.accepted_assets ||
-    (vault as unknown as { accepted_assets?: string[] })?.accepted_assets ||
-    (vault as unknown as { acceptedAssets?: string[] })?.acceptedAssets
-
+  const accepted = vault?.metadata?.acceptedAssets
   if (Array.isArray(accepted) && accepted.length > 0) {
     const matched = accepted
       .map((sym) => getTokenMeta(sym))
@@ -37,11 +31,61 @@ export function getSupportedDepositTokens(vault?: Vault): TokenInfo[] {
 
 export function useDepositModal(vaultId: string) {
   const { execute } = useDeposit()
+  const { connection } = useConnection()
   const { data: vaultDetail } = useVaultDetailQuery(vaultId)
   const { data: vaults = [] } = useVaultsQuery()
   const vault = vaultDetail || vaults.find((v) => v.id === vaultId || v.address === vaultId)
 
-  const availableTokens = useMemo(() => getSupportedDepositTokens(vault), [vault])
+  const [onChainDepositMint, setOnChainDepositMint] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function resolveOnChainMint() {
+      if (!vault?.address || !connection) return
+      try {
+        const pk = new PublicKey(vault.address)
+        const info = await connection.getAccountInfo(pk)
+        if (info && info.data && info.data.length >= 137) {
+          const data = info.data
+          let offset = 72
+          if (data[offset] === 0) {
+            offset += 1
+          } else {
+            offset += 33
+          }
+          if (data.length >= offset + 32) {
+            const mintPk = new PublicKey(data.slice(offset, offset + 32))
+            if (!mintPk.equals(PublicKey.default) && !cancelled) {
+              setOnChainDepositMint(mintPk.toBase58())
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    resolveOnChainMint()
+    return () => {
+      cancelled = true
+    }
+  }, [vault?.address, connection])
+
+  const effectiveVault = useMemo(() => {
+    if (!vault) return vault
+    if (onChainDepositMint && vault.depositMint !== onChainDepositMint) {
+      return {
+        ...vault,
+        depositMint: onChainDepositMint,
+        metadata: {
+          ...vault.metadata,
+          depositMint: onChainDepositMint,
+        },
+      }
+    }
+    return vault
+  }, [vault, onChainDepositMint])
+
+  const availableTokens = useMemo(() => getSupportedDepositTokens(effectiveVault), [effectiveVault])
 
   const [step, setStep] = useState(0)
   const [selectedToken, setSelectedToken] = useState<TokenInfo>(availableTokens[0] || ALL_TOKENS[0])
@@ -52,12 +96,9 @@ export function useDepositModal(vaultId: string) {
   // Keep selectedToken in sync with availableTokens when vault loads/changes
   useEffect(() => {
     if (availableTokens.length > 0) {
-      setSelectedToken((current) => {
-        const stillValid = availableTokens.some((t) => t.symbol === current.symbol || t.mint === current.mint)
-        return stillValid ? current : availableTokens[0]
-      })
+      setSelectedToken(availableTokens[0])
     }
-  }, [availableTokens])
+  }, [vaultId, availableTokens])
 
   const handleConfirm = async () => {
     if (!vault || !amount) {

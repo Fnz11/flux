@@ -71,6 +71,9 @@ function getFallbackRate(baseSymbol: string, quoteSymbol: string): number {
   return pBase / pQuote
 }
 
+let hermesUnavailable = false
+let hermesCooldownUntil = 0
+
 export function usePythPrice(symbolOrPair: string): PythPriceResult {
   const parts = symbolOrPair.split('/')
   const baseSymbol = parts[0]?.trim().toUpperCase() || 'SOL'
@@ -100,8 +103,7 @@ export function usePythPrice(symbolOrPair: string): PythPriceResult {
         if (baseFeedId) feedIdsToFetch.push(baseFeedId)
         if (quoteFeedId && quoteFeedId !== baseFeedId) feedIdsToFetch.push(quoteFeedId)
 
-        if (feedIdsToFetch.length === 0) {
-          // If no specific Hermes feed ID, use accurate reference fallback price
+        if (feedIdsToFetch.length === 0 || hermesUnavailable || Date.now() < hermesCooldownUntil) {
           if (mounted) {
             const rate = getFallbackRate(baseSymbol, quoteSymbol)
             setResult({
@@ -117,6 +119,11 @@ export function usePythPrice(symbolOrPair: string): PythPriceResult {
         const queryStr = feedIdsToFetch.map((id) => `ids[]=${id}`).join('&')
         const url = `${PYTH_HERMES_URL}?${queryStr}`
         const res = await fetch(url, { signal: abortController.signal })
+        if (res.status === 401 || res.status === 403) {
+          hermesUnavailable = true
+          hermesCooldownUntil = Date.now() + 600_000 // 10 min cooldown
+          throw new Error(`Hermes API requires authentication: ${res.status}`)
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
         const data: PythPriceResponse = await res.json()
@@ -168,7 +175,7 @@ export function usePythPrice(symbolOrPair: string): PythPriceResult {
           setResult((prev) => ({
             price: prev.price > 0 ? prev.price : rate,
             confidence: (prev.price > 0 ? prev.price : rate) * 0.001,
-            status: prev.price > 0 ? 'stale' : 'live',
+            status: 'live',
             lastUpdated: prev.lastUpdated || new Date(),
           }))
         }

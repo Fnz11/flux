@@ -181,7 +181,7 @@ export function useExecuteTrade() {
                     ixs.push(activateIx)
                   }
                 }
-              } catch (checkErr: any) {
+              } catch (checkErr: unknown) {
                 console.error('Auto-activate vault check error:', checkErr)
               }
 
@@ -222,17 +222,77 @@ export function useExecuteTrade() {
               const outputMeta = getTokenMeta(params.outputToken)
               const inputDecimals = isNativeMint(params.inputToken) ? 9 : (inputMeta.decimals || 6)
               const outputDecimals = isNativeMint(params.outputToken) ? 9 : (outputMeta.decimals || 6)
-
-              const amountInBn = new BN(Math.round(params.amountIn * 10 ** inputDecimals))
-              const minAmountOutBn = new BN(
-                Math.round(params.amountOut * (1 - params.slippage / 100) * 10 ** outputDecimals),
-              )
+              const amountInRaw = Math.round(params.amountIn * 10 ** inputDecimals)
 
               // Derive Pyth oracle price feed PDA
               const [priceUpdatePda] = PublicKey.findProgramAddressSync(
                 [Buffer.from('write_price_update'), Buffer.from(SOL_USD_FEED_ID, 'hex')],
                 PYTH_RECEIVER_PROGRAM_ID,
               )
+
+              let onChainPriceOut: number | null = null
+              try {
+                const priceAccInfo = await connection.getAccountInfo(priceUpdatePda)
+                if (priceAccInfo && priceAccInfo.data && priceAccInfo.data.length >= 70) {
+                  // PriceUpdateV2 structure has price (i64) and expo (i32)
+                  const data = priceAccInfo.data
+                  const feedBuffer = Buffer.from(SOL_USD_FEED_ID, 'hex')
+                  const feedIndex = data.indexOf(feedBuffer)
+                  if (feedIndex !== -1 && feedIndex + 32 + 16 <= data.length) {
+                    const priceOffset = feedIndex + 32
+                    const rawPrice = data.readBigInt64LE(priceOffset)
+                    const rawConf = data.readBigUInt64LE(priceOffset + 8)
+                    const expo = data.readInt32LE(priceOffset + 16)
+                    const realPrice = Number(rawPrice) * 10 ** expo
+                    if (realPrice > 0) {
+                      onChainPriceOut = realPrice
+                      console.log('[useExecuteTrade] Read on-chain Pyth price:', { realPrice, rawPrice: rawPrice.toString(), rawConf: rawConf.toString(), expo })
+                    }
+                  }
+                }
+              } catch (readPythErr) {
+                console.warn('[useExecuteTrade] Could not decode on-chain Pyth price account:', readPythErr)
+              }
+
+              // Base rate from on-chain price or UI price
+              const isBaseSOL = params.inputToken.toUpperCase() === 'SOL'
+              const effectivePrice = onChainPriceOut && onChainPriceOut > 0
+                ? (isBaseSOL ? onChainPriceOut : 1 / onChainPriceOut)
+                : (params.priceAtExecution && params.priceAtExecution > 0 ? params.priceAtExecution : 1.0)
+
+              const expectedOut = params.amountIn * effectivePrice
+              const slippageMultiplier = Math.max(0.01, 1 - (params.slippage || 0.5) / 100)
+              // Clamped minAmountOutRaw ensuring no strict rejection while protecting slippage
+              const minAmountOutRaw = Math.max(
+                1,
+                Math.floor(expectedOut * slippageMultiplier * 10 ** outputDecimals)
+              )
+
+              const amountInBn = new BN(amountInRaw)
+              const minAmountOutBn = new BN(minAmountOutRaw)
+
+              console.log('[useExecuteTrade] Preparing trade transaction:\n' + JSON.stringify({
+                vaultPubkey: vaultPubkey.toBase58(),
+                vaultAuthorityPda: vaultAuthorityPda.toBase58(),
+                inputToken: params.inputToken,
+                inputMint: inputMintPubkey.toBase58(),
+                inputDecimals,
+                amountIn: params.amountIn,
+                amountInRaw,
+                outputToken: params.outputToken,
+                outputMint: outputMintPubkey.toBase58(),
+                outputDecimals,
+                amountOut: params.amountOut,
+                expectedOut,
+                effectivePrice,
+                slippage: params.slippage,
+                slippageMultiplier,
+                minAmountOutRaw,
+                vaultInputAta: vaultInputAta.toBase58(),
+                vaultOutputAta: vaultOutputAta.toBase58(),
+              }, null, 2))
+
+              console.log('[useExecuteTrade] Pyth priceUpdatePda:', priceUpdatePda.toBase58())
 
               const tradeIx = await program.methods
                 .executeTradePyth(amountInBn, minAmountOutBn)
@@ -251,14 +311,18 @@ export function useExecuteTrade() {
 
               ixs.push(tradeIx)
 
+              console.log('[useExecuteTrade] Total instructions in tx:', ixs.length)
+
               const tx = buildTransactionWithComputeBudget(ixs, 1000, 200000)
               signature = await sendTransaction(connection, tx, anchorWallet)
+              console.log('[useExecuteTrade] Transaction sent, signature:', signature)
               if (signature) {
                 await confirmTransactionHelper(connection, signature, undefined, 'confirmed')
+                console.log('[useExecuteTrade] Transaction confirmed successfully!')
               }
             }
-          } catch (e) {
-            console.warn('Trade execution on-chain error:', e)
+          } catch (e: unknown) {
+            console.error('[useExecuteTrade] Detailed on-chain execution error:', e)
             throw e
           }
         }

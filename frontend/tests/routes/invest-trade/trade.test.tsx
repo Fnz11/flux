@@ -175,9 +175,11 @@ describe('SwapForm', () => {
   })
 
   it('restricts token options to selected vault focus assets', async () => {
+    mocks.balances = []
     const customVault: Vault = {
       ...vault,
       id: 'custom-vault',
+      tvl: 0,
       metadata: { displayName: 'Custom Vault', description: 'Custom', focusAssets: ['AAA', 'BBB', 'CCC'] },
     }
     mocks.vaults = [customVault]

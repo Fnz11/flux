@@ -356,13 +356,44 @@ export function useDeposit() {
       } catch (err: unknown) {
         console.error('[useDeposit] Error occurred during deposit execution:', err)
         let message = formatError(err, 'Deposit failed')
-        const sendTxErr = err as { getLogs?: () => string[]; logs?: string[] }
-        const logs = (typeof sendTxErr?.getLogs === 'function' ? sendTxErr.getLogs() : sendTxErr?.logs) || []
+        const sendTxErr = err as { getLogs?: () => Promise<string[] | undefined> | string[] | undefined; logs?: string[] }
+        let logs: string[] = []
+        if (typeof sendTxErr?.getLogs === 'function') {
+          try {
+            const rawLogs = await sendTxErr.getLogs()
+            if (Array.isArray(rawLogs)) {
+              logs = rawLogs
+            }
+          } catch {
+            // ignore getLogs error
+          }
+        }
+        if (!logs.length && Array.isArray(sendTxErr?.logs)) {
+          logs = sendTxErr.logs
+        }
+        if (!logs.length && typeof err === 'object' && err !== null && 'logs' in err && Array.isArray((err as { logs: unknown }).logs)) {
+          logs = (err as { logs: string[] }).logs
+        }
+
         console.error('[useDeposit] Transaction error logs:', logs)
-        const insufficientLog = logs.find((l) => l.includes('insufficient lamports') || l.includes('custom program error: 0x1'))
-        const uninitializedLog = logs.find((l) => l.includes('AccountNotInitialized') || l.includes('0xbc4') || l.includes('3012'))
+        const insufficientLog = logs.find((l) =>
+          typeof l === 'string' && (
+            l.includes('insufficient lamports') ||
+            l.includes('insufficient funds') ||
+            l.includes('custom program error: 0x1')
+          )
+        )
+        const uninitializedLog = logs.find((l) =>
+          typeof l === 'string' && (
+            l.includes('AccountNotInitialized') ||
+            l.includes('0xbc4') ||
+            l.includes('3012')
+          )
+        )
         if (insufficientLog) {
-          message = `Insufficient SOL balance for deposit + gas fees (${insufficientLog}).`
+          message = isNative(tokenMint)
+            ? `Insufficient SOL balance for deposit + gas fees.`
+            : `Insufficient token balance in your wallet for this deposit.`
         } else if (uninitializedLog) {
           message = `Vault account is not initialized on-chain (Error: AccountNotInitialized). Please create a new vault via the app to test on-chain deposits.`
         }

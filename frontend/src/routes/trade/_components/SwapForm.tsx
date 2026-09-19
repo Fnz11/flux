@@ -126,7 +126,7 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
   const pythPriceFeedId = `${inputToken}/${outputToken}`
   const priceData: PriceState = usePythPrice(pythPriceFeedId)
 
-  const tokens = useMemo(() => {
+  const focusOrWhitelistTokens = useMemo(() => {
     const focusAssets = selectedVault?.metadata?.focusAssets
     const rawList = Array.isArray(focusAssets) && focusAssets.length > 0
       ? focusAssets
@@ -134,21 +134,45 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     return rawList.filter((t) => t.toUpperCase() !== 'BONK')
   }, [selectedVault, config])
 
+  const payTokens = useMemo(() => {
+    const set = new Set<string>()
+    // 1. Prioritize all tokens held by the vault with positive balance
+    for (const b of vaultBalances) {
+      if (b.symbol && (b.amount > 0 || (b.usdValue && b.usdValue > 0))) {
+        set.add(b.symbol.toUpperCase())
+      }
+    }
+    // 2. If vault has TVL, ensure SOL is also available to pay with
+    if (selectedVault && selectedVault.tvl > 0) {
+      set.add('SOL')
+    }
+    // 3. Include focus assets / whitelist
+    for (const t of focusOrWhitelistTokens) {
+      set.add(t.toUpperCase())
+    }
+    const list = Array.from(set).filter((t) => t !== 'BONK')
+    return list.length > 0 ? list : ['SOL', 'USDC']
+  }, [vaultBalances, selectedVault, focusOrWhitelistTokens])
+
+  const receiveTokens = useMemo(() => {
+    return focusOrWhitelistTokens.length > 0 ? focusOrWhitelistTokens : ['USDC', 'SOL']
+  }, [focusOrWhitelistTokens])
+
   useEffect(() => {
-    if (!tokens || tokens.length === 0) return
+    if (!payTokens.length || !receiveTokens.length) return
     let currentInput = inputToken
     let currentOutput = outputToken
 
-    if (!tokens.includes(currentInput)) {
-      currentInput = tokens[0]
+    if (!payTokens.includes(currentInput)) {
+      currentInput = payTokens[0]
       setInputToken(currentInput)
     }
 
-    if (!tokens.includes(currentOutput) || (currentOutput === currentInput && tokens.length > 1)) {
-      currentOutput = tokens.find((t) => t !== currentInput) ?? tokens[0]
+    if (!receiveTokens.includes(currentOutput) || (currentOutput === currentInput && receiveTokens.length > 1)) {
+      currentOutput = receiveTokens.find((t) => t !== currentInput) ?? receiveTokens[0]
       setOutputToken(currentOutput)
     }
-  }, [tokens, inputToken, outputToken])
+  }, [payTokens, receiveTokens, inputToken, outputToken])
 
   const [sliderValue, setSliderValue] = useState(0)
 
@@ -214,6 +238,16 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
 
   const handleConfirm = useCallback(async () => {
     if (!vaultId || !inputNum) return
+    console.log('[SwapForm] Confirming swap with params:', {
+      vaultId,
+      vaultAddress: selectedVault?.address,
+      inputToken,
+      outputToken,
+      amountIn: inputNum,
+      amountOut: outputAmount,
+      priceAtExecution: rate,
+      slippage,
+    })
     await execute({
       vaultId,
       vaultAddress: selectedVault?.address,
@@ -229,19 +263,19 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
 
   const handleInputTokenChange = useCallback((token: string) => {
     if (token === outputToken) {
-      const nextOutput = tokens.find((t) => t !== token) ?? token
+      const nextOutput = receiveTokens.find((t) => t !== token) ?? token
       setOutputToken(inputToken !== token ? inputToken : nextOutput)
     }
     setInputToken(token)
-  }, [inputToken, outputToken, tokens])
+  }, [inputToken, outputToken, receiveTokens])
 
   const handleOutputTokenChange = useCallback((token: string) => {
     if (token === inputToken) {
-      const nextInput = tokens.find((t) => t !== token) ?? token
+      const nextInput = payTokens.find((t) => t !== token) ?? token
       setInputToken(outputToken !== token ? outputToken : nextInput)
     }
     setOutputToken(token)
-  }, [inputToken, outputToken, tokens])
+  }, [inputToken, outputToken, payTokens])
 
   const toggleDirection = () => {
     setInputToken(outputToken)
@@ -263,7 +297,8 @@ function useSwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVaults
     setShowConfirm,
     maxBalance,
     handleSetMax,
-    tokens,
+    payTokens,
+    receiveTokens,
     inputNum,
     rate,
     outputAmount,
@@ -308,7 +343,8 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
     setShowConfirm,
     maxBalance,
     handleSetMax,
-    tokens,
+    payTokens,
+    receiveTokens,
     inputNum,
     rate,
     outputAmount,
@@ -361,7 +397,7 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
               <PayInputField
                 maxBalance={maxBalance}
                 onSetMax={handleSetMax}
-                tokens={tokens}
+                tokens={payTokens}
                 inputToken={inputToken}
                 onInputTokenChange={setInputToken}
                 disabledTokens={[outputToken]}
@@ -373,7 +409,7 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
 
               <ReceiveSection
                 outputAmount={outputAmount}
-                tokens={tokens}
+                tokens={receiveTokens}
                 outputToken={outputToken}
                 onOutputTokenChange={setOutputToken}
                 disabledTokens={[inputToken]}

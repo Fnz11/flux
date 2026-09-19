@@ -27,6 +27,7 @@ export interface VaultMetadata {
   displayName: string
   coverImageUrl?: string
   tags?: string[]
+  depositMint?: string
 }
 
 // ── Vault (frontend display) ──
@@ -49,6 +50,7 @@ export interface Vault {
   investorCount?: number
   sparkline?: number[]
   maxCapacity?: number
+  depositMint?: string
 }
 
 // ── Portfolio position ──
