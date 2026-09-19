@@ -1,9 +1,7 @@
 import { Connection, PublicKey } from '@solana/web3.js'
-import { getAssociatedTokenAddressSync } from '@solana/spl-token'
 
 async function main() {
     const connection = new Connection('http://127.0.0.1:8899', 'confirmed')
-    const investor = new PublicKey('AfaHEa4znixyBcvimfUT2SzDoYTpEaxu6DmmFhmzZYVd') // Assuming this is User 2
     // Wait, User 2 is random in Playwright? No, let's just get the last vault's share mint.
     const shareMint = new PublicKey('6bfUcZR5NpnSwBKczggMH7Cqss7QAUeLrv8daKXcSsgx')
     

@@ -22,7 +22,7 @@ import { SwapActionButton } from './SwapActionButton'
 import { RouteDetails } from './RouteDetails'
 import { getTradeEligibility } from '@/lib/eligibility'
 
-import { DEFAULT_FOCUS_ASSETS_WHITELIST, isWhitelistedToken } from '@/constants/tokens'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
 import type { Vault } from '@/types'
 
 export interface SwapFormProps {
@@ -319,7 +319,6 @@ export function SwapForm({ preselectedVaultId, vaults: customVaults, isLoadingVa
     isInsufficientBalance,
     sliderValue,
     handleSliderChange,
-    handlePercentageClick,
     onSubmit,
     handleConfirm,
     handleVaultChange,

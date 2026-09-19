@@ -39,7 +39,6 @@ export function VaultCard({ vault }: VaultCardProps) {
     vault.managerAddress &&
     walletAddress === vault.managerAddress,
   );
-  const isClosed = vault.vaultType === "closed";
   const displayName =
     vault.metadata?.displayName ||
     (vault.id

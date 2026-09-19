@@ -50,7 +50,7 @@ export function CreateVaultPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageName, setImageName] = useState<string | null>(null)
 
-  const form = useForm<CreateVaultFormValues, unknown, CreateVaultFormValues>({
+  const form = useForm<CreateVaultFormValues>({
     resolver: zodResolver(createVaultSchema),
     defaultValues: {
       vaultType: 'open',

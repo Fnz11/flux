@@ -6,7 +6,7 @@ import type {
   VaultStatus,
   TradeType,
 } from '@/types'
-import { DEFAULT_FOCUS_ASSETS_WHITELIST, isWhitelistedToken } from '@/constants/tokens'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST } from '@/constants/tokens'
 
 export interface RawApiVault {
   id?: string

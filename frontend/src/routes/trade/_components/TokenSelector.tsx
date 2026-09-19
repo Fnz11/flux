@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ResponsiveDrawer, useIsMobile } from '@/components/ui/ResponsiveDrawer'
 import { cn } from '@/lib/utils'
 import { TokenIcon } from '@/components/ui/TokenIcon'
-import { DEFAULT_FOCUS_ASSETS_WHITELIST, getTokenMeta, isWhitelistedToken } from '@/constants/tokens'
+import { DEFAULT_FOCUS_ASSETS_WHITELIST, getTokenMeta } from '@/constants/tokens'
 
 interface TokenSelectorProps {
   tokens: string[]

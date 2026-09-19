@@ -1,4 +1,4 @@
-import { api, getAuthToken, setAuthToken } from '@/lib/api'
+import { api, setAuthToken } from '@/lib/api'
 
 export interface NonceResponse {
   nonce: string

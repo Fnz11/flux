@@ -1,7 +1,6 @@
 import { useState, useMemo, type ReactNode } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { useGlobalTransactionsQuery } from '@/services/hooks/useQuery/useGlobalTransactionsQuery'
-import type { GlobalTransactionAction, GlobalTransaction, GlobalTransactionsResponse } from '@/services/apis/rest-api/transactions.service'
+import type { GlobalTransactionAction } from '@/services/apis/rest-api/transactions.service'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, SortableTableHead, Pagination } from '@/components/ui/table'
 import { TableRowSkeleton } from '@/components/ui/TableSkeleton'
 import { SolscanLink } from '@/components/ui/SolscanLink'

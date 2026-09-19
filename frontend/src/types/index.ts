@@ -48,6 +48,7 @@ export interface Vault {
   vaultType?: 'open' | 'closed'
   investorCount?: number
   sparkline?: number[]
+  maxCapacity?: number
 }
 
 // ── Portfolio position ──
@@ -61,6 +62,8 @@ export interface PortfolioPosition {
   currentValue: number
   pnl: number
   pnlPercent: number
+  coverImageUrl?: string
+  metadata?: VaultMetadata
   createdAt?: string
   investedAt?: string
 }
@@ -71,26 +74,6 @@ export interface AppConfig {
   focusAssetsWhitelist: string[]
   minRaiseAmount: number
   lockupPeriod: number
-}
-
-// ── WebSocket message (legacy) ──
-export interface WSMessage {
-  type:
-    | 'TX_CONFIRMED'
-    | 'TRADE_EXECUTED'
-    | 'VAULT_UPDATED'
-    | 'PRICE_UPDATE'
-    | 'trade_confirmed'
-    | 'leaderboard_update'
-  vaultId?: string
-  tradeId?: string
-  transactionId?: string
-  signature?: string
-  status?: TransactionStatus
-  errorMessage?: string
-  payload?: Record<string, unknown>
-  data?: unknown
-  timestamp?: number
 }
 
 // ═══════════════════════════════════════
@@ -212,15 +195,30 @@ export type WsMessageType =
   | 'update'
   | 'trade_confirmed'
   | 'portfolio_update'
+  | 'portfolio_summary_update'
   | 'price_update'
   | 'heartbeat'
   | 'error'
+  | 'notification'
+  | 'TX_CONFIRMED'
+  | 'TRADE_EXECUTED'
+  | 'VAULT_UPDATED'
+  | 'PRICE_UPDATE'
+  | 'leaderboard_update'
+  | (string & {})
 
 export interface WsMessage<T = unknown> {
   type: WsMessageType
   channel?: string
-  data: T
-  timestamp: number
+  vaultId?: string
+  tradeId?: string
+  transactionId?: string
+  signature?: string
+  status?: TransactionStatus | 'success' | 'failed'
+  errorMessage?: string
+  payload?: Record<string, unknown>
+  data?: T
+  timestamp?: number
 }
 
 export type WSMessage<T = unknown> = WsMessage<T>
@@ -305,6 +303,8 @@ export interface SearchVault {
   address: string
   displayName: string
   tvl: number
+  coverImageUrl?: string
+  metadata?: VaultMetadata
 }
 
 export type SearchResultKind = 'pairs' | 'vaults'

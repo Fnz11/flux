@@ -1,5 +1,4 @@
 import { test, expect } from './real-fixtures'
-import { Keypair } from '@solana/web3.js'
 
 test('Real E2E: Create, Deposit, Trade, Withdraw', async ({ page, wallet }) => {
   test.setTimeout(120000) // 2 minutes, as blockchain txs take time

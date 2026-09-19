@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatCurrencyParts, formatPercent, formatNumber } from '@/lib/format'
+import { formatCurrency, formatCurrencyParts, formatPercent } from '@/lib/format'
 
 describe('formatCurrencyParts & formatCurrency', () => {
   it('splits positive numbers into integer and fraction parts', () => {

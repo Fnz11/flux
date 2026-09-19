@@ -3,8 +3,6 @@ import {
   formatError,
   ANCHOR_VAULT_ERRORS,
   ANCHOR_VAULT_ERROR_NAMES,
-  ANCHOR_FRAMEWORK_ERRORS,
-  ANCHOR_FRAMEWORK_ERROR_NAMES,
 } from '@/lib/errors'
 
 describe('Anchor Vault Errors Mapping (6000 - 6020)', () => {

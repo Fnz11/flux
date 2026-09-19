@@ -69,7 +69,6 @@ export function PortfolioSummary() {
   // Format balance and PnL string parts
   const balanceParts = formatCurrencyParts(totalValue)
   const pnlParts = formatCurrencyParts(totalPnl, { showSign: true })
-  const deltaParts = formatCurrencyParts(change.delta, { showSign: true })
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || historyPoints.length < 2) return

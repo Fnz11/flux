@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test'
+import { test as base, expect } from '@playwright/test'
 import { Keypair, Connection, VersionedTransaction } from '@solana/web3.js'
 import bs58 from 'bs58'
 import nacl from 'tweetnacl'
@@ -28,7 +28,9 @@ export const test = base.extend<Fixtures>({
       await connection.requestAirdrop(user2Keypair.publicKey, 10 * 1e9)
       // wait a bit for airdrop
       await new Promise(r => setTimeout(r, 1000))
-    } catch(e) {}
+    } catch {
+      // ignore
+    }
 
     await page.exposeFunction('signMessageBytes', async (msgBase64: string, skBase58: string) => {
       const msg = Uint8Array.from(Buffer.from(msgBase64, 'base64'))
@@ -51,7 +53,16 @@ export const test = base.extend<Fixtures>({
 
     // Use addInitScript to install the mock wallet before the page loads
     await page.addInitScript(() => {
-      const state = { accounts: [], listeners: new Set<any>() }
+      interface MockAccount {
+        address: string
+        publicKey: Uint8Array
+        chains: string[]
+        features: string[]
+      }
+      const state: { accounts: MockAccount[]; listeners: Set<(arg: unknown) => void> } = {
+        accounts: [],
+        listeners: new Set(),
+      }
       const emit = () => state.listeners.forEach(l => l({ accounts: state.accounts }))
 
       const mockWallet = {
@@ -61,7 +72,7 @@ export const test = base.extend<Fixtures>({
         chains: ['solana:devnet', 'solana:localnet', 'solana:mainnet', 'solana:testnet'],
         get accounts() { return state.accounts },
         features: {
-          'standard:events': { version: '1.0.0', on: (e: string, l: any) => { state.listeners.add(l); return () => state.listeners.delete(l) } },
+          'standard:events': { version: '1.0.0', on: (_e: string, l: (arg: unknown) => void) => { state.listeners.add(l); return () => state.listeners.delete(l) } },
           'standard:connect': { version: '1.0.0', connect: async () => { 
             emit(); 
             return { accounts: state.accounts } 

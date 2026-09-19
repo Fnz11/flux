@@ -86,6 +86,9 @@ export function PerformanceChart({
 
   const selectedAsset = externalAsset ?? internalAsset
   const isNav = !selectedAsset || selectedAsset === 'Portfolio NAV'
+  void isNav
+  void setInternalAsset
+  void onSelectedAssetChange
 
   const { data: market, isLoading: marketLoading, isError } = useMarketStatsQuery()
 

@@ -190,6 +190,19 @@ export function useDeposit() {
               }),
               createSyncNativeInstruction(investorTokenAccount),
             )
+          } else {
+            // For SPL token deposits, ensure investor token ATA exists
+            const investorAtaInfo = await connection.getAccountInfo(investorTokenAccount)
+            if (!investorAtaInfo) {
+              ixs.push(
+                createAssociatedTokenAccountInstruction(
+                  userPubkey,
+                  investorTokenAccount,
+                  userPubkey,
+                  tokenMintPubkey,
+                ),
+              )
+            }
           }
 
           // Check and create investor share ATA if missing

@@ -314,6 +314,14 @@ func BuildDepositTx(programID solana.PublicKey, p DepositParams) (*PreparedTrans
 		instructions = append(instructions, buildSyncNativeIx(
 			investorTokenAta,
 		))
+	} else {
+		// Ensure investor deposit token account ATA is created if it doesn't exist
+		instructions = append(instructions, buildCreateIdempotentATAIx(
+			p.Investor,
+			p.Investor,
+			p.DepositMint,
+			investorTokenAta,
+		))
 	}
 
 	// Ensure vault token account (owned by vault authority) ATA is created
