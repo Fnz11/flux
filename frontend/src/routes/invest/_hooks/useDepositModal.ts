@@ -60,8 +60,18 @@ export function useDepositModal(vaultId: string) {
   }, [availableTokens])
 
   const handleConfirm = async () => {
-    if (!vault || !amount) return
+    if (!vault || !amount) {
+      console.warn('[useDepositModal] handleConfirm skipped: vault or amount missing', { vault, amount })
+      return
+    }
     setLoading(true)
+    console.log('[useDepositModal] handleConfirm called with:', {
+      vaultAddress: vault.address,
+      tokenMint: selectedToken.mint,
+      tokenSymbol: selectedToken.symbol,
+      amount: Number(amount),
+      vaultId,
+    })
     try {
       const sig = await execute({
         vaultAddress: vault.address,
@@ -69,10 +79,12 @@ export function useDepositModal(vaultId: string) {
         amount: Number(amount),
         vaultId,
       })
+      console.log('[useDepositModal] Deposit confirmed successfully, sig:', sig)
       setSignature(sig)
       setStep(2)
-    } catch {
-      // error handled by store
+    } catch (err) {
+      console.error('[useDepositModal] handleConfirm error:', err)
+      throw err
     } finally {
       setLoading(false)
     }

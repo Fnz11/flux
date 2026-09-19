@@ -83,6 +83,16 @@ export function useDeposit() {
           ? Math.round(amount * LAMPORTS_PER_SOL)
           : Math.round(amount * 10 ** USDC_DECIMALS)
 
+        console.log('[useDeposit] Starting deposit:', {
+          vaultAddress,
+          vaultPubkey: vaultPubkey.toBase58(),
+          tokenMint,
+          isNativeToken: isNative(tokenMint),
+          amount,
+          lamports,
+          investor: userPubkey.toBase58(),
+        })
+
         let signature: string | null = null
         let tx: Transaction
         let draftId: string | undefined
@@ -90,12 +100,15 @@ export function useDeposit() {
 
         try {
           // 1. Enterprise path: request backend to prepare tx
+          console.log('[useDeposit] Calling backend prepareDeposit...')
           const prep = await prepareDeposit({
             investorAddress: userPubkey.toBase58(),
             vaultAddress: vaultPubkey.toBase58(),
             amountLamports: lamports,
             depositMint: isNative(tokenMint) ? undefined : tokenMint,
           })
+
+          console.log('[useDeposit] Backend prepare response:', prep)
 
           if (!prep?.transaction) {
             throw new Error('Prepared transaction missing')
@@ -110,7 +123,12 @@ export function useDeposit() {
 
           draftId = prep.draft_id
           tx = Transaction.from(Buffer.from(prep.transaction, 'base64'))
-        } catch {
+          console.log('[useDeposit] Deserialized prepared tx. Instructions count:', tx.instructions.length)
+          tx.instructions.forEach((ix, idx) => {
+            console.log(`[useDeposit] Ix #${idx}: programId=${ix.programId.toBase58()} keys=${ix.keys.map(k => `${k.pubkey.toBase58()}(w=${k.isWritable},s=${k.isSigner})`).join(', ')}`)
+          })
+        } catch (prepErr) {
+          console.warn('[useDeposit] Backend prepare failed, falling back to client-side Anchor:', prepErr)
           // 2. Client-side fallback ONLY if backend prepare HTTP call fails
           const program = await getProgram(
             {
@@ -336,9 +354,11 @@ export function useDeposit() {
         updateStatus(txId, 'success')
         return signature
       } catch (err: unknown) {
+        console.error('[useDeposit] Error occurred during deposit execution:', err)
         let message = formatError(err, 'Deposit failed')
         const sendTxErr = err as { getLogs?: () => string[]; logs?: string[] }
         const logs = (typeof sendTxErr?.getLogs === 'function' ? sendTxErr.getLogs() : sendTxErr?.logs) || []
+        console.error('[useDeposit] Transaction error logs:', logs)
         const insufficientLog = logs.find((l) => l.includes('insufficient lamports') || l.includes('custom program error: 0x1'))
         const uninitializedLog = logs.find((l) => l.includes('AccountNotInitialized') || l.includes('0xbc4') || l.includes('3012'))
         if (insufficientLog) {
